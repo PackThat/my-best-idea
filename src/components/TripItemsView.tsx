@@ -1,32 +1,45 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, ChevronRight, Plus } from 'lucide-react';
 import { useAppContext } from '@/contexts/AppContext';
-import { AddItemDialog } from '@/components/AddItemDialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, Plus, Edit2, Trash2, User, Backpack } from 'lucide-react';
+import { Item } from '@/types';
+// This import is now corrected. We import the component (which is named AddItemDialog inside the file)
+// and give it a local name of TripAddItemDialog to match the filename.
+import { AddItemDialog as TripAddItemDialog } from './TripAddItemDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 interface TripItemsViewProps {
   onBack: () => void;
-  onCategoryClick: (categoryId: string) => void;
 }
 
-const TripItemsView: React.FC<TripItemsViewProps> = ({ onBack, onCategoryClick }) => {
-  const { categories, items } = useAppContext();
-  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
+const TripItemsView: React.FC<TripItemsViewProps> = ({ onBack }) => {
+  const { 
+    items, 
+    updateItem, 
+    deleteItem,
+    addItemToTrip,
+    people, 
+    bags,
+    categories,
+    subcategories
+  } = useAppContext();
+  
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  // Get categories that have items in this trip
-  const usedCategories = categories.filter(category => 
-    items.some(item => item.categoryId === category.id)
-  );
+  const handlePackedChange = (item: Item) => {
+    updateItem(item.id, { packed: !item.packed });
+  };
+  
+  const getPersonName = (personId?: string) => {
+    if (!personId) return null;
+    return people.find(p => p.id === personId)?.name;
+  };
 
-  const getCategoryStats = (categoryId: string) => {
-    const categoryItems = items.filter(item => item.categoryId === categoryId);
-    const packedItems = categoryItems.filter(item => item.packed);
-    return {
-      total: categoryItems.length,
-      packed: packedItems.length
-    };
+  const getBagName = (bagId?: string) => {
+    if (!bagId) return null;
+    return bags.find(b => b.id === bagId)?.name;
   };
 
   return (
@@ -35,81 +48,75 @@ const TripItemsView: React.FC<TripItemsViewProps> = ({ onBack, onCategoryClick }
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Back to Trip
           </Button>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Trip Categories</h2>
-            <p className="text-gray-600">{usedCategories.length} categories with items</p>
-          </div>
+          <h2 className="text-2xl font-bold">Packing List</h2>
         </div>
-        <Button onClick={() => setShowAddItemDialog(true)}>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          ADD ITEM
+          Add Item
         </Button>
       </div>
-
-      <div className="grid gap-4">
-        {usedCategories.map((category) => {
-          const stats = getCategoryStats(category.id);
-          const progress = stats.total > 0 ? (stats.packed / stats.total) * 100 : 0;
-          
-          return (
-            <Card 
-              key={category.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer hover:bg-gray-50"
-              onClick={() => onCategoryClick(category.id)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <Package className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {category.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {stats.packed} of {stats.total} items packed
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge 
-                      variant={progress === 100 ? "default" : "secondary"}
-                      className={progress === 100 ? "bg-green-500" : ""}
-                    >
-                      {Math.round(progress)}%
-                    </Badge>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </div>
+      
+      <Card className="bg-card">
+        <CardContent className="p-4">
+          <ul className="space-y-3">
+            {items.map((item) => (
+              <li key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id={`item-${item.id}`}
+                    checked={item.packed}
+                    onCheckedChange={() => handlePackedChange(item)}
+                    className="w-5 h-5"
+                  />
+                  <label htmlFor={`item-${item.id}`} className="font-medium">{item.name}</label>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {usedCategories.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Items Yet</h3>
-            <p className="text-gray-600">Add some items to see categories here.</p>
-            <Button 
-              onClick={() => setShowAddItemDialog(true)}
-              className="mt-4"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add First Item
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <AddItemDialog 
-        open={showAddItemDialog}
-        onOpenChange={setShowAddItemDialog}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  {item.personId && <div className="flex items-center gap-1"><User className="h-4 w-4"/>{getPersonName(item.personId)}</div>}
+                  {item.bagId && <div className="flex items-center gap-1"><Backpack className="h-4 w-4"/>{getBagName(item.bagId)}</div>}
+                  <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="h-4 w-4"/></Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4"/></Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Item?</AlertDialogTitle>
+                        <AlertDialogDescription>Are you sure you want to delete "{item.name}" from this trip's packing list?</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteItem(item.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {items.length === 0 && (
+            <p className="text-center text-muted-foreground py-4">No items added to this trip yet.</p>
+          )}
+        </CardContent>
+      </Card>
+      
+      <TripAddItemDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        categories={categories}
+        subcategories={subcategories}
+        bags={bags}
+        people={people}
+        items={items}
+        onAddItem={addItemToTrip}
+        // These are not needed for the trip dialog, but we pass them to satisfy the component's props
+        onAddPerson={() => {}}
+        onAddCategory={() => {}}
+        onAddSubcategory={() => {}}
+        onAddBag={() => {}}
+        onAddItemToPacking={() => {}}
+        onAddNewItem={() => {}}
       />
     </div>
   );

@@ -1,0 +1,140 @@
+.
+├── README.md
+├── components.json
+├── eslint.config.js
+├── explorerfilelist.txt
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   ├── placeholder.svg
+│   └── robots.txt
+├── src
+│   ├── App.css
+│   ├── App.tsx
+│   ├── components
+│   │   ├── AddBagDialog.tsx
+│   │   ├── AddCategoryDialog.tsx
+│   │   ├── AddItemDialog.tsx
+│   │   ├── AddNewItemDialog.tsx
+│   │   ├── AddPersonDialog.tsx
+│   │   ├── AddSubcategoryDialog.tsx
+│   │   ├── AddToBuyItemDialog.tsx
+│   │   ├── AddTripDialog.tsx
+│   │   ├── AppLayout.tsx
+│   │   ├── BagDetailView.tsx
+│   │   ├── BagSelector.tsx
+│   │   ├── BagsListView.tsx
+│   │   ├── BagsManagementView.tsx
+│   │   ├── CatalogImportDialog.tsx
+│   │   ├── CategorySubcategorySelector.tsx
+│   │   ├── CategoryView.tsx
+│   │   ├── EditBagDialog.tsx
+│   │   ├── EditPersonDialog.tsx
+│   │   ├── HomeView.tsx
+│   │   ├── InlineTripForm.tsx
+│   │   ├── ItemAssignmentDialog.tsx
+│   │   ├── ItemCard.tsx
+│   │   ├── ItemSelectionDialog.tsx
+│   │   ├── ItemsImportView.tsx
+│   │   ├── PackingApp.tsx
+│   │   ├── PackingAppContent.tsx
+│   │   ├── PackingHeader.tsx
+│   │   ├── PackingList.tsx
+│   │   ├── PackingSidebar.tsx
+│   │   ├── PeopleListView.tsx
+│   │   ├── PeopleManagementView.tsx
+│   │   ├── PersonBagsView.tsx
+│   │   ├── PersonPackingView.tsx
+│   │   ├── PersonSelector.tsx
+│   │   ├── PersonView.tsx
+│   │   ├── QuickEditDialog.tsx
+│   │   ├── TripBagsView.tsx
+│   │   ├── TripCategoryView.tsx
+│   │   ├── TripItemsView.tsx
+│   │   ├── TripMainView.tsx
+│   │   ├── TripNavigationView.tsx
+│   │   ├── TripPeopleView.tsx
+│   │   ├── TripSelector.tsx
+│   │   ├── TripSubcategoryView.tsx
+│   │   ├── TripToBuyView.tsx
+│   │   ├── TripsList.tsx
+│   │   ├── theme-provider.tsx
+│   │   └── ui
+│   │       ├── accordion.tsx
+│   │       ├── alert-dialog.tsx
+│   │       ├── alert.tsx
+│   │       ├── aspect-ratio.tsx
+│   │       ├── avatar.tsx
+│   │       ├── badge.tsx
+│   │       ├── breadcrumb.tsx
+│   │       ├── button.tsx
+│   │       ├── calendar.tsx
+│   │       ├── card.tsx
+│   │       ├── carousel.tsx
+│   │       ├── chart.tsx
+│   │       ├── checkbox.tsx
+│   │       ├── collapsible.tsx
+│   │       ├── command.tsx
+│   │       ├── context-menu.tsx
+│   │       ├── dialog.tsx
+│   │       ├── drawer.tsx
+│   │       ├── dropdown-menu.tsx
+│   │       ├── form.tsx
+│   │       ├── hover-card.tsx
+│   │       ├── input-otp.tsx
+│   │       ├── input.tsx
+│   │       ├── label.tsx
+│   │       ├── menubar.tsx
+│   │       ├── navigation-menu.tsx
+│   │       ├── pagination.tsx
+│   │       ├── popover.tsx
+│   │       ├── progress.tsx
+│   │       ├── radio-group.tsx
+│   │       ├── resizable.tsx
+│   │       ├── scroll-area.tsx
+│   │       ├── select.tsx
+│   │       ├── separator.tsx
+│   │       ├── sheet.tsx
+│   │       ├── sidebar.tsx
+│   │       ├── skeleton.tsx
+│   │       ├── slider.tsx
+│   │       ├── sonner.tsx
+│   │       ├── switch.tsx
+│   │       ├── table.tsx
+│   │       ├── tabs.tsx
+│   │       ├── textarea.tsx
+│   │       ├── toast.tsx
+│   │       ├── toaster.tsx
+│   │       ├── toggle-group.tsx
+│   │       ├── toggle.tsx
+│   │       ├── tooltip.tsx
+│   │       └── use-toast.ts
+│   ├── contexts
+│   │   ├── AppContext.tsx
+│   │   ├── AppContextComplete.tsx
+│   │   ├── AppContextRest.tsx
+│   │   └── AppContextRestPart2.tsx
+│   ├── data
+│   │   └── defaultData.ts
+│   ├── hooks
+│   │   ├── use-mobile.tsx
+│   │   ├── use-toast.ts
+│   │   └── usePackingData.ts
+│   ├── index.css
+│   ├── lib
+│   │   └── utils.ts
+│   ├── main.tsx
+│   ├── pages
+│   │   ├── Index.tsx
+│   │   └── NotFound.tsx
+│   └── types
+│       └── index.ts
+├── tailwind.config.ts
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+
+11 directories, 127 files

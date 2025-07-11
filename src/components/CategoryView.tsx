@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, Plus } from 'lucide-react';
 import ItemCard from './ItemCard';
 import ItemSelectionDialog from './ItemSelectionDialog';
-import AddItemDialog from './AddItemDialog';
+import AddItemDialog from './TripAddItemDialog';
 
 interface CategoryViewProps {
   categoryId: string;

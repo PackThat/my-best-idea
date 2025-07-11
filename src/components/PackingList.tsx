@@ -1,111 +1,111 @@
 import React from 'react';
-import { useAppContext } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, User, Package } from 'lucide-react';
-import { Person, Category } from '@/types';
+import { ChevronRight, User, Package, Plus } from 'lucide-react';
+import { Item, Person, Category, Subcategory, Bag } from '@/types';
+import ItemCard from './ItemCard';
+import { Button } from './ui/button';
 
 interface PackingListProps {
-  onPersonClick: (personId: string) => void;
-  onCategoryClick: (categoryId: string, personId?: string) => void;
+  items: Item[];
+  categories: Category[];
+  subcategories: Subcategory[];
+  bags: Bag[];
+  people: Person[];
+  onUpdateItem: (id: string, updates: Partial<Item>) => void;
+  onDeleteItem: (id: string) => void;
+  onAddItem: () => void;
+  showAddButton: boolean;
 }
 
-const PackingList: React.FC<PackingListProps> = ({ onPersonClick, onCategoryClick }) => {
-  const { people, categories, items } = useAppContext();
+const PackingList: React.FC<PackingListProps> = ({
+  items,
+  categories,
+  subcategories,
+  bags,
+  people,
+  onUpdateItem,
+  onDeleteItem,
+  onAddItem,
+  showAddButton,
+}) => {
+  // Group items by person
+  const itemsByPerson: { [key: string]: Item[] } = items.reduce((acc, item) => {
+    const personId = item.personId || 'unassigned';
+    if (!acc[personId]) {
+      acc[personId] = [];
+    }
+    acc[personId].push(item);
+    return acc;
+  }, {} as { [key: string]: Item[] });
 
-  const getPersonItemCount = (personId: string) => {
-    return items.filter(item => item.personId === personId).length;
-  };
-
-  const getPersonPackedCount = (personId: string) => {
-    return items.filter(item => item.personId === personId && item.packed).length;
-  };
-
-  const getCategoryItemCount = (categoryId: string, personId?: string) => {
-    return items.filter(item => 
-      item.categoryId === categoryId && 
-      (!personId || item.personId === personId)
-    ).length;
-  };
-
-  const getCategoryPackedCount = (categoryId: string, personId?: string) => {
-    return items.filter(item => 
-      item.categoryId === categoryId && 
-      (!personId || item.personId === personId) && 
-      item.packed
-    ).length;
-  };
-
-  const getPersonCategories = (personId: string) => {
-    const personItems = items.filter(item => item.personId === personId);
-    const categoryIds = [...new Set(personItems.map(item => item.categoryId))];
-    return categories.filter(cat => categoryIds.includes(cat.id));
-  };
+  const getPersonById = (personId: string) => people.find(p => p.id === personId);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Packing List</h2>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Packing List</h2>
+        {showAddButton && (
+          <Button onClick={onAddItem} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        )}
+      </div>
       
-      {people.map((person) => {
-        const totalItems = getPersonItemCount(person.id);
-        const packedItems = getPersonPackedCount(person.id);
-        const personCategories = getPersonCategories(person.id);
-        
-        if (totalItems === 0) return null;
-        
+      {Object.entries(itemsByPerson).map(([personId, personItems]) => {
+        const person = personId !== 'unassigned' ? getPersonById(personId) : null;
+        const packedCount = personItems.filter(item => item.packed).length;
+        const totalCount = personItems.length;
+
+        if (totalCount === 0) return null;
+
         return (
-          <Card key={person.id} className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardHeader 
-              className="pb-3"
-              onClick={() => onPersonClick(person.id)}
-            >
+          <Card key={personId} className="overflow-hidden">
+            <CardHeader className="pb-3 bg-gray-50 border-b">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div 
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: person.color }}
-                  />
-                  <User className="h-5 w-5" />
-                  <span>{person.name}</span>
+                  {person ? (
+                    <>
+                      <div 
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: person.color }}
+                      />
+                      <User className="h-5 w-5 text-gray-600" />
+                      <span className="font-semibold">{person.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Package className="h-5 w-5 text-gray-600" />
+                      <span className="font-semibold">Unassigned Items</span>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">
-                    {packedItems}/{totalItems} packed
-                  </Badge>
-                  <ChevronRight className="h-4 w-4" />
-                </div>
+                <Badge variant={packedCount === totalCount ? 'default' : 'secondary'}>
+                  {packedCount}/{totalCount} packed
+                </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid gap-2">
-                {personCategories.map((category) => {
-                  const catTotal = getCategoryItemCount(category.id, person.id);
-                  const catPacked = getCategoryPackedCount(category.id, person.id);
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {personItems.map((item) => {
+                  const itemCategory = categories.find(c => c.id === item.categoryId);
+                  const subcategory = subcategories.find(s => s.id === item.subcategoryId);
+                  const bag = bags.find(b => b.id === item.bagId);
                   
                   return (
-                    <div
-                      key={category.id}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCategoryClick(category.id, person.id);
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <Package className="h-4 w-4" />
-                        <span className="text-sm">{category.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {catPacked}/{catTotal}
-                        </Badge>
-                        <ChevronRight className="h-3 w-3" />
-                      </div>
-                    </div>
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      category={itemCategory}
+                      subcategory={subcategory}
+                      bag={bag}
+                      person={person}
+                      bags={bags}
+                      people={people}
+                      onUpdate={onUpdateItem}
+                      onDelete={onDeleteItem}
+                    />
                   );
                 })}
               </div>
@@ -113,6 +113,18 @@ const PackingList: React.FC<PackingListProps> = ({ onPersonClick, onCategoryClic
           </Card>
         );
       })}
+
+      {items.length === 0 && (
+        <div className="text-center text-gray-500 py-12">
+          <Package size={48} className="mx-auto text-gray-400" />
+          <h3 className="mt-2 text-lg font-medium">This packing list is empty.</h3>
+          <p className="mt-1 text-sm text-gray-500">Click the button below to add your first item.</p>
+          <Button onClick={onAddItem} className="mt-6">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Your First Item
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

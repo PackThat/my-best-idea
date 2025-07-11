@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Package } from 'lucide-react';
 import { Bag, Item } from '@/types';
-import { AddBagDialog } from './AddBagDialog';
+import { AddBagDialog } from './TripAddBagDialog';
 
 interface BagsListViewProps {
   bags: Bag[];

@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Bag } from '@/types';
+import { Check } from 'lucide-react';
+import { PRESET_COLORS } from '@/data/ColorPalette';
 
 interface EditBagDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bag: Bag;
-  onSave: (bagId: string, newName: string) => void;
+  onSave: (bagId: string, updates: Partial<Bag>) => void;
 }
 
 const EditBagDialog: React.FC<EditBagDialogProps> = ({
@@ -19,21 +21,30 @@ const EditBagDialog: React.FC<EditBagDialogProps> = ({
   onSave
 }) => {
   const [name, setName] = useState(bag.name);
+  const [color, setColor] = useState(bag.color || '');
+
+  useEffect(() => {
+    if (bag) {
+      setName(bag.name);
+      setColor(bag.color || '');
+    }
+  }, [bag]);
 
   const handleSave = () => {
     if (name.trim()) {
-      onSave(bag.id, name.trim());
+      onSave(bag.id, { name: name.trim(), color: color });
       onOpenChange(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle>Edit Bag</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 py-2">
+          {/* Name Input */}
           <div>
             <Label htmlFor="name">Name</Label>
             <Input
@@ -41,7 +52,25 @@ const EditBagDialog: React.FC<EditBagDialogProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter bag name"
+              autoFocus
             />
+          </div>
+          {/* Color Picker */}
+          <div>
+            <Label>Color</Label>
+            <div className="grid grid-cols-8 gap-2 pt-2">
+              {PRESET_COLORS.map((presetColor) => (
+                <button
+                  key={presetColor}
+                  type="button"
+                  className="w-8 h-8 rounded-full transition-all flex items-center justify-center"
+                  style={{ backgroundColor: presetColor }}
+                  onClick={() => setColor(presetColor)}
+                >
+                  {color === presetColor && <Check className="h-5 w-5 text-white" />}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <DialogFooter>

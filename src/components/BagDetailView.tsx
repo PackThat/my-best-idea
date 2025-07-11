@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { CategorySubcategorySelector } from './CategorySubcategorySelector';
 import { ItemSelectionDialog } from './ItemSelectionDialog';
-import { AddItemDialog } from './AddItemDialog';
+import { AddItemDialog } from './TripAddItemDialog';
 import ItemCard from './ItemCard';
 import { Bag } from '@/types';
 

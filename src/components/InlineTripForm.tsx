@@ -3,47 +3,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAppContext } from '@/contexts/AppContext';
+import { Trip } from '@/types';
 import { X, Plus } from 'lucide-react';
 
+// The onCreateTrip prop type has been simplified
 interface InlineTripFormProps {
   onCancel: () => void;
+  onCreateTrip: (tripData: { name: string, date?: string }) => void;
 }
 
-export const InlineTripForm: React.FC<InlineTripFormProps> = ({ onCancel }) => {
-  const { createTrip } = useAppContext();
+export const InlineTripForm: React.FC<InlineTripFormProps> = ({ onCancel, onCreateTrip }) => {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('InlineTripForm: Submitting trip:', { name: name.trim(), date });
     if (name.trim()) {
-      createTrip({
+      // This now sends the correct, simplified data object
+      onCreateTrip({
         name: name.trim(),
         date: date || undefined,
-        items: [],
-        categories: [],
-        subcategories: [],
-        bags: [],
-        people: [],
-        todos: [],
-        tripBags: []
       });
       setName('');
       setDate('');
-      onCancel();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onCancel();
     }
   };
 
   return (
-    <Card className="mb-4">
+    // Added theme classes to the main container card
+    <Card className="mb-4 bg-card text-card-foreground">
       <CardContent className="pt-4">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex justify-between items-center mb-3">
@@ -65,7 +53,6 @@ export const InlineTripForm: React.FC<InlineTripFormProps> = ({ onCancel }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter trip name"
-              onKeyDown={handleKeyDown}
               autoFocus
               required
             />
@@ -78,7 +65,6 @@ export const InlineTripForm: React.FC<InlineTripFormProps> = ({ onCancel }) => {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              onKeyDown={handleKeyDown}
             />
           </div>
           

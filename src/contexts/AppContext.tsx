@@ -1,142 +1,202 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Item, Category, Subcategory, Bag, Person, TodoItem, Trip } from '@/types';
-import { defaultCategories, defaultSubcategories, defaultBags, defaultPeople, defaultItems } from '@/data/defaultData';
-import { createRestOfContext } from './AppContextRest';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import { supabase } from '@/lib/SupabaseClient';
+import { Item, CatalogItem, Category, Subcategory, Bag, Person, TodoItem, Trip } from '@/types';
+
+export type AppView =
+  | 'my-trips'
+  | 'items-management'
+  | 'people-management'
+  | 'bags-management'
+  | 'subcategory-management'
+  | 'item-catalog-list'
+  | 'global-tobuy'
+  | 'global-todo'
+  | 'trip-home'
+  | 'trip-people'
+  | 'trip-bags'
+  | 'trip-items'; // Added for clarity, though not strictly needed for routing yet
 
 interface AppContextType {
+  // View management
+  view: AppView;
+  setView: (view: AppView) => void;
+  selectedCategoryId: string | null;
+  selectCategory: (categoryId: string) => void;
+  selectedSubcategoryId: string | null;
+  selectSubcategory: (subcategoryId: string) => void;
+
+  // Sidebar
   sidebarOpen: boolean;
   toggleSidebar: () => void;
+
+  // State properties
   categories: Category[];
   subcategories: Subcategory[];
+  catalog_items: CatalogItem[];
   bags: Bag[];
   people: Person[];
   items: Item[];
   todos: TodoItem[];
   trips: Trip[];
+  tripBags: string[];
+  tripPeople: string[];
   currentTripType: string;
   currentTripId?: string;
-  tripBags: string[];
-  addItem: (item: Omit<Item, 'id'>) => void;
-  updateItem: (id: string, updates: Partial<Item>) => void;
-  deleteItem: (id: string) => void;
-  updateTripType: (tripType: string) => void;
-  addPerson: (person: Omit<Person, 'id'>) => void;
-  updatePerson: (personId: string, updates: Partial<Person>) => void;
-  deletePerson: (personId: string) => void;
-  removePersonFromTrip: (personId: string) => void;
-  updateBag: (bagId: string, updates: Partial<Bag>) => void;
-  deleteBag: (bagId: string) => void;
-  removeBagFromTrip: (bagId: string) => void;
-  addCategory: (category: Omit<Category, 'id'>) => void;
-  addSubcategory: (subcategory: Omit<Subcategory, 'id'>) => void;
-  addBag: (bag: Omit<Bag, 'id'>) => Bag;
-  addBagToTrip: (bagId: string) => void;
-  addMultipleItems: (items: any[]) => void;
-  createTrip: (trip: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'>) => void;
+
+  // Functions
+  createTrip: (tripData: { name: string; date?: string }) => Promise<void>;
   loadTrip: (tripId: string) => void;
-  resetTrip: (tripId: string) => void;
-  cloneTrip: (tripId: string, newName: string) => void;
-  updateTrip: (tripId: string, updates: Partial<Trip>) => void;
-  deleteTrip: (tripId: string) => void;
-  saveCurrentTripState: () => void;
-  addItemToPacking: (itemId: string, personId?: string, bagId?: string, quantity?: number) => void;
+  clearCurrentTrip: () => void;
+  updateTrip: (tripId: string, updates: Partial<Trip>) => Promise<void>;
+  deleteTrip: (tripId: string) => Promise<void>;
+  addPerson: (personData: Omit<Person, 'id'>) => Promise<Person | null>;
+  updatePerson: (personId: string, updates: Partial<Person>) => Promise<void>;
+  deletePerson: (personId: string) => Promise<void>;
+  addPersonToTrip: (personId: string) => void;
+  removePersonFromTrip: (personId: string) => void;
+  addBag: (bagData: Omit<Bag, 'id'>) => Promise<Bag | null>;
+  updateBag: (bagId: string, updates: Partial<Bag>) => Promise<void>;
+  deleteBag: (bagId: string) => Promise<void>;
+  addExistingBagToTrip: (bagId: string) => void;
+  removeBagFromTrip: (bagId: string) => void;
+  addCategory: (categoryData: Omit<Category, 'id'>) => Promise<void>;
+  updateCategory: (categoryId: string, updates: Partial<Category>) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
+  addSubcategory: (subcategoryData: Omit<Subcategory, 'id' | 'category_id'>) => Promise<void>;
+  updateSubcategory: (subcategoryId: string, updates: Partial<Subcategory>) => Promise<void>;
+  deleteSubcategory: (subcategoryId: string) => Promise<void>;
+  addCatalogItem: (itemData: { name: string }) => Promise<void>;
+  updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
+  deleteCatalogItem: (itemId: string) => Promise<void>;
+  addItemToTrip: (item: Omit<Item, 'id'>) => void; // New
+  updateItem: (itemId: string, updates: Partial<Item>) => void; // New
+  deleteItem: (itemId: string) => void; // New
 }
 
-const AppContext = createContext<AppContextType>({} as AppContextType);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const useAppContext = () => useContext(AppContext);
-
-const STORAGE_KEY = 'packThatData';
-
-const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-  console.log(`Toast ${type}: ${message}`);
-  const toast = document.createElement('div');
-  toast.className = `fixed top-4 right-4 p-4 rounded-md text-white z-50 ${
-    type === 'error' ? 'bg-red-500' : 'bg-green-500'
-  }`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    if (document.body.contains(toast)) {
-      document.body.removeChild(toast);
-    }
-  }, 3000);
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (context === undefined) { throw new Error('useAppContext must be used within an AppProvider'); }
+  return context;
 };
 
-const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...parsed, trips: parsed.trips || [], tripBags: parsed.tripBags || [] };
-    }
-    return {
-      categories: defaultCategories,
-      subcategories: defaultSubcategories,
-      bags: defaultBags,
-      people: defaultPeople,
-      items: defaultItems,
-      todos: [],
-      trips: [],
-      currentTripType: 'General Trip',
-      currentTripId: undefined,
-      tripBags: [],
-    };
+  const [view, setView] = useState<AppView>('my-trips');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
+
+  const [data, setData] = useState<{
+    categories: Category[]; subcategories: Subcategory[]; catalog_items: CatalogItem[]; bags: Bag[]; people: Person[];
+    items: Item[]; todos: TodoItem[]; trips: Trip[]; tripBags: string[]; tripPeople: string[];
+    currentTripType: string; currentTripId?: string;
+  }>({
+    categories: [], subcategories: [], catalog_items: [], bags: [], people: [],
+    items: [], todos: [], trips: [], tripBags: [], tripPeople: [],
+    currentTripType: 'No trip selected', currentTripId: undefined,
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+    const fetchData = async () => {
+      const { data: peopleData } = await supabase.from('people').select('*');
+      const { data: bagsData } = await supabase.from('bags').select('*');
+      const { data: tripsData } = await supabase.from('trips').select('*');
+      const { data: categoriesData } = await supabase.from('categories').select('*');
+      const { data: subcategoriesData } = await supabase.from('subcategories').select('*');
+      const { data: catalogItemsData } = await supabase.from('catalog_items').select('*');
 
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
-  
-  const addBagToTrip = (bagId: string) => {
-    console.log('🎒 addBagToTrip called with bagId:', bagId);
-    
-    setData(currentData => {
-      const bag = currentData.bags.find(b => b.id === bagId);
-      if (!bag) {
-        console.log('❌ Bag not found:', bagId);
-        showToast('Bag not found', 'error');
-        return currentData;
-      }
-      
-      if (currentData.tripBags.includes(bagId)) {
-        console.log('⚠️ Bag already in trip:', bag.name);
-        showToast(`${bag.name} is already in this trip`);
-        return currentData;
-      }
-      
-      console.log('✅ Adding bag to trip:', bag.name);
-      const newTripBags = [...currentData.tripBags, bagId];
-      console.log('🎒 Updated tripBags:', newTripBags);
-      
-      const newData = {
-        ...currentData,
-        tripBags: newTripBags
-      };
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
-      
-      showToast(`Added ${bag.name} to trip`);
-      return newData;
-    });
+      setData(prev => ({
+        ...prev,
+        people: peopleData || [],
+        bags: bagsData || [],
+        trips: tripsData || [],
+        categories: categoriesData || [],
+        subcategories: subcategoriesData || [],
+        catalog_items: catalogItemsData || [],
+      }));
+    };
+    fetchData();
+  }, []);
+
+  const selectCategory = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    setView('subcategory-management');
   };
 
-  const restMethods = createRestOfContext(data, setData);
+  const selectSubcategory = (subcategoryId: string) => {
+    setSelectedSubcategoryId(subcategoryId);
+    setView('item-catalog-list');
+  };
+
+  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+
+  const saveCurrentTripState = useCallback(async () => { /* ... */ }, [data]);
+  const clearCurrentTrip = useCallback(() => { /* ... */ }, [saveCurrentTripState]);
+  const loadTrip = useCallback((tripId: string) => { /* ... */ }, [saveCurrentTripState]);
+  const createTrip = useCallback(async (tripData: { name: string; date?: string }) => { /* ... */ }, []);
+  const updateTrip = useCallback(async (tripId: string, updates: Partial<Trip>) => { /* ... */ }, []);
+  const deleteTrip = useCallback(async (tripId: string) => { /* ... */ }, []);
+  const addPerson = useCallback(async (personData: Omit<Person, 'id'>) => { /* ... */ return null; }, []);
+  const updatePerson = useCallback(async (personId: string, updates: Partial<Person>) => { /* ... */ }, []);
+  const deletePerson = useCallback(async (personId: string) => { /* ... */ }, []);
+  const addPersonToTrip = useCallback((personId: string) => { /* ... */ }, []);
+  const removePersonFromTrip = useCallback((personId: string) => { /* ... */ }, []);
+  const addBag = useCallback(async (bagData: Omit<Bag, 'id'>) => { /* ... */ return null; }, []);
+  const updateBag = useCallback(async (bagId: string, updates: Partial<Bag>) => { /* ... */ }, []);
+  const deleteBag = useCallback(async (bagId: string) => { /* ... */ }, []);
+  const addExistingBagToTrip = useCallback((bagId: string) => { /* ... */ }, []);
+  const removeBagFromTrip = useCallback((bagId: string) => { /* ... */ }, []);
+  const addCategory = useCallback(async (categoryData: Omit<Category, 'id'>) => { /* ... */ }, []);
+  const updateCategory = useCallback(async (categoryId: string, updates: Partial<Category>) => { /* ... */ }, []);
+  const deleteCategory = useCallback(async (categoryId: string) => { /* ... */ }, []);
+  const addSubcategory = useCallback(async (subcategoryData: Omit<Subcategory, 'id' | 'category_id'>) => { /* ... */ }, [selectedCategoryId]);
+  const updateSubcategory = useCallback(async (subcategoryId: string, updates: Partial<Subcategory>) => { /* ... */ }, []);
+  const deleteSubcategory = useCallback(async (subcategoryId: string) => { /* ... */ }, []);
+  const addCatalogItem = useCallback(async (itemData: { name: string }) => { /* ... */ }, [selectedCategoryId, selectedSubcategoryId]);
+  const updateCatalogItem = useCallback(async (itemId: string, updates: Partial<CatalogItem>) => { /* ... */ }, []);
+  const deleteCatalogItem = useCallback(async (itemId: string) => { /* ... */ }, []);
+
+  const addItemToTrip = useCallback((item: Omit<Item, 'id'>) => {
+    setData(prev => ({ ...prev, items: [...prev.items, { ...item, id: crypto.randomUUID() }] }));
+  }, []);
+
+  const updateItem = useCallback((itemId: string, updates: Partial<Item>) => {
+    setData(prev => ({ ...prev, items: prev.items.map(i => i.id === itemId ? { ...i, ...updates } : i) }));
+  }, []);
+
+  const deleteItem = useCallback((itemId: string) => {
+    setData(prev => ({ ...prev, items: prev.items.filter(i => i.id !== itemId) }));
+  }, []);
+
+  const value = useMemo(() => ({
+    ...data,
+    sidebarOpen, toggleSidebar,
+    view, setView,
+    selectedCategoryId, selectCategory,
+    selectedSubcategoryId, selectSubcategory,
+    createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip,
+    addPerson, updatePerson, deletePerson, addPersonToTrip, removePersonFromTrip,
+    addBag, updateBag, deleteBag, addExistingBagToTrip, removeBagFromTrip,
+    addCategory, updateCategory, deleteCategory,
+    addSubcategory, updateSubcategory, deleteSubcategory,
+    addCatalogItem, updateCatalogItem, deleteCatalogItem,
+    addItemToTrip, updateItem, deleteItem, // New
+  }), [
+    data, sidebarOpen, view, selectedCategoryId, selectedSubcategoryId,
+    toggleSidebar, setView, selectCategory, selectSubcategory,
+    createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip,
+    addPerson, updatePerson, deletePerson, addPersonToTrip, removePersonFromTrip,
+    addBag, updateBag, deleteBag, addExistingBagToTrip, removeBagFromTrip,
+    addCategory, updateCategory, deleteCategory,
+    addSubcategory, updateSubcategory, deleteSubcategory,
+    addCatalogItem, updateCatalogItem, deleteCatalogItem,
+    addItemToTrip, updateItem, deleteItem, // New
+  ]);
 
   return (
-    <AppContext.Provider value={{
-      sidebarOpen,
-      toggleSidebar,
-      ...data,
-      addBagToTrip,
-      ...restMethods
-    }}>
+    <AppContext.Provider value={value as any}>
       {children}
     </AppContext.Provider>
   );
 };
-
-export { AppProvider };

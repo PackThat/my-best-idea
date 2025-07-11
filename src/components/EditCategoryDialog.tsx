@@ -1,27 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Category } from '@/types';
 
-interface AddCategoryDialogProps {
+interface EditCategoryDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (name: string) => void;
+  onOpenChange: () => void;
+  category: Category;
+  onSave: (id: string, name: string) => void;
 }
 
-const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
+const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
   open,
   onOpenChange,
+  category,
   onSave,
 }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(category.name);
+
+  useEffect(() => {
+    setName(category.name);
+  }, [category]);
 
   const handleSave = () => {
     if (name.trim()) {
-      onSave(name.trim());
-      onOpenChange(false); // Close the dialog
-      setName(''); // Reset the input field
+      onSave(category.id, name.trim());
+      onOpenChange();
     }
   };
 
@@ -29,7 +35,7 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card text-card-foreground">
         <DialogHeader>
-          <DialogTitle>Add New Category</DialogTitle>
+          <DialogTitle>Edit Category</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
@@ -44,11 +50,11 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={onOpenChange}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={!name.trim()}>
-            Save
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -56,4 +62,4 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
   );
 };
 
-export default AddCategoryDialog;
+export default EditCategoryDialog;

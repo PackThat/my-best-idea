@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,14 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Category, Subcategory, Item } from '@/types';
+import { Category, Subcategory } from '@/types';
 
+// The props are simplified as this dialog now has one job: add to the master catalog.
 interface AddNewItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: Category[];
   subcategories: Subcategory[];
-  onAddItem: (item: Omit<Item, 'id'>) => void;
+  onAddItem: (itemData: { name: string; notes?: string }) => void;
   preselectedCategoryId?: string;
   preselectedSubcategoryId?: string;
 }
@@ -39,39 +40,40 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: '',
-    categoryId: preselectedCategoryId || '',
-    subcategoryId: preselectedSubcategoryId || '',
     notes: '',
   });
-
-  const filteredSubcategories = subcategories.filter(
-    sub => sub.categoryId === formData.categoryId
-  );
+  
+  // This logic is no longer needed here as the category/subcategory are pre-selected
+  // but we keep it for reference. In the future, this dialog could be made more flexible.
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.categoryId) return;
+    if (!formData.name.trim()) return;
 
+    // We only need to pass the name and optional notes.
+    // The category/subcategory IDs are already known by the context.
     onAddItem({
-      name: formData.name,
-      categoryId: formData.categoryId,
-      subcategoryId: formData.subcategoryId || undefined,
-      quantity: 1,
+      name: formData.name.trim(),
       notes: formData.notes,
-      packed: false,
-      needsToBuy: false,
-      personId: undefined, // Optional - no person required
-      bagId: undefined, // Optional - no bag required
     });
 
+    // Reset form after submission
     setFormData({
       name: '',
-      categoryId: preselectedCategoryId || '',
-      subcategoryId: preselectedSubcategoryId || '',
       notes: '',
     });
     onOpenChange(false);
   };
+  
+  // Reset form when dialog is opened
+  useEffect(() => {
+    if (open) {
+      setFormData({ name: '', notes: '' });
+    }
+  }, [open]);
+
+  const selectedCategory = categories.find(c => c.id === preselectedCategoryId);
+  const selectedSubcategory = subcategories.find(sc => sc.id === preselectedSubcategoryId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,7 +81,10 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Add New Item to Catalog</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="text-sm text-muted-foreground">
+          Adding to: <span className="font-medium text-foreground">{selectedCategory?.name} / {selectedSubcategory?.name}</span>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
             <Label htmlFor="name">Item Name *</Label>
             <Input
@@ -88,52 +93,8 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Enter item name"
               required
+              autoFocus
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Category *</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) => setFormData(prev => ({ 
-                  ...prev, 
-                  categoryId: value,
-                  subcategoryId: '' 
-                }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Subcategory</Label>
-              <Select
-                value={formData.subcategoryId}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, subcategoryId: value }))}
-                disabled={!formData.categoryId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select subcategory" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredSubcategories.map((subcategory) => (
-                    <SelectItem key={subcategory.id} value={subcategory.id}>
-                      {subcategory.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <div>
@@ -151,7 +112,7 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add to Catalog</Button>
+            <Button type="submit" disabled={!formData.name.trim()}>Add to Catalog</Button>
           </div>
         </form>
       </DialogContent>

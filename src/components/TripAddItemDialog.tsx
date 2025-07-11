@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Category, Subcategory, Bag, Person, Item } from '@/types';
-import { useAppContext } from '@/contexts/AppContext';
 
 interface AddItemDialogProps {
   open: boolean;
@@ -26,7 +25,14 @@ interface AddItemDialogProps {
   subcategories: Subcategory[];
   bags: Bag[];
   people: Person[];
+  items: Item[];
   onAddItem: (item: Omit<Item, 'id'>) => void;
+  onAddPerson: (person: Omit<Person, 'id'>) => void;
+  onAddCategory: (category: Omit<Category, 'id'>) => void;
+  onAddSubcategory: (subcategory: Omit<Subcategory, 'id'>) => void;
+  onAddBag: (bag: Omit<Bag, 'id'>) => void;
+  onAddItemToPacking: (itemId: string, personId?: string, bagId?: string, quantity?: number) => void; 
+  onAddNewItem: (item: Omit<Item, 'id'>) => void;
   preselectedPersonId?: string;
   preselectedBagId?: string;
 }
@@ -39,10 +45,16 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
   bags,
   people,
   onAddItem,
+  onAddPerson,
+  onAddCategory,
+  onAddSubcategory,
+  onAddBag,
   preselectedPersonId,
   preselectedBagId,
 }) => {
-  const { addPerson, addCategory, addSubcategory, addBag } = useAppContext();
+  // --- THIS IS OUR TEST MESSAGE ---
+  console.log("--- EXECUTING THE LATEST AddItemDialog.tsx FILE ---");
+
   const [formData, setFormData] = useState({
     name: '',
     categoryId: '',
@@ -53,16 +65,14 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
     personId: preselectedPersonId || '',
   });
 
-  const filteredSubcategories = subcategories.filter(
+  const filteredSubcategories = (subcategories || []).filter(
     sub => sub.categoryId === formData.categoryId
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📝 AddItemDialog handleSubmit called');
     
     if (!formData.name || !formData.categoryId) {
-      console.log('❌ Missing required fields');
       return;
     }
 
@@ -75,16 +85,16 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
       personId: formData.personId || undefined,
     };
     
-    console.log('📝 Adding item:', newItem);
     onAddItem(newItem);
 
+    // Reset form after submission
     setFormData({
       name: '',
       categoryId: '',
       subcategoryId: '',
       quantity: 1,
       notes: '',
-      bagId: preselectedBagId || '',
+      bagId: preselectedPersonId || '',
       personId: preselectedPersonId || '',
     });
     onOpenChange(false);
@@ -123,7 +133,7 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {(categories || []).map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -143,7 +153,7 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
                   <SelectValue placeholder="Select subcategory" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredSubcategories.map((subcategory) => (
+                  {(filteredSubcategories || []).map((subcategory) => (
                     <SelectItem key={subcategory.id} value={subcategory.id}>
                       {subcategory.name}
                     </SelectItem>
@@ -151,6 +161,16 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Add any specific notes..."
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -164,7 +184,8 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
                   <SelectValue placeholder="Select person" />
                 </SelectTrigger>
                 <SelectContent>
-                  {people.map((person) => (
+                  <SelectItem value="">None</SelectItem>
+                  {(people || []).map((person) => (
                     <SelectItem key={person.id} value={person.id}>
                       {person.name}
                     </SelectItem>
@@ -183,7 +204,8 @@ export const AddItemDialog: React.FC<AddItemDialogProps> = ({
                   <SelectValue placeholder="Select bag" />
                 </SelectTrigger>
                 <SelectContent>
-                  {bags.map((bag) => (
+                  <SelectItem value="">None</SelectItem>
+                  {(bags || []).map((bag) => (
                     <SelectItem key={bag.id} value={bag.id}>
                       {bag.name}
                     </SelectItem>

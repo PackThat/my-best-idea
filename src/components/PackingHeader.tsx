@@ -13,37 +13,48 @@ interface PackingHeaderProps {
 const PackingHeader: React.FC<PackingHeaderProps> = ({
   showBackButton = false,
   onBackClick,
-  backButtonText = 'Back to Trip'
+  backButtonText = 'Back'
 }) => {
   const { toggleSidebar, currentTripId } = useAppContext();
 
   return (
-    <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 shadow-lg">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+    <div className="bg-primary text-primary-foreground p-4">
+      {/* This is now a 3-column grid to perfectly center the title */}
+      <div className="grid grid-cols-3 items-center">
+        
+        {/* Left Column */}
+        <div className="flex justify-start">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={toggleSidebar}
-            className="text-white hover:bg-white/20 md:hidden"
+            className="text-primary-foreground hover:bg-white/20"
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Package className="h-8 w-8" />
-          <h1 className="text-3xl font-bold">PackThat!</h1>
         </div>
-        
-        {showBackButton && currentTripId && onBackClick && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBackClick}
-            className="text-white hover:bg-white/20 flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {backButtonText}
-          </Button>
-        )}
+
+        {/* Center Column */}
+        <div className="flex justify-center items-center gap-2">
+          <Package className="h-7 w-7" />
+          <h1 className="text-2xl font-bold">PackThat!</h1>
+        </div>
+
+        {/* Right Column */}
+        <div className="flex justify-end">
+          {showBackButton && currentTripId && onBackClick && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBackClick}
+              className="text-primary-foreground hover:bg-white/20 flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {backButtonText}
+            </Button>
+          )}
+        </div>
+
       </div>
     </div>
   );

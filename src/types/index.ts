@@ -2,65 +2,60 @@ export interface Item {
   id: string;
   name: string;
   categoryId: string;
-  subcategoryId?: string;
+  subcategoryId: string;
   quantity: number;
-  notes: string;
   packed: boolean;
   needsToBuy: boolean;
-  bagId?: string;
   personId?: string;
+  bagId?: string;
 }
 
 export interface Category {
   id: string;
   name: string;
-  color: string;
 }
 
 export interface Subcategory {
   id: string;
   name: string;
-  categoryId: string;
+  category_id: string;
 }
 
 export interface Bag {
   id: string;
   name: string;
-  color: string;
+  color?: string;
 }
 
 export interface Person {
   id: string;
   name: string;
-  color: string;
+  color?: string;
+}
+
+// This is the main fix for this file
+export interface Trip {
+  id: string;
+  name: string;
+  date?: string;
+  items: Item[];
+  todos: TodoItem[];
+  // These now use snake_case to match the database columns
+  trip_bags: string[];
+  trip_people: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TodoItem {
   id: string;
   text: string;
   completed: boolean;
-  type: 'before' | 'after';
-  location: 'work' | 'home' | 'online' | 'other';
 }
-
-export interface TripType {
+export interface CatalogItem {
   id: string;
   name: string;
-  items: Item[];
-  todos: TodoItem[];
-}
-
-export interface Trip {
-  id: string;
-  name: string;
-  date?: string;
-  items: Item[];
-  categories: Category[];
-  subcategories: Subcategory[];
-  bags: Bag[];
-  people: Person[];
-  todos: TodoItem[];
-  tripBags: string[];
-  createdAt: string;
-  updatedAt: string;
+  category_id: string;
+  subcategory_id: string;
+  notes?: string;
 }

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, Package, Plus } from 'lucide-react';
 import { CategorySubcategorySelector } from './CategorySubcategorySelector';
-import { AddItemDialog } from './AddItemDialog';
+import { AddItemDialog } from './TripAddItemDialog';
 import ItemCard from './ItemCard';
 import { Person, Bag } from '@/types';
 import { useAppContext } from '@/contexts/AppContext';

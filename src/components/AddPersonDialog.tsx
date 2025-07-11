@@ -1,66 +1,69 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Person } from '@/types';
+import { ColorPalette } from './ColorPalette'; // This import will now work
 
 interface AddPersonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddPerson: (person: Omit<Person, 'id'>) => void;
+  onSave: (personData: { name: string, color?: string }) => void;
 }
 
 const AddPersonDialog: React.FC<AddPersonDialogProps> = ({
   open,
   onOpenChange,
-  onAddPerson,
+  onSave,
 }) => {
   const [name, setName] = useState('');
+  const [color, setColor] = useState<string | undefined>(undefined);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    onAddPerson({ name: name.trim() });
-    setName('');
-    onOpenChange(false);
+  const handleSave = () => {
+    if (name.trim()) {
+      onSave({ name: name.trim(), color });
+      onOpenChange(false); // Close the dialog
+      setName(''); // Reset the fields
+      setColor(undefined);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle>Add New Person</DialogTitle>
+          <DialogDescription>
+            Add a new person to your global list. You can assign them to trips later.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="personName">Person Name *</Label>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Person's Name</Label>
             <Input
-              id="personName"
+              id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter person's name"
-              required
+              placeholder="e.g., Andrea"
+              autoFocus
             />
           </div>
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Person</Button>
+          <div className="space-y-2">
+            <Label>Color</Label>
+            <ColorPalette selectedColor={color} onSelectColor={setColor} />
           </div>
-        </form>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={!name.trim()}>
+            Add Person
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-export { AddPersonDialog };
 export default AddPersonDialog;

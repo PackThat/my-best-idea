@@ -34,6 +34,7 @@ interface ItemSelectionDialogProps {
   preselectedPersonId?: string;
   preselectedBagId?: string;
   defaultNeedsToBuy?: boolean;
+  category?: Category; // <-- This is the new line we are adding
 }
 
 export const ItemSelectionDialog: React.FC<ItemSelectionDialogProps> = ({
@@ -49,6 +50,7 @@ export const ItemSelectionDialog: React.FC<ItemSelectionDialogProps> = ({
   preselectedPersonId,
   preselectedBagId,
   defaultNeedsToBuy = false,
+  category, // We receive the new prop here but don't use it yet.
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
@@ -148,7 +150,7 @@ export const ItemSelectionDialog: React.FC<ItemSelectionDialogProps> = ({
             <Label>Select Item ({filteredItems.length} found)</Label>
             <div className="grid gap-2 max-h-60 overflow-y-auto">
               {filteredItems.map((item) => {
-                const category = categories.find(c => c.id === item.categoryId);
+                const itemCategory = categories.find(c => c.id === item.categoryId);
                 
                 return (
                   <Card 
@@ -164,7 +166,7 @@ export const ItemSelectionDialog: React.FC<ItemSelectionDialogProps> = ({
                           <h4 className="font-medium">{item.name}</h4>
                           <div className="flex gap-1 mt-1">
                             <Badge variant="secondary">
-                              {category?.name}
+                              {itemCategory?.name}
                             </Badge>
                           </div>
                         </div>

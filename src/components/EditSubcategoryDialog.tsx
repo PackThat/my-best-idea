@@ -1,27 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Subcategory } from '@/types';
 
-interface AddCategoryDialogProps {
+interface EditSubcategoryDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (name: string) => void;
+  onOpenChange: () => void;
+  subcategory: Subcategory;
+  onSave: (id: string, name: string) => void;
 }
 
-const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
+const EditSubcategoryDialog: React.FC<EditSubcategoryDialogProps> = ({
   open,
   onOpenChange,
+  subcategory,
   onSave,
 }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(subcategory.name);
+
+  useEffect(() => {
+    setName(subcategory.name);
+  }, [subcategory]);
 
   const handleSave = () => {
     if (name.trim()) {
-      onSave(name.trim());
-      onOpenChange(false); // Close the dialog
-      setName(''); // Reset the input field
+      onSave(subcategory.id, name.trim());
+      onOpenChange();
     }
   };
 
@@ -29,26 +35,26 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card text-card-foreground">
         <DialogHeader>
-          <DialogTitle>Add New Category</DialogTitle>
+          <DialogTitle>Edit Subcategory</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <Label htmlFor="name">Category Name</Label>
+            <Label htmlFor="name">Subcategory Name</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Toiletries"
+              placeholder="e.g., Glasses"
               autoFocus
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={onOpenChange}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={!name.trim()}>
-            Save
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -56,4 +62,4 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
   );
 };
 
-export default AddCategoryDialog;
+export default EditSubcategoryDialog;
