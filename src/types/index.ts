@@ -1,61 +1,74 @@
-export interface Item {
-  id: string;
-  name: string;
-  categoryId: string;
-  subcategoryId: string;
-  quantity: number;
-  packed: boolean;
-  needsToBuy: boolean;
-  personId?: string;
-  bagId?: string;
-}
+// src/types/index.ts
 
-export interface Category {
-  id: string;
-  name: string;
-}
-
-export interface Subcategory {
-  id: string;
-  name: string;
-  category_id: string;
-}
-
-export interface Bag {
-  id: string;
-  name: string;
-  color?: string;
-}
-
-export interface Person {
-  id: string;
-  name: string;
-  color?: string;
-}
-
-// This is the main fix for this file
 export interface Trip {
   id: string;
   name: string;
   date?: string;
-  items: Item[];
-  todos: TodoItem[];
-  // These now use snake_case to match the database columns
-  trip_bags: string[];
-  trip_people: string[];
+  tripTheme?: string;
+  updatedAt?: string;
   createdAt: string;
-  updatedAt: string;
+  backgroundImageUrl?: string;
+  userId?: string;
+  peopleIds?: number[];
+  bagIds?: number[];
+  items?: Item[];
+  todos?: TodoItem[];
+}
+
+export interface Person {
+  id: number;
+  name: string;
+  color?: string;
+  createdAt?: string;
+}
+
+export interface Bag {
+  id: number;
+  name: string;
+  color?: string;
+  createdAt?: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  createdAt?: string;
+}
+
+export interface Subcategory {
+  id: number;
+  name: string;
+  categoryId: number;
+  createdAt?: string;
+}
+
+export interface CatalogItem {
+  id: number;
+  name: string;
+  categoryId: number;
+  subcategoryId?: number;
+  is_favorite?: boolean;
+  createdAt?: string;
+}
+
+export interface Item {
+  id: string; // UUID
+  name: string;
+  catalogItemId?: number; // Link to catalog item
+  categoryId?: number;
+  subcategoryId?: number;
+  personId?: number;
+  bagId?: number;
+  packed: boolean;
+  quantity: number;
+  isToBuy: boolean;
+  notes?: string;
+  createdAt: string;
 }
 
 export interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-export interface CatalogItem {
-  id: string;
+  id: string; // UUID
   name: string;
-  category_id: string;
-  subcategory_id: string;
-  notes?: string;
+  isComplete: boolean;
+  createdAt: string;
 }

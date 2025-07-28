@@ -1,3 +1,4 @@
+// src/components/TripPeopleView.tsx
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
@@ -11,34 +12,37 @@ import { Person } from '@/types';
 
 interface TripPeopleViewProps {
   onBack: () => void;
-  onPersonClick: (personId: string) => void;
+  onPersonClick: (personId: string) => void; // This expects a string, so we'll convert
 }
 
 const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }) => {
   const [showPersonSelector, setShowPersonSelector] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+
   const {
-    people, tripPeople, items,
-    addPerson, addPersonToTrip, updatePerson, removePersonFromTrip,
+    people,
+    items,
+    addPersonToTrip,
+    updatePerson,
+    removePersonFromTrip,
+    currentTrip,
   } = useAppContext();
 
-  const currentTripPeople = people.filter(p => tripPeople.includes(p.id));
+  // Filter global people to get only those associated with the current trip
+  // Ensure that p.id (number) is compared with currentTrip?.peopleIds (number[])
+  const currentTripPeople = people.filter(p => currentTrip?.peopleIds?.includes(p.id));
 
-  const getPersonStats = (personId: string) => {
+  const getPersonStats = (personId: number) => { // Expect personId as number
+    // Ensure item.personId (number | undefined) is compared with personId (number)
     const personItems = items.filter(item => item.personId === personId);
     const packedCount = personItems.filter(item => item.packed).length;
     const totalCount = personItems.length;
     return { packed: packedCount, total: totalCount };
   };
 
-  const handlePersonSelect = (personId: string) => {
+  const handlePersonSelect = (personId: number) => { // Expect personId as number
     addPersonToTrip(personId);
-    setShowPersonSelector(false); 
-  };
-
-  const handleAddNewPerson = async (personData: { name: string; color?: string }) => {
-    await addPerson(personData);
-    setShowPersonSelector(false); 
+    setShowPersonSelector(false);
   };
 
   const handleEditPerson = (person: Person, e: React.MouseEvent) => {
@@ -46,11 +50,12 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
     setEditingPerson(person);
   };
 
-  const handleSavePersonEdit = (personId: string, updates: Partial<Person>) => {
+  const handleSavePersonEdit = (personId: number, updates: Partial<Person>) => { // Expect personId as number
     updatePerson(personId, updates);
+    setEditingPerson(null);
   };
 
-  const handleRemoveFromTrip = (personId: string, e: React.MouseEvent) => {
+  const handleRemoveFromTrip = (personId: number, e: React.MouseEvent) => { // Expect personId as number
     e.stopPropagation();
     removePersonFromTrip(personId);
   };
@@ -79,8 +84,7 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
           <CardContent>
             <PersonSelector
               people={people}
-              onPersonSelect={handlePersonSelect}
-              onAddNewPerson={handleAddNewPerson}
+              onPersonSelect={handlePersonSelect} // Passes number
               placeholder="Choose a person to add..."
             />
           </CardContent>
@@ -89,12 +93,12 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {currentTripPeople.map((person) => {
-          const stats = getPersonStats(person.id);
+          const stats = getPersonStats(person.id); // Pass person.id as number
           return (
             <Card key={person.id} className="hover:shadow-lg transition-all cursor-pointer bg-card">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2" onClick={() => onPersonClick(person.id)}>
+                  <div className="flex items-center gap-2" onClick={() => onPersonClick(String(person.id))}> {/* Convert to string for onPersonClick */}
                     {person.color && ( <div className="w-4 h-4 rounded-full" style={{ backgroundColor: person.color }} /> )}
                     <User className="h-5 w-5" />
                     <span>{person.name}</span>
@@ -112,14 +116,14 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={(e) => handleRemoveFromTrip(person.id, e)}>Remove</AlertDialogAction>
+                          <AlertDialogAction onClick={(e) => handleRemoveFromTrip(person.id, e)}>Remove</AlertDialogAction> {/* Pass person.id as number */}
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent onClick={() => onPersonClick(person.id)}>
+              <CardContent onClick={() => onPersonClick(String(person.id))}> {/* Convert to string for onPersonClick */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Items Progress</span>
                   <Badge variant={stats.packed === stats.total && stats.total > 0 ? "default" : "secondary"}>{stats.packed}/{stats.total}</Badge>

@@ -46,7 +46,7 @@ const PackingSidebar: React.FC = () => {
   };
 
   const menuItems = [
-    { id: 'my-trips', label: 'All Trips', icon: Home, section: 'Navigation', count: trips.length },
+    { id: 'my-trips', label: 'My Trips', icon: Home, section: 'Navigation', count: trips.length },
     { id: 'global-tobuy', label: 'To Buy', icon: ShoppingCart, count: '0/0', section: 'Action' },
     { id: 'global-todo', label: 'To Do', icon: ListTodo, count: '0/0', section: 'Action' },
     { id: 'items-management', label: 'Item Catalog', icon: Layers, section: 'App Data' },

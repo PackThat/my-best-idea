@@ -8,6 +8,7 @@
 ├── package.json
 ├── postcss.config.js
 ├── public
+│   ├── Items.csv
 │   ├── placeholder.svg
 │   └── robots.txt
 ├── src
@@ -16,7 +17,6 @@
 │   ├── components
 │   │   ├── AddBagDialog.tsx
 │   │   ├── AddCategoryDialog.tsx
-│   │   ├── AddItemDialog.tsx
 │   │   ├── AddNewItemDialog.tsx
 │   │   ├── AddPersonDialog.tsx
 │   │   ├── AddSubcategoryDialog.tsx
@@ -30,14 +30,21 @@
 │   │   ├── CatalogImportDialog.tsx
 │   │   ├── CategorySubcategorySelector.tsx
 │   │   ├── CategoryView.tsx
+│   │   ├── ColorPalette.tsx
+│   │   ├── CreateTripView.tsx
 │   │   ├── EditBagDialog.tsx
+│   │   ├── EditCatalogItemDialog.tsx
+│   │   ├── EditCategoryDialog.tsx
 │   │   ├── EditPersonDialog.tsx
+│   │   ├── EditSubcategoryDialog.tsx
 │   │   ├── HomeView.tsx
 │   │   ├── InlineTripForm.tsx
 │   │   ├── ItemAssignmentDialog.tsx
 │   │   ├── ItemCard.tsx
+│   │   ├── ItemCatalogListView.tsx
 │   │   ├── ItemSelectionDialog.tsx
 │   │   ├── ItemsImportView.tsx
+│   │   ├── ItemsManagementView.tsx
 │   │   ├── PackingApp.tsx
 │   │   ├── PackingAppContent.tsx
 │   │   ├── PackingHeader.tsx
@@ -50,6 +57,9 @@
 │   │   ├── PersonSelector.tsx
 │   │   ├── PersonView.tsx
 │   │   ├── QuickEditDialog.tsx
+│   │   ├── SubcategoryManagementView.tsx
+│   │   ├── TripAddBagDialog.tsx
+│   │   ├── TripAddItemDialog.tsx
 │   │   ├── TripBagsView.tsx
 │   │   ├── TripCategoryView.tsx
 │   │   ├── TripItemsView.tsx
@@ -117,6 +127,7 @@
 │   │   ├── AppContextRest.tsx
 │   │   └── AppContextRestPart2.tsx
 │   ├── data
+│   │   ├── ColorPalette.ts
 │   │   └── defaultData.ts
 │   ├── hooks
 │   │   ├── use-mobile.tsx
@@ -124,6 +135,8 @@
 │   │   └── usePackingData.ts
 │   ├── index.css
 │   ├── lib
+│   │   ├── SupabaseClient.ts
+│   │   ├── constants.ts
 │   │   └── utils.ts
 │   ├── main.tsx
 │   ├── pages
@@ -137,4 +150,4 @@
 ├── tsconfig.node.json
 └── vite.config.ts
 
-11 directories, 127 files
+11 directories, 140 files
