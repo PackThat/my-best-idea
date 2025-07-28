@@ -1,5 +1,4 @@
 // src/contexts/AppContext.tsx
-
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { supabase } from '@/lib/SupabaseClient';
 import { Item, CatalogItem, Category, Subcategory, Bag, Person, TodoItem, Trip } from '@/types';
@@ -51,15 +50,17 @@ interface AppContextType {
   updateTrip: (tripId: string, updates: Partial<Trip>) => Promise<void>;
   deleteTrip: (tripId: string) => Promise<void>;
 
-  createPerson: (personData: Omit<Person, 'id' | 'createdAt'>) => Promise<number | null>;
+  createPerson: (personData: Omit<Person, 'id' | 'createdAt'>) => Promise<Person | null>;
   updatePerson: (personId: number, updates: Partial<Person>) => Promise<void>;
   deletePerson: (personId: number) => Promise<void>;
   addPersonToTrip: (personId: number) => Promise<void>;
   removePersonFromTrip: (personId: number) => Promise<void>;
 
-  createBag: (bagData: Omit<Bag, 'id'>) => Promise<number | null>;
+  createBag: (bagData: Omit<Bag, 'id' | 'createdAt'>) => Promise<Bag | null>;
   updateBag: (bagId: number, updates: Partial<Bag>) => Promise<void>;
   deleteBag: (bagId: number) => Promise<void>;
+  addBagToTrip: (bagId: number) => Promise<void>;
+  removeBagFromTrip: (bagId: number) => Promise<void>; // Correctly added to interface
 
   addCategory: (categoryData: Omit<Category, 'id' | 'tripId'>) => Promise<number | null>;
   updateCategory: (categoryId: number, updates: Partial<Category>) => Promise<void>;
@@ -73,20 +74,20 @@ interface AppContextType {
   updateCatalogItem: (itemId: number, updates: Partial<CatalogItem>) => Promise<void>;
   deleteCatalogItem: (itemId: number) => Promise<void>;
 
-  addItemToTrip: (itemData: Omit<Item, 'tripId'>) => Promise<void>;
+  addItemToTrip: (itemData: Omit<Item, 'tripId' | 'id' | 'createdAt'>) => Promise<void>; // Adjusted type to remove id and createdAt
   updateItem: (itemId: string, updates: Partial<Item>) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
   addSingleCatalogItemToTripItems: (
-    bagId: number | null,
-    personId: number | null,
+    bagId: number | undefined,
+    personId: number | undefined,
     catalogItem: CatalogItem,
     quantity: number,
     notes?: string,
     isToBuy?: boolean
   ) => Promise<void>;
   addMultipleCatalogItemsToTripItems: (
-    bagId: number | null,
-    personId: number | null,
+    bagId: number | undefined,
+    personId: number | undefined,
     itemsToAdd: { catalogItemId: number; quantity: number; notes?: string; isToBuy?: boolean }[]
   ) => Promise<void>;
 }
@@ -122,11 +123,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (currentTrip?.items as Item[] || []).map(item => ({
       ...item,
       id: String(item.id),
-      categoryId: item.categoryId ? Number(item.categoryId) : undefined,
-      subcategoryId: item.subcategoryId ? Number(item.subcategoryId) : undefined,
-      personId: item.personId ? Number(item.personId) : undefined,
-      bagId: item.bagId ? Number(item.bagId) : undefined,
-      catalogItemId: item.catalogItemId ? Number(item.catalogItemId) : undefined,
+      categoryId: item.categoryId !== null ? Number(item.categoryId) : undefined,
+      subcategoryId: item.subcategoryId !== null ? Number(item.subcategoryId) : undefined,
+      personId: item.personId !== null ? Number(item.personId) : undefined,
+      bagId: item.bagId !== null ? Number(item.bagId) : undefined,
+      catalogItemId: item.catalogItemId !== null ? Number(item.catalogItemId) : undefined,
+      notes: item.notes || undefined,
     }));
   }, [currentTrip]);
 
@@ -364,14 +366,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       const newPersonFromDb = data[0];
-      setPeople(prev => [...prev, {
+      const newPerson: Person = {
         id: newPersonFromDb.id,
         name: newPersonFromDb.name,
         color: newPersonFromDb.color,
         createdAt: newPersonFromDb.created_at,
-      }]);
+      };
+      setPeople(prev => [...prev, newPerson]);
 
-      return newPersonFromDb.id;
+      return newPerson; // Return the full Person object
     } catch (error) {
       console.error("Failed to create person:", error);
       return null;
@@ -461,7 +464,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    // Fetch the current trip's state to ensure we have the latest version
     const { data: tripData, error: fetchError } = await supabase
         .from('trips')
         .select(`id, trip_people`)
@@ -522,7 +524,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    // Fetch the current trip's state to ensure we have the latest version
     const { data: tripData, error: fetchError } = await supabase
         .from('trips')
         .select(`id, trip_people, items`)
@@ -581,7 +582,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [currentTripId, setTrips]);
 
-  const createBag = useCallback(async (bagData: Omit<Bag, 'id'>) => {
+  const createBag = useCallback(async (bagData: Omit<Bag, 'id' | 'createdAt'>) => {
     try {
       const { data, error } = await supabase
         .from('bags')
@@ -593,18 +594,145 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return null;
       }
       const newBagFromDb = data[0];
-      setBags(prev => [...prev, {
+      const newBag: Bag = {
         id: newBagFromDb.id,
         name: newBagFromDb.name,
         color: newBagFromDb.color,
         createdAt: newBagFromDb.created_at,
-      }]);
-      return newBagFromDb.id;
+      };
+      setBags(prev => [...prev, newBag]);
+      return newBag; // Return the full Bag object
     } catch (error) {
       console.error("Failed to create bag:", error);
       return null;
     }
   }, [setBags]);
+
+  const addBagToTrip = useCallback(async (bagId: number) => {
+    if (!currentTripId) {
+      console.error("addBagToTrip: No current trip ID selected.");
+      return;
+    }
+
+    const { data: tripData, error: fetchError } = await supabase
+        .from('trips')
+        .select(`id, trip_bags`)
+        .eq('id', currentTripId)
+        .single();
+
+    if (fetchError || !tripData) {
+        console.error("Error fetching current trip for bag add:", fetchError || "Trip not found");
+        return;
+    }
+
+    const currentBagIds = (tripData.trip_bags || []) as number[];
+    const updatedBagIds = [...currentBagIds, bagId];
+    const uniqueBagIds = Array.from(new Set(updatedBagIds));
+
+    console.log("Attempting to add bagId:", bagId, "to trip_bags:", uniqueBagIds);
+
+    const { data, error } = await supabase
+      .from('trips')
+      .update({ trip_bags: uniqueBagIds })
+      .eq('id', currentTripId)
+      .select(`
+        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
+        trip_people, trip_bags, items, todos
+      `);
+
+    if (error) {
+      console.error("Error adding bag to trip in Supabase:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      console.log("Successfully added bag to trip, data received:", data[0]);
+      setTrips(prev => prev.map(trip =>
+        trip.id === currentTripId ? {
+          ...trip,
+          name: data[0].name,
+          date: data[0].date,
+          tripTheme: data[0].trip_theme,
+          updatedAt: data[0].updated_at,
+          backgroundImageUrl: data[0].background_image_url,
+          userId: data[0].user_id,
+          createdAt: data[0].created_at,
+          peopleIds: data[0].trip_people || [],
+          bagIds: data[0].trip_bags || [],
+          items: data[0].items || [],
+          todos: data[0].todos || [],
+        } : trip
+      ));
+    } else {
+        console.warn("Supabase update for adding bag returned no data.");
+    }
+  }, [currentTripId, setTrips]);
+
+
+  const removeBagFromTrip = useCallback(async (bagId: number) => { // Correctly implemented
+    if (!currentTripId) {
+      console.error("removeBagFromTrip: No current trip ID selected.");
+      return;
+    }
+
+    const { data: tripData, error: fetchError } = await supabase
+        .from('trips')
+        .select(`id, trip_bags, items`)
+        .eq('id', currentTripId)
+        .single();
+
+    if (fetchError || !tripData) {
+        console.error("Error fetching current trip for bag removal:", fetchError || "Trip not found");
+        return;
+    }
+
+    const currentBagIds = (tripData.trip_bags || []) as number[];
+    const updatedBagIds = currentBagIds.filter(id => id !== bagId);
+
+    const currentItems = (tripData.items || []) as Item[];
+    const updatedItems = currentItems.map(item =>
+        item.bagId === bagId ? { ...item, bagId: undefined, packed: false } : item
+    );
+
+    console.log("Attempting to remove bagId:", bagId, "from trip_bags:", updatedBagIds);
+
+    const { data, error } = await supabase
+      .from('trips')
+      .update({ trip_bags: updatedBagIds, items: updatedItems })
+      .eq('id', currentTripId)
+      .select(`
+        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
+        trip_people, trip_bags, items, todos
+      `);
+
+    if (error) {
+      console.error("Error removing bag from trip in Supabase:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+        console.log("Successfully removed bag from trip, data received:", data[0]);
+      setTrips(prev => prev.map(trip =>
+        trip.id === currentTripId ? {
+          ...trip,
+          name: data[0].name,
+          date: data[0].date,
+          tripTheme: data[0].trip_theme,
+          updatedAt: data[0].updated_at,
+          backgroundImageUrl: data[0].background_image_url,
+          userId: data[0].user_id,
+          createdAt: data[0].created_at,
+          peopleIds: data[0].trip_people || [],
+          bagIds: data[0].trip_bags || [],
+          items: data[0].items || [],
+          todos: data[0].todos || [],
+        } : trip
+      ));
+    } else {
+        console.warn("Supabase update for removing bag returned no data.");
+    }
+  }, [currentTripId, setTrips]);
+
 
   const updateBag = useCallback(async (bagId: number, updates: Partial<Bag>) => {
     const updateData: any = {
@@ -874,7 +1002,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     `);
     if (tripsFetchError) console.error("Error re-fetching trips after subcategory deletion:", tripsFetchError);
     setTrips(updatedTripsData?.map(t => ({
-        id: t.id, name: t.name, date: t.name, tripTheme: t.trip_theme, updatedAt: t.updated_at,
+        id: t.id, name: t.name, date: t.date, tripTheme: t.trip_theme, updatedAt: t.updated_at,
         backgroundImageUrl: t.background_image_url, userId: t.user_id, createdAt: t.created_at,
         peopleIds: t.trip_people || [], bagIds: t.trip_bags || [],
         items: t.items || [], todos: t.todos || []
@@ -892,7 +1020,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .insert({
           name: itemData.name,
           category_id: Number(itemData.categoryId),
-          subcategory_id: itemData.subcategoryId ? Number(itemData.subcategoryId) : null,
+          subcategory_id: itemData.subcategoryId ? Number(itemData.subcategoryId) : undefined,
           is_favorite: itemData.is_favorite || false,
           created_at: new Date().toISOString(),
         })
@@ -922,7 +1050,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updateData: any = {
       name: updates.name,
       category_id: updates.categoryId ? Number(updates.categoryId) : undefined,
-      subcategory_id: updates.subcategoryId ? Number(updates.subcategoryId) : null,
+      subcategory_id: updates.subcategoryId ? Number(updates.subcategoryId) : undefined,
       is_favorite: updates.is_favorite,
     };
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -992,7 +1120,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     })) || []);
   }, [trips, setCatalogItems, setTrips]);
 
-  const addItemToTrip = useCallback(async (itemData: Omit<Item, 'tripId'>) => {
+  const addItemToTrip = useCallback(async (itemData: Omit<Item, 'tripId' | 'id' | 'createdAt'>) => {
     if (!currentTripId || !currentTrip) {
       console.error("No current trip selected to add item to.");
       return;
@@ -1009,7 +1137,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       packed: itemData.packed || false,
       quantity: itemData.quantity || 1,
       isToBuy: itemData.isToBuy || false,
-      notes: itemData.notes || null,
+      notes: itemData.notes || undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -1043,14 +1171,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [currentTripId, currentTrip, updateTrip]);
 
   const addSingleCatalogItemToTripItems = useCallback(async (
-    bagId: number | null,
-    personId: number | null,
+    bagId: number | undefined,
+    personId: number | undefined,
     catalogItem: CatalogItem,
     quantity: number,
     notes?: string,
     isToBuy: boolean = false
   ) => {
-    const itemToAdd: Omit<Item, 'tripId'> = {
+    const itemToAdd: Omit<Item, 'tripId' | 'id' | 'createdAt'> = { // Adjusted type
       name: catalogItem.name,
       catalogItemId: catalogItem.id,
       categoryId: catalogItem.categoryId,
@@ -1066,8 +1194,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [addItemToTrip]);
 
   const addMultipleCatalogItemsToTripItems = useCallback(async (
-    bagId: number | null,
-    personId: number | null,
+    bagId: number | undefined,
+    personId: number | undefined,
     itemsToAdd: { catalogItemId: number; quantity: number; notes?: string; isToBuy?: boolean }[]
   ) => {
     if (!currentTripId || !currentTrip) {
@@ -1093,7 +1221,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isToBuy: itemData.isToBuy || false,
         bagId: bagId,
         personId: personId,
-        notes: itemData.notes || null,
+        notes: itemData.notes || undefined,
         createdAt: new Date().toISOString(),
       });
     });
@@ -1127,7 +1255,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     createPerson, updatePerson, deletePerson,
     addPersonToTrip,
     removePersonFromTrip,
-    createBag, updateBag, deleteBag,
+    createBag, updateBag, deleteBag, addBagToTrip,
+    removeBagFromTrip, // Ensure this is explicitly listed
     addCategory, updateCategory, deleteCategory,
     addSubcategory, updateSubcategory, deleteSubcategory,
     addCatalogItem, updateCatalogItem, deleteCatalogItem,
@@ -1142,7 +1271,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip,
     createPerson, updatePerson, deletePerson,
     addPersonToTrip, removePersonFromTrip,
-    createBag, updateBag, deleteBag,
+    createBag, updateBag, deleteBag, addBagToTrip,
+    removeBagFromTrip, // Ensure this is in the dependency array
     addCategory, updateCategory, deleteCategory,
     addSubcategory, updateSubcategory, deleteSubcategory,
     addCatalogItem, updateCatalogItem, deleteCatalogItem,
