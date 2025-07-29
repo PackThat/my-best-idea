@@ -72,3 +72,11 @@ export interface TodoItem {
   isComplete: boolean;
   createdAt: string;
 }
+export type ViewState =
+  | { type: 'list' }
+  | { type: 'home' }
+  | { type: 'person'; personId?: string }
+  | { type: 'bag'; bagId?: string }
+  | { type: 'category'; categoryId?: string; personId?: string }
+  | { type: 'trip-people' }
+  | { type: 'trip-bags' };

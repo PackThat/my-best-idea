@@ -30,13 +30,13 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
     if (newPersonName.trim()) {
       setIsSavingNewPerson(true);
       try {
-        // createPerson returns a number (Person.id is number)
-        const newPersonId = await createPerson({ name: newPersonName.trim(), color: newPersonColor });
+        // createPerson returns the full Person object
+        const newPersonObject = await createPerson({ name: newPersonName.trim(), color: newPersonColor });
         
-        if (newPersonId) {
-          // addPersonToTrip expects a number
-          await addPersonToTrip(newPersonId);
-          onPersonSelect(newPersonId); // onPersonSelect now expects a number
+        if (newPersonObject) {
+          // We need to pass the ID (a number), not the whole object
+          await addPersonToTrip(newPersonObject.id);
+          onPersonSelect(newPersonObject.id);
         }
 
         setNewPersonName('');

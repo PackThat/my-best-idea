@@ -9,9 +9,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const TripsList: React.FC = () => {
-  const { trips, loadTrip, createTrip, updateTrip, deleteTrip } = useAppContext();
+  const { trips, loadTrip, createTrip, updateTrip, deleteTrip, isLoading } = useAppContext();
   
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [editTrip, setEditTrip] = useState<Trip | null>(null);
@@ -31,8 +32,33 @@ export const TripsList: React.FC = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No date';
-    return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    // The current time is 2:19 PM Tuesday, July 29, 2025 in Echuca, Victoria, Australia.
+    return new Date(dateString).toLocaleDateString('en-AU', { timeZone: 'Australia/Melbourne', year: 'numeric', month: 'long', day: 'numeric' });
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-10 w-28" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="flex flex-col bg-card">
+              <CardHeader className="pb-4">
+                <Skeleton className="h-6 w-3/4 mb-3" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col justify-end">
+                 <Skeleton className="h-9 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

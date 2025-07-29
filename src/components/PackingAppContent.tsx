@@ -4,7 +4,9 @@ import HomeView from './HomeView';
 import { TripsList } from './TripsList';
 import PersonView from './PersonView';
 import CategoryView from './CategoryView';
-import { ViewState } from '@/types'; // Now correctly imports the shared type
+import TripPeopleView from './TripPeopleView';
+import TripBagsView from './TripBagsView';
+import { ViewState } from '@/types';
 
 interface PackingAppContentProps {
   viewState: ViewState;
@@ -27,13 +29,19 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
 
   const renderContent = () => {
     switch (viewState.type) {
-      case 'home':
+    case 'home':
         return <HomeView onViewChange={onTripViewChange} />;
-      
-      case 'list':
+
+    case 'list':
         return <TripsList onTripSelected={onNavigateToTripHome} />;
 
-      case 'person':
+    case 'trip-people':
+        return <TripPeopleView onBack={onBackToList} />;
+
+    case 'trip-bags':
+        return <TripBagsView onBack={onBackToList} />;
+
+    case 'person':
         if (!viewState.personId) return null;
         return (
           <PersonView

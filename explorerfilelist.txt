@@ -31,7 +31,6 @@
 │   │   ├── CategorySubcategorySelector.tsx
 │   │   ├── CategoryView.tsx
 │   │   ├── ColorPalette.tsx
-│   │   ├── CreateTripView.tsx
 │   │   ├── EditBagDialog.tsx
 │   │   ├── EditCatalogItemDialog.tsx
 │   │   ├── EditCategoryDialog.tsx
@@ -150,4 +149,4 @@
 ├── tsconfig.node.json
 └── vite.config.ts
 
-11 directories, 140 files
+11 directories, 139 files

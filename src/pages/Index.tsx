@@ -1,14 +1,9 @@
-
+// src/pages/Index.tsx
 import React from 'react';
-import AppLayout from '@/components/AppLayout';
-import { AppProvider } from '@/contexts/AppContext';
+import PackingApp from '@/components/PackingApp';
 
 const Index: React.FC = () => {
-  return (
-    <AppProvider>
-      <AppLayout />
-    </AppProvider>
-  );
+  return <PackingApp />;
 };
 
 export default Index;
