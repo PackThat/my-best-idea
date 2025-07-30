@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Person } from '@/types';
-import { Check } from 'lucide-react';
-import { PRESET_COLORS } from '@/data/ColorPalette'; // Uses the new central palette
+import { ColorPalette } from './ColorPalette';
 
 interface EditPersonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   person: Person;
-  onSave: (personId: string, updates: { name: string; color?: string }) => void;
+  onSave: (personId: number, updates: Partial<Person>) => void;
 }
 
 const EditPersonDialog: React.FC<EditPersonDialogProps> = ({
@@ -58,19 +57,7 @@ const EditPersonDialog: React.FC<EditPersonDialogProps> = ({
           {/* Color Picker */}
           <div>
             <Label>Color</Label>
-            <div className="grid grid-cols-8 gap-2 pt-2">
-              {PRESET_COLORS.map((presetColor) => (
-                <button
-                  key={presetColor}
-                  type="button"
-                  className="w-8 h-8 rounded-full transition-all flex items-center justify-center"
-                  style={{ backgroundColor: presetColor }}
-                  onClick={() => setColor(presetColor)}
-                >
-                  {color === presetColor && <Check className="h-5 w-5 text-white" />}
-                </button>
-              ))}
-            </div>
+            <ColorPalette selectedColor={color} onSelectColor={(newColor) => setColor(newColor || '')} />
           </div>
         </div>
         <DialogFooter>

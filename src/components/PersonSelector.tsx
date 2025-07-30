@@ -1,17 +1,16 @@
-// src/components/PersonSelector.tsx
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Check } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Person } from '@/types';
-import { PRESET_COLORS } from '@/data/ColorPalette';
+import { ColorPalette } from './ColorPalette';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface PersonSelectorProps {
   people: Person[];
-  onPersonSelect: (personId: number) => void; // Expect personId as number now
+  onPersonSelect: (personId: number) => void;
   placeholder?: string;
 }
 
@@ -23,24 +22,22 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
   const { createPerson, addPersonToTrip } = useAppContext();
   const [showAddNew, setShowAddNew] = useState(false);
   const [newPersonName, setNewPersonName] = useState('');
-  const [newPersonColor, setNewPersonColor] = useState(PRESET_COLORS[0]);
+  const [newPersonColor, setNewPersonColor] = useState<string | undefined>(undefined);
   const [isSavingNewPerson, setIsSavingNewPerson] = useState(false);
 
   const handleAddNew = async () => {
     if (newPersonName.trim()) {
       setIsSavingNewPerson(true);
       try {
-        // createPerson returns the full Person object
         const newPersonObject = await createPerson({ name: newPersonName.trim(), color: newPersonColor });
         
         if (newPersonObject) {
-          // We need to pass the ID (a number), not the whole object
           await addPersonToTrip(newPersonObject.id);
           onPersonSelect(newPersonObject.id);
         }
 
         setNewPersonName('');
-        setNewPersonColor(PRESET_COLORS[0]);
+        setNewPersonColor(undefined);
         setShowAddNew(false);
       } catch (error) {
         console.error("Error adding new person:", error);
@@ -54,10 +51,10 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
     if (value === 'add-new') {
       setShowAddNew(true);
       setNewPersonName('');
-      setNewPersonColor(PRESET_COLORS[0]);
+      setNewPersonColor(undefined);
     } else {
       setShowAddNew(false);
-      onPersonSelect(Number(value)); // Convert the string value back to a number for onPersonSelect
+      onPersonSelect(Number(value));
     }
   };
 
@@ -78,20 +75,10 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
         </div>
         <div>
           <Label>Color</Label>
-          <div className="grid grid-cols-8 gap-2 pt-2">
-            {PRESET_COLORS.map((presetColor) => (
-              <button
-                key={presetColor}
-                type="button"
-                className="w-8 h-8 rounded-full transition-all flex items-center justify-center"
-                style={{ backgroundColor: presetColor }}
-                onClick={() => setNewPersonColor(presetColor)}
-                disabled={isSavingNewPerson}
-              >
-                {newPersonColor === presetColor && <Check className="h-5 w-5 text-white" />}
-              </button>
-            ))}
-          </div>
+          <ColorPalette
+            selectedColor={newPersonColor}
+            onSelectColor={(color) => setNewPersonColor(color)}
+          />
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setShowAddNew(false)} disabled={isSavingNewPerson}>
@@ -112,7 +99,6 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
       </SelectTrigger>
       <SelectContent>
         {people.map((person) => (
-          // Value in SelectItem must be a string, so convert person.id to string
           <SelectItem key={String(person.id)} value={String(person.id)}>
             <div className="flex items-center gap-2">
               {person.color && (

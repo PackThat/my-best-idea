@@ -1,89 +1,96 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Plus, Edit2, Trash2 } from 'lucide-react';
+import { User, Plus, Edit2, Trash2, X } from 'lucide-react';
 import EditPersonDialog from './EditPersonDialog';
-import AddPersonDialog from './AddPersonDialog'; // Import the new dialog
+import InlinePersonForm from './InlinePersonForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Person } from '@/types';
+import { cn } from '@/lib/utils';
 
 const PeopleManagementView: React.FC = () => {
-  const { people, addPerson, updatePerson, deletePerson } = useAppContext();
+  const { people, createPerson, updatePerson, deletePerson } = useAppContext();
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false); // State for the new dialog
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const handleUpdate = (personId: string, updates: Partial<Person>) => {
+  const handleUpdate = (personId: number, updates: Partial<Person>) => {
     updatePerson(personId, updates);
   };
   
   const handleAdd = async (personData: { name: string, color?: string }) => {
-    await addPerson(personData);
+    await createPerson(personData);
+    setShowAddForm(false);
   };
+
+  const sortedPeople = [...people].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Manage All People</h2>
-        {/* This button now opens our new dialog */}
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Person
+        <Button onClick={() => setShowAddForm(!showAddForm)}>
+          {showAddForm ? <X className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+          {showAddForm ? 'Cancel' : 'Add New Person'}
         </Button>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {people.map((person) => (
-          <Card key={person.id} className="bg-card">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {person.color && (
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: person.color }} />
-                  )}
-                  <User className="h-5 w-5" />
-                  <span>{person.name}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setEditingPerson(person)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-8 w-8">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="bg-card text-card-foreground">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete "{person.name}" and remove them and all their assigned items from every trip. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deletePerson(person.id)}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+
+      {showAddForm && (
+        <InlinePersonForm
+          onCancel={() => setShowAddForm(false)}
+          onSave={handleAdd}
+        />
+      )}
       
-      {/* Add the new dialog to the page */}
-      <AddPersonDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSave={handleAdd}
-      />
+      <div className="border rounded-md bg-card">
+        <Table>
+          <TableBody>
+            {sortedPeople.map((person) => (
+              <TableRow key={person.id}>
+                <TableCell className="py-1">
+                  <div className="flex items-center gap-3">
+                    {person.color && (
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: person.color }} />
+                    )}
+                    <span className="font-medium text-card-foreground">{person.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-1">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setEditingPerson(person)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-8 w-8">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-card text-card-foreground">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete "{person.name}" and remove them and all their assigned items from every trip. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deletePerson(person.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {editingPerson && (
         <EditPersonDialog

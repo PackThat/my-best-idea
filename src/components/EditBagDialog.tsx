@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Bag } from '@/types';
 import { Check } from 'lucide-react';
-import { PRESET_COLORS } from '@/data/ColorPalette';
+import { ColorPalette } from './ColorPalette';
 
 interface EditBagDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bag: Bag;
-  onSave: (bagId: string, updates: Partial<Bag>) => void;
+  onSave: (bagId: number, updates: Partial<Bag>) => void;
 }
 
 const EditBagDialog: React.FC<EditBagDialogProps> = ({
@@ -58,19 +58,7 @@ const EditBagDialog: React.FC<EditBagDialogProps> = ({
           {/* Color Picker */}
           <div>
             <Label>Color</Label>
-            <div className="grid grid-cols-8 gap-2 pt-2">
-              {PRESET_COLORS.map((presetColor) => (
-                <button
-                  key={presetColor}
-                  type="button"
-                  className="w-8 h-8 rounded-full transition-all flex items-center justify-center"
-                  style={{ backgroundColor: presetColor }}
-                  onClick={() => setColor(presetColor)}
-                >
-                  {color === presetColor && <Check className="h-5 w-5 text-white" />}
-                </button>
-              ))}
-            </div>
+            <ColorPalette selectedColor={color} onSelectColor={(newColor) => setColor(newColor || '')} />
           </div>
         </div>
         <DialogFooter>

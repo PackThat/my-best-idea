@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Briefcase, Plus, Edit2, Trash2, X } from 'lucide-react';
 import EditBagDialog from './EditBagDialog';
-import AddBagDialog from './AddBagDialog';
+import InlineBagForm from './InlineBagForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Bag } from '@/types';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 const BagsManagementView: React.FC = () => {
   const { bags, createBag, updateBag, deleteBag } = useAppContext();
   const [editingBag, setEditingBag] = useState<Bag | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const handleUpdate = (bagId: number, updates: Partial<Bag>) => {
     updateBag(bagId, updates);
@@ -20,6 +20,7 @@ const BagsManagementView: React.FC = () => {
 
   const handleAdd = async (bagData: { name: string, color?: string }) => {
     await createBag(bagData);
+    setShowAddForm(false);
   };
 
   const sortedBags = [...bags].sort((a, b) => a.name.localeCompare(b.name));
@@ -28,15 +29,22 @@ const BagsManagementView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Manage All Bags</h2>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Bag
+        <Button onClick={() => setShowAddForm(!showAddForm)} variant="default">
+          {showAddForm ? <X className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+          {showAddForm ? 'Cancel' : 'Add New Bag'}
         </Button>
       </div>
 
+      {showAddForm && (
+        <InlineBagForm
+          onCancel={() => setShowAddForm(false)}
+          onSave={handleAdd}
+        />
+      )}
+
       <div className="border rounded-md bg-card">
         <Table>
-      <TableBody>
+          <TableBody>
             {sortedBags.map((bag) => (
               <TableRow key={bag.id}>
                 <TableCell className="py-1">
@@ -83,12 +91,6 @@ const BagsManagementView: React.FC = () => {
           </TableBody>
         </Table>
       </div>
-
-      <AddBagDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSave={handleAdd}
-      />
 
       {editingBag && (
         <EditBagDialog
