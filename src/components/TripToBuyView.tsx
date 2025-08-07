@@ -1,150 +1,143 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { PackingListItem } from './PackingListItem';
+import { Category, Subcategory, Item, Person, Bag, CatalogItem } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, ShoppingCart, Plus } from 'lucide-react';
-import AddToBuyItemDialog from './AddToBuyItemDialog';
+import { Card, CardContent } from '@/components/ui/card';
 
-interface TripToBuyViewProps {
-  onBack: () => void;
-}
+// This is the same helper component we built inside TripItemsView
+const ItemsAccordion: React.FC<{
+  title: string;
+  items: Item[];
+  categories: Category[];
+  subcategories: Subcategory[];
+  people: Person[];
+  bags: Bag[];
+  onUpdate: (itemId: string, updates: Partial<Item>) => void;
+  onDelete: (itemId: string) => void;
+  updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
+  onEditItem: (item: Item) => void;
+  onEditNote: (item: Item) => void;
+  mode: 'packing' | 'tobuy';
+}> = ({ title, items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote, mode }) => {
+  const { catalog_items } = useAppContext();
 
-const TripToBuyView: React.FC<TripToBuyViewProps> = ({ onBack }) => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const groupItemsBy = (items: Item[], key: keyof Item) => {
+    return items.reduce((acc, item) => {
+      const groupKey = item[key] as string | number | undefined;
+      const finalKey = groupKey === undefined ? 'uncategorized' : groupKey;
+      if (!acc[finalKey]) {
+        acc[finalKey] = [];
+      }
+      acc[finalKey].push(item);
+      return acc;
+    }, {} as Record<string | number, Item[]>);
+  };
+
+  const itemsByCategory = groupItemsBy(items, 'categoryId');
+  const sortedCategoryIds = Object.keys(itemsByCategory).sort((a, b) => {
+    if (a === 'uncategorized') return 1; if (b === 'uncategorized') return -1;
+    const catA = categories.find(c => c.id === a)?.name || '';
+    const catB = categories.find(c => c.id === b)?.name || '';
+    return catA.localeCompare(catB);
+  });
+
+  return (
+    <Accordion type="multiple" defaultValue={[title.toLowerCase().replace(/ /g, '-')]} className="w-full space-y-2">
+      {sortedCategoryIds.map(categoryId => {
+        const category = categories.find(c => c.id === categoryId);
+        const categoryName = categoryId === 'uncategorized' ? 'Uncategorized' : category?.name;
+        const categoryItems = itemsByCategory[categoryId];
+        const itemsBySubcategory = groupItemsBy(categoryItems, 'subcategoryId');
+        const sortedSubcategoryIds = Object.keys(itemsBySubcategory).sort((a,b) => {
+            const subA = subcategories.find(s => s.id === a)?.name || '';
+            const subB = subcategories.find(s => s.id === b)?.name || '';
+            return subA.localeCompare(subB);
+        });
+
+        return (
+          <AccordionItem value={categoryId} key={categoryId} className="border rounded-md bg-card px-4">
+            <AccordionTrigger>{categoryName} ({categoryItems.length})</AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <Accordion type="multiple" className="w-full">
+                {sortedSubcategoryIds.map(subcategoryId => {
+                  const subcategory = subcategories.find(sc => sc.id === subcategoryId);
+                  const subName = subcategoryId === 'uncategorized' ? 'Uncategorized' : subcategory?.name;
+                  const subcategoryItems = itemsBySubcategory[subcategoryId];
+                  return (
+                    <AccordionItem value={subcategoryId} key={subcategoryId}>
+                      <AccordionTrigger className="text-sm">{subName} ({subcategoryItems.length})</AccordionTrigger>
+                      <AccordionContent className="pl-4">
+                        {subcategoryItems.map(item => (
+                          <PackingListItem 
+                            key={item.id} item={item} people={people} bags={bags}
+                            catalog_items={catalog_items} onUpdate={onUpdate} onDelete={onDelete}
+                            updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
+                            mode={mode}
+                          />
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )
+                })}
+              </Accordion>
+            </AccordionContent>
+          </AccordionItem>
+        )
+      })}
+    </Accordion>
+  );
+};
+
+export const TripToBuyView: React.FC = () => {
   const {
-    items,
-    categories,
-    subcategories,
-    people,
-    bags,
-    updateItem,
-    addItem,
+    currentTrip, setView, categories, subcategories, people, bags,
+    updateItem, deleteItem, updateCatalogItem
   } = useAppContext();
 
-  // Filter items that need to be bought
-  const toBuyItems = items.filter(item => item.needsToBuy);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [editingNoteItem, setEditingNoteItem] = useState<Item | null>(null);
 
-  const handleToggleBought = (itemId: string, bought: boolean) => {
-    updateItem(itemId, { needsToBuy: !bought });
-  };
-
-  const getCategoryName = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId)?.name || 'Unknown';
-  };
-
-  const getSubcategoryName = (subcategoryId?: string) => {
-    if (!subcategoryId) return null;
-    return subcategories.find(s => s.id === subcategoryId)?.name;
-  };
-
-  const getPersonName = (personId?: string) => {
-    if (!personId) return null;
-    return people.find(p => p.id === personId)?.name;
-  };
-
-  const getBagName = (bagId?: string) => {
-    if (!bagId) return null;
-    return bags.find(b => b.id === bagId)?.name;
-  };
+  const toBuyItems = (currentTrip?.items || []).filter(item => item.isToBuy);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <h2 className="text-2xl font-bold text-gray-900">Items to Buy</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => setView('trip-home')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Trip
+          </Button>
+          <h2 className="text-2xl font-bold">To Buy List</h2>
+        </div>
       </div>
       
-      <div className="mb-4">
-        <Button 
-          onClick={() => setShowAddDialog(true)}
-          className="w-full bg-orange-600 hover:bg-orange-700"
-          size="lg"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          ADD ITEM TO BUY
-        </Button>
-      </div>
-      
-      <div className="space-y-4">
-        {toBuyItems.map((item) => {
-          const categoryName = getCategoryName(item.categoryId);
-          const subcategoryName = getSubcategoryName(item.subcategoryId);
-          const personName = getPersonName(item.personId);
-          const bagName = getBagName(item.bagId);
-          
-          return (
-            <Card key={item.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={!item.needsToBuy}
-                    onCheckedChange={(checked) => handleToggleBought(item.id, !!checked)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold">{item.name}</h3>
-                      <Badge variant="outline">Qty: {item.quantity}</Badge>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      <Badge variant="secondary">{categoryName}</Badge>
-                      {subcategoryName && (
-                        <Badge variant="outline">{subcategoryName}</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                      {personName && (
-                        <span className="bg-blue-100 px-2 py-1 rounded">
-                          👤 {personName}
-                        </span>
-                      )}
-                      {bagName && (
-                        <span className="bg-green-100 px-2 py-1 rounded">
-                          🎒 {bagName}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {item.notes && (
-                      <p className="text-sm text-gray-600 mt-2">{item.notes}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-      
-      {toBuyItems.length === 0 && (
-        <Card>
+      {toBuyItems.length > 0 ? (
+        <ItemsAccordion
+          title="To Buy"
+          items={toBuyItems}
+          categories={categories}
+          subcategories={subcategories}
+          people={people}
+          bags={bags}
+          onUpdate={updateItem}
+          onDelete={deleteItem}
+          updateCatalogItem={updateCatalogItem}
+          onEditItem={setEditingItem}
+          onEditNote={setEditingNoteItem}
+          mode="tobuy"
+        />
+      ) : (
+        <Card className="bg-card">
           <CardContent className="p-6 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-gray-500 mb-4">No items marked for purchase yet.</p>
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item to Buy
-            </Button>
+            <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">Nothing on your shopping list yet.</p>
           </CardContent>
         </Card>
       )}
-
-      <AddToBuyItemDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        categories={categories}
-        subcategories={subcategories}
-        people={people}
-        bags={bags}
-        onAddItem={addItem}
-      />
     </div>
   );
 };

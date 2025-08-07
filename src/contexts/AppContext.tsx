@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export type AppView =
   | 'my-trips' | 'items-management' | 'people-management' | 'bags-management' | 'subcategory-management'
   | 'item-catalog-list' | 'global-tobuy' | 'global-todo' | 'trip-home' | 'trip-people' | 'trip-bags'
-  | 'trip-items' | 'trip-add-item' | 'trip-settings' | 'create-trip-page' | 'person-detail' | 'bag-detail' | 'category-detail'
+  | 'trip-items' | 'trip-add-item' | 'trip-tobuy' | 'trip-settings' | 'create-trip-page' | 'person-detail' | 'bag-detail' | 'category-detail'
   | 'trip-add-subcategory' | 'trip-add-item-list';
 
 interface AppContextType {

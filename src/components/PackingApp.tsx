@@ -34,6 +34,8 @@ export const PackingApp: React.FC = () => {
         return { type: 'trip-bags' };
       case 'trip-items':
         return { type: 'trip-items' };
+      case 'trip-tobuy':
+        return { type: 'trip-tobuy' };
       case 'trip-add-item':
         return { type: 'trip-add-item' };
       case 'trip-add-subcategory':
@@ -63,7 +65,7 @@ export const PackingApp: React.FC = () => {
         setView('trip-items');
         break;
       case 'tobuy':
-        setView('global-tobuy');
+        setView('trip-tobuy');
         break;
       case 'trips':
         setView('my-trips');

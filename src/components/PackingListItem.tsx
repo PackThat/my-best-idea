@@ -22,9 +22,21 @@ interface PackingListItemProps {
   updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
   onEdit: (item: Item) => void;
   onEditNote: (item: Item) => void;
+  mode?: 'packing' | 'tobuy';
 }
 
-export const PackingListItem: React.FC<PackingListItemProps> = ({ item, people, bags, catalog_items, onUpdate, onDelete, updateCatalogItem, onEdit, onEditNote }) => {
+export const PackingListItem: React.FC<PackingListItemProps> = ({ 
+  item, 
+  people, 
+  bags, 
+  catalog_items, 
+  onUpdate, 
+  onDelete, 
+  updateCatalogItem, 
+  onEdit, 
+  onEditNote,
+  mode = 'packing' 
+}) => {
   const assignedPerson = people.find(p => p.id === item.personId);
   const assignedBag = bags.find(b => b.id === item.bagId);
   const catalogItem = item.catalogItemId ? catalog_items.find(ci => ci.id === item.catalogItemId) : null;
@@ -36,13 +48,21 @@ export const PackingListItem: React.FC<PackingListItemProps> = ({ item, people, 
     }
   };
 
+  const handleCheckboxChange = (checked: boolean) => {
+    if (mode === 'packing') {
+      onUpdate(item.id, { packed: checked });
+    } else { // mode === 'tobuy'
+      onUpdate(item.id, { isToBuy: false });
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-4 py-2 border-b">
         <Checkbox
           className="w-5 h-5"
-          checked={item.packed}
-          onCheckedChange={(checked) => onUpdate(item.id, { packed: Boolean(checked) })}
+          checked={mode === 'packing' ? item.packed : false}
+          onCheckedChange={(checked) => handleCheckboxChange(Boolean(checked))}
         />
         
         <div className="flex-grow flex items-center gap-3">
@@ -74,9 +94,11 @@ export const PackingListItem: React.FC<PackingListItemProps> = ({ item, people, 
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={handleFavoriteToggle}>
             <Star className={cn("h-4 w-4", isFavorite && "fill-yellow-400 text-yellow-500")} />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => onUpdate(item.id, { isToBuy: !item.isToBuy })}>
-            <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-yellow-500")} />
-          </Button>
+          {mode === 'packing' && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => onUpdate(item.id, { isToBuy: !item.isToBuy })}>
+              <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-yellow-500")} />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => onEditNote(item)}>
             <MessageSquare className={cn("h-4 w-4", item.notes && "text-yellow-500")} />
           </Button>

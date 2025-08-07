@@ -81,6 +81,7 @@ export type ViewState =
   | { type: 'trip-people' }
   | { type: 'trip-bags' }
   | { type: 'trip-items' }
+  | { type: 'trip-tobuy' }
   | { type: 'trip-add-item' }
   | { type: 'trip-add-subcategory' }
   | { type: 'trip-add-item-list' };

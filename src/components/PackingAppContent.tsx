@@ -10,6 +10,7 @@ import TripItemsView from './TripItemsView';
 import TripAddItemView from './TripAddItemView';
 import { TripAddSubcategoryView } from './TripAddSubcategoryView';
 import { TripAddItemListView } from './TripAddItemListView';
+import TripToBuyView from './TripToBuyView';
 import { ViewState } from '@/types';
 
 interface PackingAppContentProps {
@@ -47,9 +48,12 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         return <TripBagsView />;
 
       case 'trip-items':
-        return <TripItemsView />;
+    return <TripItemsView />;
 
-      case 'trip-add-item':
+  case 'trip-tobuy':
+    return <TripToBuyView />;
+
+  case 'trip-add-item':
     return <TripAddItemView />;
 
   case 'trip-add-subcategory':
