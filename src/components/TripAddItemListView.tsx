@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 export const TripAddItemListView: React.FC = () => {
   const { 
     setView, 
+    categories,
     subcategories, 
     catalog_items,
     people,
@@ -39,6 +40,7 @@ export const TripAddItemListView: React.FC = () => {
   }, [currentTrip, bags]);
 
   const currentSubcategory = subcategories.find(sc => sc.id === addingSubcategoryId);
+  const parentCategory = categories.find(c => c.id === currentSubcategory?.categoryId);
   const itemsInSubcategory = catalog_items.filter(item => item.subcategoryId === addingSubcategoryId);
 
   const handleItemSelect = (itemId: string, isSelected: boolean) => {
@@ -88,7 +90,9 @@ export const TripAddItemListView: React.FC = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Subcategories
         </Button>
-        <h2 className="text-2xl font-bold">{currentSubcategory.name}</h2>
+        <h2 className="text-2xl font-bold">
+          {parentCategory?.name}: {currentSubcategory.name}
+        </h2>
       </div>
 
       <div className="space-y-1">
