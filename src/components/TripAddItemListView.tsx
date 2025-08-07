@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Star, Minus, Plus } from 'lucide-react';
@@ -12,22 +12,32 @@ import { cn } from '@/lib/utils';
 export const TripAddItemListView: React.FC = () => {
   const { 
     setView, 
-    categories,
     subcategories, 
     catalog_items,
     people,
     bags,
     currentTrip,
     addingSubcategoryId,
+    addingForPersonId,
+    setAddingForPersonId,
     addMultipleCatalogItemsToTripItems,
     updateCatalogItem,
   } = useAppContext();
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
-  const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>();
+  const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(addingForPersonId || undefined);
   const [selectedBagId, setSelectedBagId] = useState<number | undefined>();
   const [needsToBuy, setNeedsToBuy] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    // This is a cleanup function. It runs when you leave this page.
+    // It clears the context so that the next time you add an item from the main list,
+    // a person isn't incorrectly pre-selected.
+    return () => {
+      setAddingForPersonId(null);
+    };
+  }, [setAddingForPersonId]);
 
   const tripPeople = useMemo(() => {
     if (!currentTrip?.peopleIds) return [];
@@ -40,7 +50,6 @@ export const TripAddItemListView: React.FC = () => {
   }, [currentTrip, bags]);
 
   const currentSubcategory = subcategories.find(sc => sc.id === addingSubcategoryId);
-  const parentCategory = categories.find(c => c.id === currentSubcategory?.categoryId);
   const itemsInSubcategory = catalog_items.filter(item => item.subcategoryId === addingSubcategoryId);
 
   const handleItemSelect = (itemId: string, isSelected: boolean) => {
@@ -90,9 +99,7 @@ export const TripAddItemListView: React.FC = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Subcategories
         </Button>
-        <h2 className="text-2xl font-bold">
-          {parentCategory?.name}: {currentSubcategory.name}
-        </h2>
+        <h2 className="text-2xl font-bold">{currentSubcategory.name}</h2>
       </div>
 
       <div className="space-y-1">

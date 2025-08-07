@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 export type AppView =
   | 'my-trips' | 'items-management' | 'people-management' | 'bags-management' | 'subcategory-management'
   | 'item-catalog-list' | 'global-tobuy' | 'global-todo' | 'trip-home' | 'trip-people' | 'trip-bags'
-  | 'trip-items' | 'trip-add-item' | 'trip-tobuy' | 'trip-settings' | 'create-trip-page' | 'person-detail' | 'bag-detail' | 'category-detail'
-  | 'trip-add-subcategory' | 'trip-add-item-list';
+  | 'trip-items' | 'trip-add-item' | 'trip-settings' | 'create-trip-page' | 'person-detail' | 'bag-detail' | 'category-detail'
+  | 'trip-add-subcategory' | 'trip-add-item-list' | 'trip-tobuy';
 
 interface AppContextType {
   view: AppView;
@@ -20,6 +20,8 @@ interface AppContextType {
   setAddingCategoryId: (id: string | null) => void; 
   addingSubcategoryId: string | null;
   setAddingSubcategoryId: (id: string | null) => void;
+  addingForPersonId: number | null;
+  setAddingForPersonId: (id: number | null) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   isLoading: boolean;
@@ -54,19 +56,9 @@ interface AppContextType {
   deleteBag: (bagId: number) => Promise<void>;
   addBagToTrip: (bagId: number) => Promise<void>;
   removeBagFromTrip: (bagId: number) => Promise<void>;
-  addCategory: (categoryData: Omit<Category, 'id' | 'createdAt'>) => Promise<string | null>;
-  updateCategory: (categoryId: string, updates: Partial<Category>) => Promise<void>;
-  deleteCategory: (categoryId: string) => Promise<void>;
-  addSubcategory: (subcategoryData: Omit<Subcategory, 'id' | 'createdAt' | 'categoryId'>) => Promise<string | null>;
-  updateSubcategory: (subcategoryId: string, updates: Partial<Subcategory>) => Promise<void>;
-  deleteSubcategory: (subcategoryId: string) => Promise<void>;
-  addCatalogItem: (itemData: Omit<CatalogItem, 'id' | 'createdAt'>) => Promise<string | null>;
   updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
-  deleteCatalogItem: (itemId: string) => Promise<void>;
-  addItemToTrip: (itemData: Omit<Item, 'id' | 'createdAt'>) => Promise<void>;
   updateItem: (itemId: string, updates: Partial<Item>) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
-  addSingleCatalogItemToTripItems: (bagId: number | undefined, personId: number | undefined, catalogItem: CatalogItem, quantity: number, notes?: string, isToBuy?: boolean) => Promise<void>;
   addMultipleCatalogItemsToTripItems: (bagId: number | undefined, personId: number | undefined, itemsToAdd: { catalogItemId: string; quantity: number; notes?: string; isToBuy?: boolean }[]) => Promise<void>;
 }
 
@@ -96,6 +88,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currentCategoryForViewId, setCurrentCategoryForViewId] = useState<string | null>(null);
   const [addingCategoryId, setAddingCategoryId] = useState<string | null>(null);
   const [addingSubcategoryId, setAddingSubcategoryId] = useState<string | null>(null);
+  const [addingForPersonId, setAddingForPersonId] = useState<number | null>(null);
 
   const currentTrip = useMemo(() => trips.find(trip => trip.id === currentTripId) || null, [trips, currentTripId]);
   const currentPerson = useMemo(() => people.find(person => String(person.id) === currentPersonId) || null, [people, currentPersonId]);
@@ -249,7 +242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatedBagIds = (currentTrip.bagIds || []).filter(id => id !== bagId);
     await updateTrip(currentTrip.id, { bagIds: updatedBagIds });
   }, [currentTrip, updateTrip]);
-  
+
   const selectCategory = useCallback((categoryId: string) => {
     setSelectedCategoryId(categoryId);
     setView('subcategory-management');
@@ -318,6 +311,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const value = {
     view, setView, selectedCategoryId, selectCategory, selectedSubcategoryId, selectSubcategory,
     addingCategoryId, setAddingCategoryId, addingSubcategoryId, setAddingSubcategoryId,
+    addingForPersonId, setAddingForPersonId,
     sidebarOpen, toggleSidebar, isLoading, categories, subcategories, catalog_items: catalogItems,
     bags, people, items: currentTripItems, todos: [], trips, currentTrip, currentTripId,
     currentPerson, currentBag, currentCategory, selectPerson, selectBag, selectCategoryForView,

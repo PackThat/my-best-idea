@@ -67,7 +67,6 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         return (
           <PersonView
             personId={viewState.personId}
-            onCategoryClick={onCategoryClick}
             onBack={onBackToList}
           />
         );
