@@ -30,23 +30,23 @@ export interface Bag {
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   createdAt?: string;
 }
 
 export interface Subcategory {
-  id: number;
+  id: string;
   name: string;
-  categoryId: number;
+  categoryId: string;
   createdAt?: string;
 }
 
 export interface CatalogItem {
-  id: number;
+  id: string;
   name: string;
-  categoryId: number;
-  subcategoryId?: number;
+  categoryId: string;
+  subcategoryId?: string;
   is_favorite?: boolean;
   createdAt?: string;
 }
@@ -54,9 +54,9 @@ export interface CatalogItem {
 export interface Item {
   id: string; // UUID
   name: string;
-  catalogItemId?: number; // Link to catalog item
-  categoryId?: number;
-  subcategoryId?: number;
+  catalogItemId?: string; // Link to catalog item
+  categoryId?: string;
+  subcategoryId?: string;
   personId?: number;
   bagId?: number;
   packed: boolean;
@@ -79,4 +79,9 @@ export type ViewState =
   | { type: 'bag'; bagId?: string }
   | { type: 'category'; categoryId?: string; personId?: string }
   | { type: 'trip-people' }
-  | { type: 'trip-bags' };
+  | { type: 'trip-bags' }
+  | { type: 'trip-items' }
+  | { type: 'trip-add-item' }
+  | { type: 'trip-add-subcategory' }
+  | { type: 'trip-add-item-list' };
+  

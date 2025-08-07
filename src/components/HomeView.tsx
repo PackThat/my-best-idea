@@ -57,7 +57,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
           <span>Bags</span>
           <Badge variant="default">{bagsCount}</Badge>
         </Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('items')}>
+        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { console.log("1. HomeView: 'Items' button clicked."); onViewChange('items'); }}>
           <ClipboardList className="h-6 w-6" />
           <span>Items</span>
           <Badge variant="default">

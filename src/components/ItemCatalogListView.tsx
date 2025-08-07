@@ -26,12 +26,16 @@ const ItemCatalogListView: React.FC = () => {
 
   const selectedSubcategory = subcategories.find(sc => sc.id === selectedSubcategoryId);
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
-  const relevantItems = catalog_items.filter(item => item.subcategory_id === selectedSubcategoryId);
+  const relevantItems = catalog_items.filter(item => item.subcategoryId === selectedSubcategoryId);
 
-  const handleAddItem = async (itemData: { name: string; notes?: string }) => {
-    await addCatalogItem(itemData);
+  const handleAddItem = async (itemData: { name: string }) => {
+    if (!selectedCategoryId || !selectedSubcategoryId) return;
+    await addCatalogItem({
+      name: itemData.name,
+      categoryId: selectedCategoryId,
+      subcategoryId: selectedSubcategoryId,
+    });
   };
-
   const handleUpdateItem = async (itemId: string, updates: { name: string; notes?: string }) => {
     await updateCatalogItem(itemId, updates);
   };

@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -16,109 +17,94 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Search } from 'lucide-react';
-import { Category, Subcategory, Item, Person, Bag } from '@/types';
+import { Search } from 'lucide-react';
+import { Category, CatalogItem, Person, Bag } from '@/types';
 
 interface ItemSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: Category[];
-  subcategories: Subcategory[];
-  items: Item[];
+  items: CatalogItem[];
   people: Person[];
   bags: Bag[];
-  onAddItemToPacking: (itemId: string, personId?: string, bagId?: string, quantity?: number) => void;
-  onAddNewItem: (item: Omit<Item, 'id'>) => void;
+  onAddSingleItem: (bagId: number | undefined, personId: number | undefined, catalogItem: CatalogItem, quantity: number, notes?: string, isToBuy?: boolean) => Promise<void>;
+  onAddMultipleItems: (bagId: number | undefined, personId: number | undefined, itemsToAdd: { catalogItemId: number; quantity: number; notes?: string; isToBuy?: boolean }[]) => Promise<void>;
   preselectedPersonId?: string;
   preselectedBagId?: string;
-  defaultNeedsToBuy?: boolean;
-  category?: Category; // <-- This is the new line we are adding
 }
 
 export const ItemSelectionDialog: React.FC<ItemSelectionDialogProps> = ({
   open,
   onOpenChange,
   categories,
-  subcategories,
-  items,
+  items: catalogItems,
   people,
   bags,
-  onAddItemToPacking,
-  onAddNewItem,
+  onAddSingleItem,
   preselectedPersonId,
   preselectedBagId,
-  defaultNeedsToBuy = false,
-  category, // We receive the new prop here but don't use it yet.
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const [selectedItemId, setSelectedItemId] = useState('');
-  const [selectedPersonId, setSelectedPersonId] = useState(preselectedPersonId || '');
-  const [selectedBagId, setSelectedBagId] = useState(preselectedBagId || '');
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(preselectedPersonId ? Number(preselectedPersonId) : undefined);
+  const [selectedBagId, setSelectedBagId] = useState<number | undefined>(preselectedBagId ? Number(preselectedBagId) : undefined);
   const [quantity, setQuantity] = useState(1);
-  const [needsToBuy, setNeedsToBuy] = useState(defaultNeedsToBuy);
+  const [needsToBuy, setNeedsToBuy] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
-  // Reset preselected person when dialog opens
-  React.useEffect(() => {
-    if (open && preselectedPersonId) {
-      setSelectedPersonId(preselectedPersonId);
+  useEffect(() => {
+    if (open) {
+      setSelectedPersonId(preselectedPersonId ? Number(preselectedPersonId) : undefined);
+      setSelectedBagId(preselectedBagId ? Number(preselectedBagId) : undefined);
+      setSelectedItemId(null);
+      setSearchTerm('');
+      setSelectedCategoryId('');
+      setQuantity(1);
+      setNeedsToBuy(false);
     }
-  }, [open, preselectedPersonId]);
+  }, [open, preselectedPersonId, preselectedBagId]);
 
   const filteredItems = useMemo(() => {
-    let filtered = items;
+    let filtered = catalogItems;
     if (searchTerm) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     if (selectedCategoryId) {
-      filtered = filtered.filter(item => item.categoryId === selectedCategoryId);
+      filtered = filtered.filter(item => item.categoryId === Number(selectedCategoryId));
     }
     return filtered;
-  }, [items, searchTerm, selectedCategoryId]);
+  }, [catalogItems, searchTerm, selectedCategoryId]);
 
-  const handleAddToPacking = () => {
-    console.log('📦 ItemSelectionDialog handleAddToPacking called');
-    
-    if (!selectedItemId) {
-      console.log('❌ No item selected');
-      return;
-    }
-    
-    console.log('📦 Adding item:', selectedItemId);
-    const catalogItem = items.find(item => item.id === selectedItemId);
-    if (catalogItem) {
-      const newItem: Omit<Item, 'id'> = {
-        name: catalogItem.name,
-        categoryId: catalogItem.categoryId,
-        subcategoryId: catalogItem.subcategoryId,
-        quantity,
-        notes: catalogItem.notes,
-        packed: false,
-        needsToBuy,
-        personId: selectedPersonId || undefined,
-        bagId: selectedBagId || undefined,
-      };
-      onAddNewItem(newItem);
-    }
-    
-    setSelectedItemId('');
-    setQuantity(1);
-    setNeedsToBuy(defaultNeedsToBuy);
+  const handleAddItem = async () => {
+    if (!selectedItemId) return;
+    const catalogItem = catalogItems.find(item => item.id === selectedItemId);
+    if (!catalogItem) return;
+
+    setIsAdding(true);
+    await onAddSingleItem(
+      selectedBagId,
+      selectedPersonId,
+      catalogItem,
+      quantity,
+      undefined, 
+      needsToBuy
+    );
+    setIsAdding(false);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Item to Packing List</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="flex-grow overflow-y-auto pr-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -129,129 +115,78 @@ export const ItemSelectionDialog: React.FC<ItemSelectionDialogProps> = ({
             />
           </div>
 
-          <div>
-            <Label>Category</Label>
-            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="All categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={selectedCategoryId} onValueChange={(val) => setSelectedCategoryId(val === 'all' ? '' : val)}>
+            <SelectTrigger><SelectValue placeholder="Filter by category..." /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <div className="space-y-2">
             <Label>Select Item ({filteredItems.length} found)</Label>
-            <div className="grid gap-2 max-h-60 overflow-y-auto">
-              {filteredItems.map((item) => {
-                const itemCategory = categories.find(c => c.id === item.categoryId);
-                
-                return (
-                  <Card 
-                    key={item.id} 
-                    className={`cursor-pointer transition-colors ${
-                      selectedItemId === item.id ? 'ring-2 ring-blue-500' : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => setSelectedItemId(item.id)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-medium">{item.name}</h4>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="secondary">
-                              {itemCategory?.name}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <div className="grid gap-2 max-h-60 overflow-y-auto border p-2 rounded-md">
+              {filteredItems.map((item) => (
+                <Card 
+                  key={item.id} 
+                  className={`cursor-pointer transition-colors ${selectedItemId === item.id ? 'ring-2 ring-primary' : 'hover:bg-muted/50'}`}
+                  onClick={() => setSelectedItemId(item.id)}
+                >
+                  <CardContent className="p-3">
+                    <h4 className="font-medium">{item.name}</h4>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
 
           {selectedItemId && (
             <div className="border-t pt-4 space-y-4">
-              <h3 className="font-medium">Optional Assignment:</h3>
+              <h3 className="font-medium">Assignment (Optional)</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Person (Optional)</Label>
-                  <Select value={selectedPersonId} onValueChange={setSelectedPersonId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="No person assigned" />
-                    </SelectTrigger>
+                  <Label>Assign to Person</Label>
+                  <Select value={String(selectedPersonId || '')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>
+                    <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No person assigned</SelectItem>
-                      {people.map((person) => (
-                        <SelectItem key={person.id} value={person.id}>
-                          {person.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {people.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                
                 <div>
-                  <Label>Bag (Optional)</Label>
-                  <Select value={selectedBagId} onValueChange={setSelectedBagId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="No bag assigned" />
-                    </SelectTrigger>
+                  <Label>Assign to Bag</Label>
+                  <Select value={String(selectedBagId || '')} onValueChange={(val) => setSelectedBagId(val === 'unassigned' ? undefined : Number(val))}>
+                    <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No bag assigned</SelectItem>
-                      {bags.map((bag) => (
-                        <SelectItem key={bag.id} value={bag.id}>
-                          {bag.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {bags.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Quantity</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  />
+                  <Input type="number" min="1" value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} />
                 </div>
-                
                 <div className="flex items-center space-x-2 pt-6">
-                  <Checkbox
-                    id="needsToBuy"
-                    checked={needsToBuy}
-                    onCheckedChange={(checked) => setNeedsToBuy(!!checked)}
-                  />
+                  <Checkbox id="needsToBuy" checked={needsToBuy} onCheckedChange={(checked) => setNeedsToBuy(Boolean(checked))} />
                   <Label htmlFor="needsToBuy">Need to buy</Label>
                 </div>
               </div>
             </div>
           )}
-
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddToPacking}
-              disabled={!selectedItemId}
-            >
-              Add to Packing List
-            </Button>
-          </div>
         </div>
+
+        <DialogFooter className="pt-4 border-t">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleAddItem} disabled={!selectedItemId || isAdding}>
+            {isAdding ? 'Adding...' : 'Add to Trip'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

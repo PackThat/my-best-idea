@@ -12,7 +12,6 @@ export const TripAddSubcategoryView: React.FC = () => {
   const categorySubcategories = subcategories.filter(sc => sc.categoryId === addingCategoryId);
 
   if (!selectedCategory) {
-    // This can happen if the state is lost, just send them back.
     setView('trip-add-item');
     return null;
   }

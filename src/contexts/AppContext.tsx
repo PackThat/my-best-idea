@@ -1,27 +1,13 @@
-// src/contexts/AppContext.tsx
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { supabase } from '@/lib/SupabaseClient';
 import { Item, CatalogItem, Category, Subcategory, Bag, Person, TodoItem, Trip } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export type AppView =
-  | 'my-trips'
-  | 'items-management'
-  | 'people-management'
-  | 'bags-management'
-  | 'subcategory-management'
-  | 'item-catalog-list'
-  | 'global-tobuy'
-  | 'global-todo'
-  | 'trip-home'
-  | 'trip-people'
-  | 'trip-bags'
-  | 'trip-items'
-  | 'trip-settings'
-  | 'create-trip-page'
-  | 'person-detail'
-  | 'bag-detail'
-  | 'category-detail';
+  | 'my-trips' | 'items-management' | 'people-management' | 'bags-management' | 'subcategory-management'
+  | 'item-catalog-list' | 'global-tobuy' | 'global-todo' | 'trip-home' | 'trip-people' | 'trip-bags'
+  | 'trip-items' | 'trip-add-item' | 'trip-settings' | 'create-trip-page' | 'person-detail' | 'bag-detail' | 'category-detail'
+  | 'trip-add-subcategory' | 'trip-add-item-list';
 
 interface AppContextType {
   view: AppView;
@@ -30,12 +16,13 @@ interface AppContextType {
   selectCategory: (categoryId: string) => void;
   selectedSubcategoryId: string | null;
   selectSubcategory: (subcategoryId: string) => void;
-
+  addingCategoryId: string | null; 
+  setAddingCategoryId: (id: string | null) => void; 
+  addingSubcategoryId: string | null;
+  setAddingSubcategoryId: (id: string | null) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
-
   isLoading: boolean;
-
   categories: Category[];
   subcategories: Subcategory[];
   catalog_items: CatalogItem[];
@@ -46,61 +33,41 @@ interface AppContextType {
   trips: Trip[];
   currentTrip: Trip | null;
   currentTripId: string | null;
-
   currentPerson: Person | null;
   currentBag: Bag | null;
   currentCategory: Category | null;
-
   selectPerson: (personId: string | null) => void;
   selectBag: (bagId: string | null) => void;
   selectCategoryForView: (categoryId: string | null) => void;
-
-  createTrip: (tripData: { name: string; startDate?: string; endDate?: string; backgroundImageUrl?: string }) => Promise<void>;
+  createTrip: (tripData: { name: string; date?: string }) => Promise<void>;
   loadTrip: (tripId: string) => void;
   clearCurrentTrip: () => void;
   updateTrip: (tripId: string, updates: Partial<Trip>) => Promise<void>;
   deleteTrip: (tripId: string) => Promise<void>;
-
   createPerson: (personData: Omit<Person, 'id' | 'createdAt'>) => Promise<Person | null>;
   updatePerson: (personId: number, updates: Partial<Person>) => Promise<void>;
   deletePerson: (personId: number) => Promise<void>;
   addPersonToTrip: (personId: number) => Promise<void>;
   removePersonFromTrip: (personId: number) => Promise<void>;
-
   createBag: (bagData: Omit<Bag, 'id' | 'createdAt'>) => Promise<Bag | null>;
   updateBag: (bagId: number, updates: Partial<Bag>) => Promise<void>;
   deleteBag: (bagId: number) => Promise<void>;
   addBagToTrip: (bagId: number) => Promise<void>;
   removeBagFromTrip: (bagId: number) => Promise<void>;
-
-  addCategory: (categoryData: Omit<Category, 'id' | 'tripId'>) => Promise<number | null>;
-  updateCategory: (categoryId: number, updates: Partial<Category>) => Promise<void>;
-  deleteCategory: (categoryId: number) => Promise<void>;
-
-  addSubcategory: (subcategoryData: Omit<Subcategory, 'id' | 'tripId'>) => Promise<number | null>;
-  updateSubcategory: (subcategoryId: number, updates: Partial<Subcategory>) => Promise<void>;
-  deleteSubcategory: (subcategoryId: number) => Promise<void>;
-
-  addCatalogItem: (itemData: Omit<CatalogItem, 'id'>) => Promise<number | null>;
-  updateCatalogItem: (itemId: number, updates: Partial<CatalogItem>) => Promise<void>;
-  deleteCatalogItem: (itemId: number) => Promise<void>;
-
-  addItemToTrip: (itemData: Omit<Item, 'tripId' | 'id' | 'createdAt'>) => Promise<void>;
+  addCategory: (categoryData: Omit<Category, 'id' | 'createdAt'>) => Promise<string | null>;
+  updateCategory: (categoryId: string, updates: Partial<Category>) => Promise<void>;
+  deleteCategory: (categoryId: string) => Promise<void>;
+  addSubcategory: (subcategoryData: Omit<Subcategory, 'id' | 'createdAt' | 'categoryId'>) => Promise<string | null>;
+  updateSubcategory: (subcategoryId: string, updates: Partial<Subcategory>) => Promise<void>;
+  deleteSubcategory: (subcategoryId: string) => Promise<void>;
+  addCatalogItem: (itemData: Omit<CatalogItem, 'id' | 'createdAt'>) => Promise<string | null>;
+  updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
+  deleteCatalogItem: (itemId: string) => Promise<void>;
+  addItemToTrip: (itemData: Omit<Item, 'id' | 'createdAt'>) => Promise<void>;
   updateItem: (itemId: string, updates: Partial<Item>) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
-  addSingleCatalogItemToTripItems: (
-    bagId: number | undefined,
-    personId: number | undefined,
-    catalogItem: CatalogItem,
-    quantity: number,
-    notes?: string,
-    isToBuy?: boolean
-  ) => Promise<void>;
-  addMultipleCatalogItemsToTripItems: (
-    bagId: number | undefined,
-    personId: number | undefined,
-    itemsToAdd: { catalogItemId: number; quantity: number; notes?: string; isToBuy?: boolean }[]
-  ) => Promise<void>;
+  addSingleCatalogItemToTripItems: (bagId: number | undefined, personId: number | undefined, catalogItem: CatalogItem, quantity: number, notes?: string, isToBuy?: boolean) => Promise<void>;
+  addMultipleCatalogItemsToTripItems: (bagId: number | undefined, personId: number | undefined, itemsToAdd: { catalogItemId: string; quantity: number; notes?: string; isToBuy?: boolean }[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -117,7 +84,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
@@ -125,120 +91,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [people, setPeople] = useState<Person[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [currentTripId, setCurrentTripId] = useState<string | null>(null);
-
   const [currentPersonId, setCurrentPersonId] = useState<string | null>(null);
   const [currentBagId, setCurrentBagId] = useState<string | null>(null);
   const [currentCategoryForViewId, setCurrentCategoryForViewId] = useState<string | null>(null);
+  const [addingCategoryId, setAddingCategoryId] = useState<string | null>(null);
+  const [addingSubcategoryId, setAddingSubcategoryId] = useState<string | null>(null);
 
-  const currentTrip = useMemo(() => {
-    return trips.find(trip => trip.id === currentTripId) || null;
-  }, [trips, currentTripId]);
-
-  const currentPerson = useMemo(() => {
-    return people.find(person => String(person.id) === currentPersonId) || null;
-  }, [people, currentPersonId]);
-
-  const currentBag = useMemo(() => {
-    return bags.find(bag => String(bag.id) === currentBagId) || null;
-  }, [bags, currentBagId]);
-
-  const currentCategory = useMemo(() => {
-    return categories.find(category => String(category.id) === currentCategoryForViewId) || null;
-  }, [categories, currentCategoryForViewId]);
-
-  const currentTripItems = useMemo(() => {
-    return (currentTrip?.items as Item[] || []).map(item => ({
-      ...item,
-      id: String(item.id),
-      categoryId: item.categoryId !== null ? Number(item.categoryId) : undefined,
-      subcategoryId: item.subcategoryId !== null ? Number(item.subcategoryId) : undefined,
-      personId: item.personId !== null ? Number(item.personId) : undefined,
-      bagId: item.bagId !== null ? Number(item.bagId) : undefined,
-      catalogItemId: item.catalogItemId !== null ? Number(item.catalogItemId) : undefined,
-      notes: item.notes || undefined,
-    }));
-  }, [currentTrip]);
-
-  const currentTripTodos = useMemo(() => {
-    return (currentTrip?.todos as TodoItem[] || []).map(todo => ({
-      ...todo,
-      id: String(todo.id),
-    }));
-  }, [currentTrip]);
+  const currentTrip = useMemo(() => trips.find(trip => trip.id === currentTripId) || null, [trips, currentTripId]);
+  const currentPerson = useMemo(() => people.find(person => String(person.id) === currentPersonId) || null, [people, currentPersonId]);
+  const currentBag = useMemo(() => bags.find(bag => String(bag.id) === currentBagId) || null, [bags, currentBagId]);
+  const currentCategory = useMemo(() => categories.find(category => category.id === currentCategoryForViewId) || null, [categories, currentCategoryForViewId]);
+  const currentTripItems = useMemo(() => currentTrip?.items || [], [currentTrip]);
+  const currentTripTodos = useMemo(() => currentTrip?.todos || [], [currentTrip]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const [
-          peopleResult,
-          bagsResult,
-          tripsResult,
-          categoriesResult,
-          subcategoriesResult,
-          catalogItemsResult,
+          peopleResult, bagsResult, tripsResult, categoriesResult, subcategoriesResult, catalogItemsResult,
         ] = await Promise.all([
           supabase.from('people').select('*'),
           supabase.from('bags').select('*'),
-          supabase.from('trips').select('id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id, trip_people, trip_bags, items, todos'),
+          supabase.from('trips').select('*'),
           supabase.from('categories').select('*'),
           supabase.from('subcategories').select('*'),
           supabase.from('catalog_items').select('*'),
         ]);
+        
+        setPeople(peopleResult.data || []);
+        setBags(bagsResult.data || []);
+        setTrips(tripsResult.data?.map(t => ({...t, tripTheme: t.trip_theme, backgroundImageUrl: t.background_image_url, peopleIds: t.trip_people, bagIds: t.trip_bags })) || []);
+        setCategories(categoriesResult.data?.map(c => ({ id: c.id, name: c.name, createdAt: c.created_at })) || []);
+        setSubcategories(subcategoriesResult.data?.map(sc => ({ id: sc.id, name: sc.name, categoryId: sc.category_id, createdAt: sc.created_at })) || []);
+        setCatalogItems(catalogItemsResult.data?.map(ci => ({ id: ci.id, name: ci.name, categoryId: ci.category_id, subcategoryId: ci.subcategory_id, is_favorite: ci.is_favorite, createdAt: ci.created_at })) || []);
 
-        const { data: peopleData, error: peopleError } = peopleResult;
-        const { data: bagsData, error: bagsError } = bagsResult;
-        const { data: tripsData, error: tripsError } = tripsResult;
-        const { data: categoriesData, error: categoriesError } = categoriesResult;
-        const { data: subcategoriesData, error: subcategoriesError } = subcategoriesResult;
-        const { data: catalogItemsData, error: catalogItemsError } = catalogItemsResult;
-
-        if (peopleError) console.error('Error fetching people:', peopleError);
-        if (bagsError) console.error('Error fetching bags:', bagsError);
-        if (tripsError) console.error('Error fetching trips:', tripsError);
-        if (categoriesError) console.error('Error fetching categories:', categoriesError);
-        if (subcategoriesError) console.error('Error fetching subcategories:', subcategoriesError);
-        if (catalogItemsError) console.error('Error fetching catalog items:', catalogItemsError);
-
-        setPeople(peopleData || []);
-        setBags(bagsData || []);
-        setTrips(tripsData?.map(t => ({
-          id: t.id,
-          name: t.name,
-          date: t.date,
-          tripTheme: t.trip_theme,
-          updatedAt: t.updated_at,
-          backgroundImageUrl: t.background_image_url,
-          userId: t.user_id,
-          createdAt: t.created_at,
-          peopleIds: t.trip_people || [],
-          bagIds: t.trip_bags || [],
-          items: t.items || [],
-          todos: t.todos || [],
-        })) || []);
-        setCategories(categoriesData || []);
-        setSubcategories(subcategoriesData || []);
-        setCatalogItems(catalogItemsData || []);
-
-        const storedCurrentTripId = localStorage.getItem('currentTripId');
-        let initialView: AppView = 'my-trips';
-
-        if (!tripsData || tripsData.length === 0) {
-            initialView = 'my-trips';
-            setCurrentTripId(null);
-        } else if (storedCurrentTripId && tripsData.some(t => t.id === storedCurrentTripId)) {
-            setCurrentTripId(storedCurrentTripId);
-            initialView = 'trip-home';
+        const storedTripId = localStorage.getItem('currentTripId');
+        if (storedTripId && tripsResult.data?.some(t => t.id === storedTripId)) {
+          setCurrentTripId(storedTripId);
+          setView('trip-home');
         } else {
-            localStorage.removeItem('currentTripId');
-            setCurrentTripId(null);
-            initialView = 'my-trips';
+          setView('my-trips');
         }
-        setView(initialView);
-
       } catch (error) {
-        console.error("Failed to load initial data from Supabase", error);
-        setView('my-trips');
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -247,16 +143,113 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   useEffect(() => {
-    if (currentTripId) {
-      localStorage.setItem('currentTripId', currentTripId);
-    } else {
-      localStorage.removeItem('currentTripId');
-    }
-    if (currentTripId === null && trips.length > 0) {
-      setView('my-trips');
-    }
-  }, [currentTripId, trips.length, setView]);
+    if (currentTripId) localStorage.setItem('currentTripId', currentTripId);
+    else localStorage.removeItem('currentTripId');
+  }, [currentTripId]);
 
+  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const loadTrip = useCallback((tripId: string) => { setCurrentTripId(tripId); setView('trip-home'); }, [setView]);
+  const clearCurrentTrip = useCallback(() => { setCurrentTripId(null); setView('my-trips'); }, [setView]);
+  
+  const updateTrip = useCallback(async (tripId: string, updates: Partial<Trip>) => {
+    const updatesForSupabase: { [key: string]: any } = {};
+    if (updates.peopleIds !== undefined) { updatesForSupabase.trip_people = updates.peopleIds; }
+    if (updates.bagIds !== undefined) { updatesForSupabase.trip_bags = updates.bagIds; }
+    if (updates.tripTheme !== undefined) { updatesForSupabase.trip_theme = updates.tripTheme; }
+    if (updates.backgroundImageUrl !== undefined) { updatesForSupabase.background_image_url = updates.backgroundImageUrl; }
+    if (updates.name !== undefined) { updatesForSupabase.name = updates.name; }
+    if (updates.date !== undefined) { updatesForSupabase.date = updates.date; }
+    if (updates.items !== undefined) { updatesForSupabase.items = updates.items; }
+    if (updates.todos !== undefined) { updatesForSupabase.todos = updates.todos; }
+    
+    const { data, error } = await supabase.from('trips').update(updatesForSupabase).eq('id', tripId).select().single();
+    
+    if (error) { console.error("Error updating trip:", error); return; }
+    
+    if (data) {
+      const updatedTrip = { ...data, tripTheme: data.trip_theme, backgroundImageUrl: data.background_image_url, peopleIds: data.trip_people, bagIds: data.trip_bags };
+      setTrips(prev => prev.map(trip => (trip.id === tripId ? updatedTrip : trip)));
+    }
+  }, [setTrips]);
+
+  const createTrip = useCallback(async (tripData: { name: string; date?: string }) => {
+    const { data, error } = await supabase.from('trips').insert({ ...tripData, id: uuidv4() }).select().single();
+    if (error) { console.error("Error creating trip:", error); return; }
+    if (data) {
+      const newTrip = { ...data, tripTheme: data.trip_theme, backgroundImageUrl: data.background_image_url, peopleIds: data.trip_people, bagIds: data.trip_bags };
+      setTrips(prev => [...prev, newTrip]);
+      loadTrip(newTrip.id);
+    }
+  }, [setTrips, loadTrip]);
+  
+  const deleteTrip = useCallback(async (tripId: string) => {
+    await supabase.from('trips').delete().eq('id', tripId);
+    setTrips(prev => prev.filter(trip => trip.id !== tripId));
+    if (currentTripId === tripId) {
+      clearCurrentTrip();
+    }
+  }, [currentTripId, clearCurrentTrip, setTrips]);
+
+  const createPerson = useCallback(async (personData: Omit<Person, 'id' | 'createdAt'>) => {
+    const { data, error } = await supabase.from('people').insert(personData).select().single();
+    if (error) { console.error("Error creating person:", error); return null; }
+    setPeople(prev => [...prev, data]);
+    return data;
+  }, [setPeople]);
+
+  const updatePerson = useCallback(async (personId: number, updates: Partial<Person>) => {
+    const { data, error } = await supabase.from('people').update(updates).eq('id', personId).select().single();
+    if (error) { console.error("Error updating person:", error); return; }
+    setPeople(prev => prev.map(p => (p.id === personId ? data : p)));
+  }, [setPeople]);
+
+  const deletePerson = useCallback(async (personId: number) => {
+    await supabase.from('people').delete().eq('id', personId);
+    setPeople(prev => prev.filter(p => p.id !== personId));
+  }, [setPeople]);
+  
+  const addPersonToTrip = useCallback(async (personId: number) => {
+    if (!currentTrip) return;
+    const updatedPeopleIds = Array.from(new Set([...(currentTrip.peopleIds || []), personId]));
+    await updateTrip(currentTrip.id, { peopleIds: updatedPeopleIds });
+  }, [currentTrip, updateTrip]);
+
+  const removePersonFromTrip = useCallback(async (personId: number) => {
+    if (!currentTrip) return;
+    const updatedPeopleIds = (currentTrip.peopleIds || []).filter(id => id !== personId);
+    await updateTrip(currentTrip.id, { peopleIds: updatedPeopleIds });
+  }, [currentTrip, updateTrip]);
+
+  const createBag = useCallback(async (bagData: Omit<Bag, 'id' | 'createdAt'>) => {
+    const { data, error } = await supabase.from('bags').insert(bagData).select().single();
+    if (error) { console.error("Error creating bag:", error); return null; }
+    setBags(prev => [...prev, data]);
+    return data;
+  }, [setBags]);
+
+  const updateBag = useCallback(async (bagId: number, updates: Partial<Bag>) => {
+    const { data, error } = await supabase.from('bags').update(updates).eq('id', bagId).select().single();
+    if (error) { console.error("Error updating bag:", error); return; }
+    setBags(prev => prev.map(b => (b.id === bagId ? data : b)));
+  }, [setBags]);
+
+  const deleteBag = useCallback(async (bagId: number) => {
+    await supabase.from('bags').delete().eq('id', bagId);
+    setBags(prev => prev.filter(b => b.id !== bagId));
+  }, [setBags]);
+  
+  const addBagToTrip = useCallback(async (bagId: number) => {
+    if (!currentTrip) return;
+    const updatedBagIds = Array.from(new Set([...(currentTrip.bagIds || []), bagId]));
+    await updateTrip(currentTrip.id, { bagIds: updatedBagIds });
+  }, [currentTrip, updateTrip]);
+
+  const removeBagFromTrip = useCallback(async (bagId: number) => {
+    if (!currentTrip) return;
+    const updatedBagIds = (currentTrip.bagIds || []).filter(id => id !== bagId);
+    await updateTrip(currentTrip.id, { bagIds: updatedBagIds });
+  }, [currentTrip, updateTrip]);
+  
   const selectCategory = useCallback((categoryId: string) => {
     setSelectedCategoryId(categoryId);
     setView('subcategory-management');
@@ -269,1094 +262,79 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const selectPerson = useCallback((personId: string | null) => {
     setCurrentPersonId(personId);
-    if (personId) {
-      setView('person-detail');
-    } else {
-      setView('people-management');
-    }
+    setView(personId ? 'person-detail' : 'people-management');
   }, [setView]);
 
   const selectBag = useCallback((bagId: string | null) => {
     setCurrentBagId(bagId);
-    if (bagId) {
-      setView('bag-detail');
-    } else {
-      setView('bags-management');
-    }
+    setView(bagId ? 'bag-detail' : 'bags-management');
   }, [setView]);
 
   const selectCategoryForView = useCallback((categoryId: string | null) => {
     setCurrentCategoryForViewId(categoryId);
-    if (categoryId) {
-      setView('category-detail');
-    } else {
-      setView('item-catalog-list');
-    }
+    setView(categoryId ? 'category-detail' : 'item-catalog-list');
   }, [setView]);
 
-  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
-
-  const createTrip = useCallback(async (tripData: { name: string; startDate?: string; endDate?: string; backgroundImageUrl?: string }) => {
-    const newTripId = uuidv4();
-    const { data, error } = await supabase
-      .from('trips')
-      .insert({
-        id: newTripId,
-        name: tripData.name,
-        date: tripData.startDate,
-        trip_theme: tripData.endDate,
-        background_image_url: tripData.backgroundImageUrl,
-        created_at: new Date().toISOString(),
-        trip_people: [],
-        trip_bags: [],
-        items: [],
-        todos: [],
-      })
-      .select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-      `);
-
-    if (error) {
-      console.error("Error creating trip:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      const createdTrip: Trip = {
-        id: data[0].id,
-        name: data[0].name,
-        date: data[0].date,
-        tripTheme: data[0].trip_theme,
-        updatedAt: data[0].updated_at,
-        backgroundImageUrl: data[0].background_image_url,
-        userId: data[0].user_id,
-        createdAt: data[0].created_at,
-        peopleIds: data[0].trip_people || [],
-        bagIds: data[0].trip_bags || [],
-        items: data[0].items || [],
-        todos: data[0].todos || [],
-      };
-      setTrips(prev => [...prev, createdTrip]);
-      setCurrentTripId(createdTrip.id);
-      setView('trip-home');
-    }
-  }, [setTrips, setCurrentTripId, setView]);
-
-  const loadTrip = useCallback(async (tripId: string) => {
-    setCurrentTripId(tripId);
-    setView('trip-home');
-  }, [setCurrentTripId, setView]);
-
-  const clearCurrentTrip = useCallback(() => {
-    setCurrentTripId(null);
-    setView('my-trips');
-  }, [setCurrentTripId, setView]);
-
-  const updateTrip = useCallback(async (tripId: string, updates: Partial<Trip>) => {
-    const updateData: any = {
-      name: updates.name,
-      date: updates.date,
-      trip_theme: updates.tripTheme,
-      background_image_url: updates.backgroundImageUrl,
-      updated_at: new Date().toISOString(),
-      ...(updates.peopleIds !== undefined && { trip_people: updates.peopleIds }),
-      ...(updates.bagIds !== undefined && { trip_bags: updates.bagIds }),
-      ...(updates.items !== undefined && { items: updates.items }),
-      ...(updates.todos !== undefined && { todos: updates.todos }),
-    };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    const { data, error } = await supabase
-      .from('trips')
-      .update(updateData)
-      .eq('id', tripId)
-      .select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-      `);
-
-    if (error) {
-      console.error("Error updating trip:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      setTrips(prev => prev.map(trip =>
-        trip.id === tripId ? {
-          ...trip,
-          name: data[0].name,
-          date: data[0].date,
-          tripTheme: data[0].trip_theme,
-          updatedAt: data[0].updated_at,
-          backgroundImageUrl: data[0].background_image_url,
-          peopleIds: data[0].trip_people || [],
-          bagIds: data[0].trip_bags || [],
-          items: data[0].items || [],
-          todos: data[0].todos || [],
-        } : trip
-      ));
-    }
-  }, [setTrips]);
-
-  const deleteTrip = useCallback(async (tripId: string) => {
-    const { error } = await supabase
-      .from('trips')
-      .delete()
-      .eq('id', tripId);
-
-    if (error) {
-      console.error("Error deleting trip:", error);
-      return;
-    }
-    setTrips(prev => prev.filter(trip => trip.id !== tripId));
-    if (currentTripId === tripId) {
-      clearCurrentTrip();
-    }
-    if (trips.filter(t => t.id !== tripId).length === 0) {
-        setView('my-trips');
-    }
-  }, [currentTripId, clearCurrentTrip, trips, setTrips, setView]);
-
-  const createPerson = useCallback(async (personData: Omit<Person, 'id' | 'createdAt'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('people')
-        .insert({
-          name: personData.name,
-          color: personData.color,
-          created_at: new Date().toISOString()
-        })
-        .select();
-
-      if (error) {
-        console.error("Error creating person:", error);
-        return null;
-      }
-
-      const newPersonFromDb = data[0];
-      const newPerson: Person = {
-        id: newPersonFromDb.id,
-        name: newPersonFromDb.name,
-        color: newPersonFromDb.color,
-        createdAt: newPersonFromDb.created_at,
-      };
-      setPeople(prev => [...prev, newPerson]);
-
-      return newPerson;
-    } catch (error) {
-      console.error("Failed to create person:", error);
-      return null;
-    }
-  }, [setPeople]);
-
-  const updatePerson = useCallback(async (personId: number, updates: Partial<Person>) => {
-    const updateData: any = {
-      name: updates.name,
-      color: updates.color,
-    };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    const { data, error } = await supabase
-      .from('people')
-      .update(updateData)
-      .eq('id', personId)
-      .select();
-
-    if (error) {
-      console.error("Error updating person:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      setPeople(prev => prev.map(person =>
-        person.id === personId ? {
-          ...person,
-          name: data[0].name,
-          color: data[0].color,
-        } : person
-      ));
-    }
-  }, [setPeople]);
-
-  const deletePerson = useCallback(async (personId: number) => {
-    const tripsToUpdate = trips.filter(trip =>
-      (trip.items as Item[])?.some(item => item.personId === personId) ||
-      (trip.peopleIds as number[])?.includes(personId)
-    );
-
-    for (const trip of tripsToUpdate) {
-        const updatedItems = (trip.items as Item[] || []).map(item =>
-            item.personId === personId ? { ...item, personId: undefined } : item
-        );
-        const updatedPeopleIds = (trip.peopleIds as number[] || []).filter(id => id !== personId);
-
-        const { error: tripUpdateError } = await supabase
-            .from('trips')
-            .update({
-                items: updatedItems,
-                trip_people: updatedPeopleIds
-            })
-            .eq('id', trip.id);
-
-        if (tripUpdateError) {
-            console.error(`Error disassociating person from trip ${trip.id}'s items/trip_people:`, tripUpdateError);
-        }
-    }
-
-    const { error } = await supabase
-      .from('people')
-      .delete()
-      .eq('id', personId);
-
-    if (error) {
-      console.error("Error deleting person:", error);
-      return;
-    }
-    setPeople(prev => prev.filter(person => person.id !== personId));
-
-    const { data: updatedTripsData, error: tripsFetchError } = await supabase.from('trips').select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-    `);
-    if (tripsFetchError) console.error("Error re-fetching trips after person deletion:", tripsFetchError);
-    setTrips(updatedTripsData?.map(t => ({
-        id: t.id, name: t.name, date: t.date, tripTheme: t.trip_theme, updatedAt: t.updated_at,
-        backgroundImageUrl: t.background_image_url, userId: t.user_id, createdAt: t.created_at,
-        peopleIds: t.trip_people || [], bagIds: t.trip_bags || [],
-        items: t.items || [], todos: t.todos || []
-    })) || []);
-  }, [trips, setPeople, setTrips]);
-
-  const addPersonToTrip = useCallback(async (personId: number) => {
-    if (!currentTripId) {
-      console.error("addPersonToTrip: No current trip ID selected.");
-      return;
-    }
-
-    const { data: tripData, error: fetchError } = await supabase
-        .from('trips')
-        .select(`id, trip_people`)
-        .eq('id', currentTripId)
-        .single();
-
-    if (fetchError || !tripData) {
-        console.error("Error fetching current trip for person add:", fetchError || "Trip not found");
-        return;
-    }
-
-    const currentPeopleIds = (tripData.trip_people || []) as number[];
-    const updatedPeopleIds = [...currentPeopleIds, personId];
-    const uniquePeopleIds = Array.from(new Set(updatedPeopleIds));
-
-    console.log("Attempting to add personId:", personId, "to trip_people:", uniquePeopleIds);
-
-    const { data, error } = await supabase
-      .from('trips')
-      .update({ trip_people: uniquePeopleIds })
-      .eq('id', currentTripId)
-      .select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-      `);
-
-    if (error) {
-      console.error("Error adding person to trip in Supabase:", error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      console.log("Successfully added person to trip, data received:", data[0]);
-      setTrips(prev => prev.map(trip =>
-        trip.id === currentTripId ? {
-          ...trip,
-          name: data[0].name,
-          date: data[0].date,
-          tripTheme: data[0].trip_theme,
-          updatedAt: data[0].updated_at,
-          backgroundImageUrl: data[0].background_image_url,
-          userId: data[0].user_id,
-          createdAt: data[0].created_at,
-          peopleIds: data[0].trip_people || [],
-          bagIds: data[0].trip_bags || [],
-          items: data[0].items || [],
-          todos: data[0].todos || [],
-        } : trip
-      ));
-    } else {
-        console.warn("Supabase update for adding person returned no data.");
-    }
-  }, [currentTripId, setTrips]);
-
-  const removePersonFromTrip = useCallback(async (personId: number) => {
-    if (!currentTripId) {
-      console.error("removePersonFromTrip: No current trip ID selected.");
-      return;
-    }
-
-    const { data: tripData, error: fetchError } = await supabase
-        .from('trips')
-        .select(`id, trip_people, items`)
-        .eq('id', currentTripId)
-        .single();
-
-    if (fetchError || !tripData) {
-        console.error("Error fetching current trip for person removal:", fetchError || "Trip not found");
-        return;
-    }
-
-    const currentPeopleIds = (tripData.trip_people || []) as number[];
-    const updatedPeopleIds = currentPeopleIds.filter(id => id !== personId);
-
-    const currentItems = (tripData.items || []) as Item[];
-    const updatedItems = currentItems.map(item =>
-        item.personId === personId ? { ...item, personId: undefined } : item
-    );
-
-    console.log("Attempting to remove personId:", personId, "from trip_people:", updatedPeopleIds);
-
-    const { data, error } = await supabase
-      .from('trips')
-      .update({ trip_people: updatedPeopleIds, items: updatedItems })
-      .eq('id', currentTripId)
-      .select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-      `);
-
-    if (error) {
-      console.error("Error removing person from trip in Supabase:", error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-        console.log("Successfully removed person from trip, data received:", data[0]);
-      setTrips(prev => prev.map(trip =>
-        trip.id === currentTripId ? {
-          ...trip,
-          name: data[0].name,
-          date: data[0].date,
-          tripTheme: data[0].trip_theme,
-          updatedAt: data[0].updated_at,
-          backgroundImageUrl: data[0].background_image_url,
-          userId: data[0].user_id,
-          createdAt: data[0].created_at,
-          peopleIds: data[0].trip_people || [],
-          bagIds: data[0].trip_bags || [],
-          items: data[0].items || [],
-          todos: data[0].todos || [],
-        } : trip
-      ));
-    } else {
-        console.warn("Supabase update for removing person returned no data.");
-    }
-  }, [currentTripId, setTrips]);
-
-  const createBag = useCallback(async (bagData: Omit<Bag, 'id' | 'createdAt'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('bags')
-        .insert({ name: bagData.name, color: bagData.color, created_at: new Date().toISOString() })
-        .select();
-
-      if (error) {
-        console.error("Error creating bag:", error);
-        return null;
-      }
-      const newBagFromDb = data[0];
-      const newBag: Bag = {
-        id: newBagFromDb.id,
-        name: newBagFromDb.name,
-        color: newBagFromDb.color,
-        createdAt: newBagFromDb.created_at,
-      };
-      setBags(prev => [...prev, newBag]);
-      return newBag;
-    } catch (error) {
-      console.error("Failed to create bag:", error);
-      return null;
-    }
-  }, [setBags]);
-
-  const addBagToTrip = useCallback(async (bagId: number) => {
-    if (!currentTripId) {
-      console.error("addBagToTrip: No current trip ID selected.");
-      return;
-    }
-
-    const { data: tripData, error: fetchError } = await supabase
-        .from('trips')
-        .select(`id, trip_bags`)
-        .eq('id', currentTripId)
-        .single();
-
-    if (fetchError || !tripData) {
-        console.error("Error fetching current trip for bag add:", fetchError || "Trip not found");
-        return;
-    }
-
-    const currentBagIds = (tripData.trip_bags || []) as number[];
-    const updatedBagIds = [...currentBagIds, bagId];
-    const uniqueBagIds = Array.from(new Set(updatedBagIds));
-
-    console.log("Attempting to add bagId:", bagId, "to trip_bags:", uniqueBagIds);
-
-    const { data, error } = await supabase
-      .from('trips')
-      .update({ trip_bags: uniqueBagIds })
-      .eq('id', currentTripId)
-      .select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-      `);
-
-    if (error) {
-      console.error("Error adding bag to trip in Supabase:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      console.log("Successfully added bag to trip, data received:", data[0]);
-      setTrips(prev => prev.map(trip =>
-        trip.id === currentTripId ? {
-          ...trip,
-          name: data[0].name,
-          date: data[0].date,
-          tripTheme: data[0].trip_theme,
-          updatedAt: data[0].updated_at,
-          backgroundImageUrl: data[0].background_image_url,
-          userId: data[0].user_id,
-          createdAt: data[0].created_at,
-          peopleIds: data[0].trip_people || [],
-          bagIds: data[0].trip_bags || [],
-          items: data[0].items || [],
-          todos: data[0].todos || [],
-        } : trip
-      ));
-    } else {
-        console.warn("Supabase update for adding bag returned no data.");
-    }
-  }, [currentTripId, setTrips]);
-
-
-  const removeBagFromTrip = useCallback(async (bagId: number) => {
-    if (!currentTripId) {
-      console.error("removeBagFromTrip: No current trip ID selected.");
-      return;
-    }
-
-    const { data: tripData, error: fetchError } = await supabase
-        .from('trips')
-        .select(`id, trip_bags, items`)
-        .eq('id', currentTripId)
-        .single();
-
-    if (fetchError || !tripData) {
-        console.error("Error fetching current trip for bag removal:", fetchError || "Trip not found");
-        return;
-    }
-
-    const currentBagIds = (tripData.trip_bags || []) as number[];
-    const updatedBagIds = currentBagIds.filter(id => id !== bagId);
-
-    const currentItems = (tripData.items || []) as Item[];
-    const updatedItems = currentItems.map(item =>
-        item.bagId === bagId ? { ...item, bagId: undefined, packed: false } : item
-    );
-
-    console.log("Attempting to remove bagId:", bagId, "from trip_bags:", updatedBagIds);
-
-    const { data, error } = await supabase
-      .from('trips')
-      .update({ trip_bags: updatedBagIds, items: updatedItems })
-      .eq('id', currentTripId)
-      .select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-      `);
-
-    if (error) {
-      console.error("Error removing bag from trip in Supabase:", error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-        console.log("Successfully removed bag from trip, data received:", data[0]);
-      setTrips(prev => prev.map(trip =>
-        trip.id === currentTripId ? {
-          ...trip,
-          name: data[0].name,
-          date: data[0].date,
-          tripTheme: data[0].trip_theme,
-          updatedAt: data[0].updated_at,
-          backgroundImageUrl: data[0].background_image_url,
-          userId: data[0].user_id,
-          createdAt: data[0].created_at,
-          peopleIds: data[0].trip_people || [],
-          bagIds: data[0].trip_bags || [],
-          items: data[0].items || [],
-          todos: data[0].todos || [],
-        } : trip
-      ));
-    } else {
-        console.warn("Supabase update for removing bag returned no data.");
-    }
-  }, [currentTripId, setTrips]);
-
-
-  const updateBag = useCallback(async (bagId: number, updates: Partial<Bag>) => {
-    const updateData: any = {
-      name: updates.name,
-      color: updates.color,
-    };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    const { data, error } = await supabase
-      .from('bags')
-      .update(updateData)
-      .eq('id', bagId)
-      .select();
-
-    if (error) {
-      console.error("Error updating bag:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      setBags(prev => prev.map(bag =>
-        bag.id === bagId ? {
-          ...bag,
-          name: data[0].name,
-          color: data[0].color,
-        } : bag
-      ));
-    }
-  }, [setBags]);
-
-  const deleteBag = useCallback(async (bagId: number) => {
-    const tripsToUpdate = trips.filter(trip =>
-      (trip.items as Item[])?.some(item => item.bagId === bagId) ||
-      (trip.bagIds as number[])?.includes(bagId)
-    );
-
-    for (const trip of tripsToUpdate) {
-        const updatedItems = (trip.items as Item[] || []).map(item =>
-            item.bagId === bagId ? { ...item, bagId: undefined, packed: false } : item
-        );
-        const updatedBagIds = (trip.bagIds as number[] || []).filter(id => id !== bagId);
-
-        const { error: tripUpdateError } = await supabase
-            .from('trips')
-            .update({
-                items: updatedItems,
-                trip_bags: updatedBagIds
-            })
-            .eq('id', trip.id);
-
-        if (tripUpdateError) {
-            console.error(`Error disassociating bag from trip ${trip.id}'s items/trip_bags:`, tripUpdateError);
-        }
-    }
-
-    const { error } = await supabase
-      .from('bags')
-      .delete()
-      .eq('id', bagId);
-
-    if (error) {
-      console.error("Error deleting bag:", error);
-      return;
-    }
-    setBags(prev => prev.filter(bag => bag.id !== bagId));
-
-    const { data: updatedTripsData, error: tripsFetchError } = await supabase.from('trips').select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-    `);
-    if (tripsFetchError) console.error("Error re-fetching trips after bag deletion:", tripsFetchError);
-    setTrips(updatedTripsData?.map(t => ({
-        id: t.id, name: t.name, date: t.date, tripTheme: t.trip_theme, updatedAt: t.updated_at,
-        backgroundImageUrl: t.background_image_url, userId: t.user_id, createdAt: t.created_at,
-        peopleIds: t.trip_people || [], bagIds: t.trip_bags || [],
-        items: t.items || [], todos: t.todos || []
-    })) || []);
-  }, [trips, setBags, setTrips]);
-
-  const addCategory = useCallback(async (categoryData: Omit<Category, 'id' | 'tripId'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .insert({ name: categoryData.name, created_at: new Date().toISOString() })
-        .select();
-
-      if (error) {
-        console.error("Error creating category:", error);
-        return null;
-      }
-      const newCategoryFromDb = data[0];
-      setCategories(prev => [...prev, {
-        id: newCategoryFromDb.id,
-        name: newCategoryFromDb.name,
-        createdAt: newCategoryFromDb.created_at,
-      }]);
-      return newCategoryFromDb.id;
-    } catch (error) {
-      console.error("Failed to create category:", error);
-      return null;
-    }
-  }, [setCategories]);
-
-  const updateCategory = useCallback(async (categoryId: number, updates: Partial<Category>) => {
-    const updateData: any = { name: updates.name };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    const { data, error } = await supabase
-      .from('categories')
-      .update(updateData)
-      .eq('id', categoryId)
-      .select();
-
-    if (error) {
-      console.error("Error updating category:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      setCategories(prev => prev.map(cat =>
-        cat.id === categoryId ? { ...cat, name: data[0].name } : cat
-      ));
-    }
-  }, [setCategories]);
-
-  const deleteCategory = useCallback(async (categoryId: number) => {
-    const tripsToUpdateForItems = trips.filter(trip => (trip.items as Item[])?.some(item => item.categoryId === categoryId));
-
-    for (const trip of tripsToUpdateForItems) {
-        const updatedItems = (trip.items as Item[] || []).map(item =>
-            item.categoryId === categoryId ? { ...item, categoryId: undefined } : item
-        );
-        const { error: tripUpdateError } = await supabase
-            .from('trips')
-            .update({ items: updatedItems })
-            .eq('id', trip.id);
-
-        if (tripUpdateError) {
-            console.error(`Error disassociating category from trip ${trip.id}'s items:`, tripUpdateError);
-        }
-    }
-
-    const { error: subcategoryDeleteError } = await supabase
-      .from('subcategories')
-      .delete()
-      .eq('category_id', categoryId);
-    if (subcategoryDeleteError) console.error("Error deleting subcategories under category:", subcategoryDeleteError);
-    setSubcategories(prev => prev.filter(sub => sub.categoryId !== categoryId));
-
-    const { error: catalogItemDeleteError } = await supabase
-        .from('catalog_items')
-        .delete()
-        .eq('category_id', categoryId);
-    if (catalogItemDeleteError) console.error("Error deleting catalog items under category:", catalogItemDeleteError);
-    setCatalogItems(prev => prev.filter(item => item.categoryId !== categoryId));
-
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', categoryId);
-
-    if (error) {
-      console.error("Error deleting category:", error);
-      return;
-    }
-    setCategories(prev => prev.filter(cat => cat.id !== categoryId));
-
-    const { data: updatedTripsData, error: tripsFetchError } = await supabase.from('trips').select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-    `);
-    if (tripsFetchError) console.error("Error re-fetching trips after category deletion:", tripsFetchError);
-    setTrips(updatedTripsData?.map(t => ({
-        id: t.id, name: t.name, date: t.date, tripTheme: t.trip_theme, updatedAt: t.updated_at,
-        backgroundImageUrl: t.background_image_url, userId: t.user_id, createdAt: t.created_at,
-        peopleIds: t.trip_people || [], bagIds: t.trip_bags || [],
-        items: t.items || [], todos: t.todos || []
-    })) || []);
-  }, [trips, setCategories, setSubcategories, setCatalogItems, setTrips]);
-
-  const addSubcategory = useCallback(async (subcategoryData: Omit<Subcategory, 'id' | 'tripId'>) => {
-    if (!selectedCategoryId) {
-      console.error("No category selected for subcategory creation.");
-      return null;
-    }
-    try {
-      const { data, error } = await supabase
-        .from('subcategories')
-        .insert({ name: subcategoryData.name, category_id: Number(selectedCategoryId), created_at: new Date().toISOString() })
-        .select();
-
-      if (error) {
-        console.error("Error creating subcategory:", error);
-        return null;
-      }
-      const newSubcategoryFromDb = data[0];
-      setSubcategories(prev => [...prev, {
-        id: newSubcategoryFromDb.id,
-        name: newSubcategoryFromDb.name,
-        categoryId: newSubcategoryFromDb.category_id,
-        createdAt: newSubcategoryFromDb.created_at,
-      }]);
-      return newSubcategoryFromDb.id;
-    } catch (error) {
-      console.error("Failed to create subcategory:", error);
-      return null;
-    }
-  }, [selectedCategoryId, setSubcategories]);
-
-  const updateSubcategory = useCallback(async (subcategoryId: number, updates: Partial<Subcategory>) => {
-    const updateData: any = { name: updates.name };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    const { data, error } = await supabase
-      .from('subcategories')
-      .update(updateData)
-      .eq('id', subcategoryId)
-      .select();
-
-    if (error) {
-      console.error("Error updating subcategory:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      setSubcategories(prev => prev.map(sub =>
-        sub.id === subcategoryId ? { ...sub, name: data[0].name } : sub
-      ));
-    }
-  }, [setSubcategories]);
-
-  const deleteSubcategory = useCallback(async (subcategoryId: number) => {
-    const tripsToUpdateForItems = trips.filter(trip => (trip.items as Item[])?.some(item => item.subcategoryId === subcategoryId));
-
-    for (const trip of tripsToUpdateForItems) {
-        const updatedItems = (trip.items as Item[] || []).map(item =>
-            item.subcategoryId === subcategoryId ? { ...item, subcategoryId: undefined } : item
-        );
-        const { error: tripUpdateError } = await supabase
-            .from('trips')
-            .update({ items: updatedItems })
-            .eq('id', trip.id);
-
-        if (tripUpdateError) {
-            console.error(`Error disassociating subcategory from trip ${trip.id}'s items:`, tripUpdateError);
-        }
-    }
-
-    const { error: catalogItemDeleteError } = await supabase
-        .from('catalog_items')
-        .delete()
-        .eq('subcategory_id', subcategoryId);
-    if (catalogItemDeleteError) console.error("Error deleting catalog items under subcategory:", catalogItemDeleteError);
-    setCatalogItems(prev => prev.filter(item => item.subcategoryId !== subcategoryId));
-
-    const { error } = await supabase
-      .from('subcategories')
-      .delete()
-      .eq('id', subcategoryId);
-
-    if (error) {
-      console.error("Error deleting subcategory:", error);
-      return;
-    }
-    setSubcategories(prev => prev.filter(sub => sub.id !== subcategoryId));
-
-    const { data: updatedTripsData, error: tripsFetchError } = await supabase.from('trips').select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-    `);
-    if (tripsFetchError) console.error("Error re-fetching trips after subcategory deletion:", tripsFetchError);
-    setTrips(updatedTripsData?.map(t => ({
-        id: t.id, name: t.name, date: t.date, tripTheme: t.trip_theme, updatedAt: t.updated_at,
-        backgroundImageUrl: t.background_image_url, userId: t.user_id, createdAt: t.created_at,
-        peopleIds: t.trip_people || [], bagIds: t.trip_bags || [],
-        items: t.items || [], todos: t.todos || []
-    })) || []);
-  }, [trips, setSubcategories, setCatalogItems, setTrips]);
-
-  const addCatalogItem = useCallback(async (itemData: Omit<CatalogItem, 'id'>) => {
-    if (!itemData.categoryId) {
-      console.error("Cannot create catalog item without a category ID.");
-      return null;
-    }
-    try {
-      const { data, error } = await supabase
-        .from('catalog_items')
-        .insert({
-          name: itemData.name,
-          category_id: Number(itemData.categoryId),
-          subcategory_id: itemData.subcategoryId ? Number(itemData.subcategoryId) : undefined,
-          is_favorite: itemData.is_favorite || false,
-          created_at: new Date().toISOString(),
-        })
-        .select();
-
-      if (error) {
-        console.error("Error creating catalog item:", error);
-        return null;
-      }
-      const newCatalogItemFromDb = data[0];
-      setCatalogItems(prev => [...prev, {
-        id: newCatalogItemFromDb.id,
-        name: newCatalogItemFromDb.name,
-        categoryId: newCatalogItemFromDb.category_id,
-        subcategoryId: newCatalogItemFromDb.subcategory_id,
-        is_favorite: newCatalogItemFromDb.is_favorite,
-        createdAt: newCatalogItemFromDb.created_at,
-      }]);
-      return newCatalogItemFromDb.id;
-    } catch (error) {
-      console.error("Failed to create catalog item:", error);
-      return null;
+  const updateCatalogItem = useCallback(async (itemId: string, updates: Partial<CatalogItem>) => {
+    const { data, error } = await supabase.from('catalog_items').update({ is_favorite: updates.is_favorite }).eq('id', itemId).select().single();
+    if (error) { console.error("Error updating catalog item:", error); return; }
+    if (data) {
+      setCatalogItems(prev => prev.map(i => (i.id === itemId ? { ...i, is_favorite: data.is_favorite } : i)));
     }
   }, [setCatalogItems]);
-
-  const updateCatalogItem = useCallback(async (itemId: number, updates: Partial<CatalogItem>) => {
-    const updateData: any = {
-      name: updates.name,
-      category_id: updates.categoryId ? Number(updates.categoryId) : undefined,
-      subcategory_id: updates.subcategoryId ? Number(updates.subcategoryId) : undefined,
-      is_favorite: updates.is_favorite,
-    };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
-
-    const { data, error } = await supabase
-      .from('catalog_items')
-      .update(updateData)
-      .eq('id', itemId)
-      .select();
-
-    if (error) {
-      console.error("Error updating catalog item:", error);
-      return;
-    }
-    if (data && data.length > 0) {
-      setCatalogItems(prev => prev.map(item =>
-        item.id === itemId ? {
-          ...item,
-          name: data[0].name,
-          categoryId: data[0].category_id,
-          subcategoryId: data[0].subcategory_id,
-          is_favorite: data[0].is_favorite,
-        } : item
-      ));
-    }
-  }, [setCatalogItems]);
-
-  const deleteCatalogItem = useCallback(async (itemId: number) => {
-    const tripsToUpdateForItems = trips.filter(trip => (trip.items as Item[])?.some(item => item.catalogItemId === itemId));
-
-    for (const trip of tripsToUpdateForItems) {
-        const updatedItems = (trip.items as Item[] || []).map(item =>
-            item.catalogItemId === itemId ? { ...item, catalogItemId: undefined, name: item.name + " (Deleted Catalog Item)" } : item
-        );
-
-        const { error: tripUpdateError } = await supabase
-            .from('trips')
-            .update({ items: updatedItems })
-            .eq('id', trip.id);
-
-        if (tripUpdateError) {
-            console.error(`Error disassociating catalog item from trip ${trip.id}'s items:`, tripUpdateError);
-        }
-    }
-
-    const { error } = await supabase
-      .from('catalog_items')
-      .delete()
-      .eq('id', itemId);
-
-    if (error) {
-      console.error("Error deleting catalog item:", error);
-      return;
-    }
-    setCatalogItems(prev => prev.filter(item => item.id !== itemId));
-
-    const { data: updatedTripsData, error: tripsFetchError } = await supabase.from('trips').select(`
-        id, name, date, trip_theme, updated_at, created_at, background_image_url, user_id,
-        trip_people, trip_bags, items, todos
-    `);
-    if (tripsFetchError) console.error("Error re-fetching trips after catalog item deletion:", tripsFetchError);
-    setTrips(updatedTripsData?.map(t => ({
-        id: t.id, name: t.name, date: t.date, tripTheme: t.trip_theme, updatedAt: t.updated_at,
-        backgroundImageUrl: t.background_image_url, userId: t.user_id, createdAt: t.created_at,
-        peopleIds: t.trip_people || [], bagIds: t.trip_bags || [],
-        items: t.items || [], todos: t.todos || []
-    })) || []);
-  }, [trips, setCatalogItems, setTrips]);
-
-  const addItemToTrip = useCallback(async (itemData: Omit<Item, 'tripId' | 'id' | 'createdAt'>) => {
-    if (!currentTripId || !currentTrip) {
-      console.error("No current trip selected to add item to.");
-      return;
-    }
-
-    const newItem: Item = {
-      id: uuidv4(),
-      name: itemData.name,
-      catalogItemId: itemData.catalogItemId,
-      categoryId: itemData.categoryId,
-      subcategoryId: itemData.subcategoryId,
-      personId: itemData.personId,
-      bagId: itemData.bagId,
-      packed: itemData.packed || false,
-      quantity: itemData.quantity || 1,
-      isToBuy: itemData.isToBuy || false,
-      notes: itemData.notes || undefined,
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedItems = [...(currentTrip.items || []), newItem];
-
-    await updateTrip(currentTripId, { items: updatedItems });
-  }, [currentTripId, currentTrip, updateTrip]);
 
   const updateItem = useCallback(async (itemId: string, updates: Partial<Item>) => {
-    if (!currentTripId || !currentTrip) {
-      console.error("No current trip selected to update item in.");
-      return;
-    }
-
-    const updatedItems = (currentTrip.items || []).map(item =>
-      item.id === itemId ? { ...item, ...updates } : item
-    );
-
-    await updateTrip(currentTripId, { items: updatedItems });
-  }, [currentTripId, currentTrip, updateTrip]);
+    if (!currentTrip) return;
+    const updatedItems = (currentTrip.items || []).map(item => (item.id === itemId ? { ...item, ...updates } : item));
+    await updateTrip(currentTrip.id, { items: updatedItems });
+  }, [currentTrip, updateTrip]);
 
   const deleteItem = useCallback(async (itemId: string) => {
-    if (!currentTripId || !currentTrip) {
-      console.error("No current trip selected to delete item from.");
-      return;
-    }
-
+    if (!currentTrip) return;
     const updatedItems = (currentTrip.items || []).filter(item => item.id !== itemId);
-
-    await updateTrip(currentTripId, { items: updatedItems });
-  }, [currentTripId, currentTrip, updateTrip]);
-
-  const addSingleCatalogItemToTripItems = useCallback(async (
-    bagId: number | undefined,
-    personId: number | undefined,
-    catalogItem: CatalogItem,
-    quantity: number,
-    notes?: string,
-    isToBuy: boolean = false
-  ) => {
-    const itemToAdd: Omit<Item, 'tripId' | 'id' | 'createdAt'> = {
-      name: catalogItem.name,
-      catalogItemId: catalogItem.id,
-      categoryId: catalogItem.categoryId,
-      subcategoryId: catalogItem.subcategoryId,
-      packed: false,
-      quantity: quantity,
-      isToBuy: isToBuy,
-      bagId: bagId,
-      personId: personId,
-      notes: notes,
-    };
-    await addItemToTrip(itemToAdd);
-  }, [addItemToTrip]);
+    await updateTrip(currentTrip.id, { items: updatedItems });
+  }, [currentTrip, updateTrip]);
 
   const addMultipleCatalogItemsToTripItems = useCallback(async (
-    bagId: number | undefined,
-    personId: number | undefined,
-    itemsToAdd: { catalogItemId: number; quantity: number; notes?: string; isToBuy?: boolean }[]
+    bagId: number | undefined, personId: number | undefined,
+    itemsToAdd: { catalogItemId: string; quantity: number; notes?: string; isToBuy?: boolean }[]
   ) => {
-    if (!currentTripId || !currentTrip) {
-      console.error("No current trip selected to add items to.");
-      return;
-    }
-
+    if (!currentTrip) return;
     const newItems: Item[] = [];
-    itemsToAdd.forEach(itemData => {
+    for (const itemData of itemsToAdd) {
       const catalogItem = catalogItems.find(ci => ci.id === itemData.catalogItemId);
-      if (!catalogItem) {
-        console.warn(`Catalog item with ID ${itemData.catalogItemId} not found. Skipping.`);
-        return;
+      if (catalogItem) {
+        newItems.push({
+          id: uuidv4(), name: catalogItem.name, catalogItemId: catalogItem.id,
+          categoryId: catalogItem.categoryId, subcategoryId: catalogItem.subcategoryId,
+          packed: false, quantity: itemData.quantity, isToBuy: itemData.isToBuy || false,
+          bagId, personId, notes: itemData.notes, createdAt: new Date().toISOString(),
+        });
       }
-      newItems.push({
-        id: uuidv4(),
-        name: catalogItem.name,
-        catalogItemId: catalogItem.id,
-        categoryId: catalogItem.categoryId,
-        subcategoryId: catalogItem.subcategoryId,
-        packed: false,
-        quantity: itemData.quantity,
-        isToBuy: itemData.isToBuy || false,
-        bagId: bagId,
-        personId: personId,
-        notes: itemData.notes || undefined,
-        createdAt: new Date().toISOString(),
-      });
-    });
+    }
+    await updateTrip(currentTrip.id, { items: [...(currentTrip.items || []), ...newItems] });
+  }, [currentTrip, catalogItems, updateTrip]);
 
-    const updatedItems = [...(currentTrip.items || []), ...newItems];
-
-    await updateTrip(currentTripId, { items: updatedItems });
-  }, [currentTripId, currentTrip, catalogItems, updateTrip]);
-
-
-  const value = useMemo(() => ({
-    categories,
-    subcategories,
-    catalog_items: catalogItems,
-    bags,
-    people,
-    items: currentTripItems,
-    todos: currentTripTodos,
-    trips,
-    currentTrip,
-    currentTripId,
-    isLoading,
-
-    view, setView,
-    selectedCategoryId, selectCategory,
-    selectedSubcategoryId, selectSubcategory,
-
-    sidebarOpen, toggleSidebar,
-
-    currentPerson, // Added
-    currentBag, // Added
-    currentCategory, // Added
-    selectPerson, // Added
-    selectBag, // Added
-    selectCategoryForView, // Added
-
-    createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip,
-    createPerson, updatePerson, deletePerson,
-    addPersonToTrip,
-    removePersonFromTrip,
-    createBag, updateBag, deleteBag, addBagToTrip,
-    removeBagFromTrip,
-    addCategory, updateCategory, deleteCategory,
-    addSubcategory, updateSubcategory, deleteSubcategory,
-    addCatalogItem, updateCatalogItem, deleteCatalogItem,
-    addItemToTrip, updateItem, deleteItem,
-    addSingleCatalogItemToTripItems,
-    addMultipleCatalogItemsToTripItems,
-  }), [
-    categories, subcategories, catalogItems, bags, people,
-    currentTripItems, currentTripTodos, trips, currentTrip, currentTripId,
-    view, sidebarOpen, selectedCategoryId, selectedSubcategoryId, isLoading,
-    setView, selectCategory, selectSubcategory, toggleSidebar,
-    currentPerson, currentBag, currentCategory, // Added
-    selectPerson, selectBag, selectCategoryForView, // Added
-    createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip,
-    createPerson, updatePerson, deletePerson,
-    addPersonToTrip, removePersonFromTrip,
-    createBag, updateBag, deleteBag, addBagToTrip,
-    removeBagFromTrip,
-    addCategory, updateCategory, deleteCategory,
-    addSubcategory, updateSubcategory, deleteSubcategory,
-    addCatalogItem, updateCatalogItem, deleteCatalogItem,
-    addItemToTrip, updateItem, deleteItem,
-    addSingleCatalogItemToTripItems, addMultipleCatalogItemsToTripItems,
-  ]);
+  const value = {
+    view, setView, selectedCategoryId, selectCategory, selectedSubcategoryId, selectSubcategory,
+    addingCategoryId, setAddingCategoryId, addingSubcategoryId, setAddingSubcategoryId,
+    sidebarOpen, toggleSidebar, isLoading, categories, subcategories, catalog_items: catalogItems,
+    bags, people, items: currentTripItems, todos: [], trips, currentTrip, currentTripId,
+    currentPerson, currentBag, currentCategory, selectPerson, selectBag, selectCategoryForView,
+    createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip, createPerson, updatePerson,
+    deletePerson, addPersonToTrip, removePersonFromTrip, createBag, updateBag, deleteBag,
+    addBagToTrip, removeBagFromTrip,
+    updateCatalogItem, updateItem, deleteItem, addMultipleCatalogItemsToTripItems,
+    // Dummy functions for unimplemented features
+    addCategory: async () => null, updateCategory: async () => {}, deleteCategory: async () => {},
+    addSubcategory: async () => null, updateSubcategory: async () => {}, deleteSubcategory: async () => {},
+    addCatalogItem: async () => null, deleteCatalogItem: async () => {},
+    addItemToTrip: async () => {},
+    addSingleCatalogItemToTripItems: async () => {},
+  };
 
   return (
-    <AppContext.Provider value={value}>
+    <AppContext.Provider value={value as AppContextType}>
       {children}
     </AppContext.Provider>
   );

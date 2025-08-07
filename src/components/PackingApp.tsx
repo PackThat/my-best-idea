@@ -1,4 +1,3 @@
-// src/components/PackingApp.tsx
 import React, { useMemo, useCallback } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import PackingAppContent from './PackingAppContent';
@@ -22,7 +21,6 @@ export const PackingApp: React.FC = () => {
       case 'create-trip-page':
         return { type: 'list' };
       case 'trip-home':
-      case 'trip-items':
       case 'trip-settings':
       case 'global-tobuy':
       case 'global-todo':
@@ -34,6 +32,14 @@ export const PackingApp: React.FC = () => {
         return { type: 'trip-people' };
       case 'trip-bags':
         return { type: 'trip-bags' };
+      case 'trip-items':
+        return { type: 'trip-items' };
+      case 'trip-add-item':
+        return { type: 'trip-add-item' };
+      case 'trip-add-subcategory':
+        return { type: 'trip-add-subcategory' };
+      case 'trip-add-item-list':
+        return { type: 'trip-add-item-list' };
       case 'person-detail':
         return { type: 'person', personId: currentPerson?.id ? String(currentPerson.id) : undefined };
       case 'bag-detail':
@@ -45,7 +51,7 @@ export const PackingApp: React.FC = () => {
     }
   }, [view, currentPerson, currentBag, currentCategory]);
 
-  const handleTripViewChange = useCallback((newTripSubView: 'people' | 'bags' | 'items' | 'tobuy' | 'trips') => {
+  const handleTripViewChange = useCallback((newTripSubView: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo') => {
     switch (newTripSubView) {
       case 'people':
         setView('trip-people');
@@ -88,7 +94,7 @@ export const PackingApp: React.FC = () => {
   }, [selectBag]);
 
   const handleBackToList = useCallback(() => {
-    if (view === 'trip-people' || view === 'trip-bags') {
+    if (view === 'trip-people' || view === 'trip-bags' || view === 'trip-items') {
       setView('trip-home');
     } else if (view === 'person-detail') {
         if (currentTripId) {
@@ -118,15 +124,17 @@ export const PackingApp: React.FC = () => {
     }
   }, [view, currentTripId, clearCurrentTrip, setView, selectPerson, selectBag, selectCategoryForView]);
 
+  console.log("2. PackingApp: Rendering with view state -", view);
+
   return (
     <PackingAppContent
       viewState={viewState}
       onTripViewChange={handleTripViewChange}
       onNavigateToTripHome={handleNavigateToTripHome}
-onPersonClick={handlePersonClick}
-onCategoryClick={handleCategoryClick}
-onBackToList={handleBackToList}
-/>
+      onPersonClick={handlePersonClick}
+      onCategoryClick={handleCategoryClick}
+      onBackToList={handleBackToList}
+    />
   );
 };
 

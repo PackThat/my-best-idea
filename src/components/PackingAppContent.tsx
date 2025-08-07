@@ -6,11 +6,15 @@ import PersonView from './PersonView';
 import CategoryView from './CategoryView';
 import TripPeopleView from './TripPeopleView';
 import TripBagsView from './TripBagsView';
+import TripItemsView from './TripItemsView';
+import TripAddItemView from './TripAddItemView';
+import { TripAddSubcategoryView } from './TripAddSubcategoryView';
+import { TripAddItemListView } from './TripAddItemListView';
 import { ViewState } from '@/types';
 
 interface PackingAppContentProps {
   viewState: ViewState;
-  onTripViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'trips') => void; // Corrected typo here
+  onTripViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo') => void;
   onNavigateToTripHome: () => void;
   onPersonClick: (personId: string) => void;
   onCategoryClick: (categoryId: string, personId?: string) => void;
@@ -19,7 +23,7 @@ interface PackingAppContentProps {
 
 const PackingAppContent: React.FC<PackingAppContentProps> = ({
   viewState,
-  onTripViewChange, // Corrected typo here
+  onTripViewChange,
   onNavigateToTripHome,
   onPersonClick,
   onCategoryClick,
@@ -28,20 +32,33 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
   const { currentTripId } = useAppContext();
 
   const renderContent = () => {
+    console.log("3. PackingAppContent: Told to render type -", viewState.type);
     switch (viewState.type) {
-    case 'home':
+      case 'home':
         return <HomeView onViewChange={onTripViewChange} />;
+      
+      case 'list':
+        return <TripsList />;
 
-    case 'list':
-        return <TripsList onTripSelected={onNavigateToTripHome} />;
+      case 'trip-people':
+        return <TripPeopleView onBack={onBackToList} onPersonClick={onPersonClick} />;
+      
+      case 'trip-bags':
+        return <TripBagsView />;
 
-    case 'trip-people':
-        return <TripPeopleView onBack={onBackToList} />;
+      case 'trip-items':
+        return <TripItemsView />;
 
-    case 'trip-bags':
-        return <TripBagsView onBack={onBackToList} />;
+      case 'trip-add-item':
+    return <TripAddItemView />;
 
-    case 'person':
+  case 'trip-add-subcategory':
+    return <TripAddSubcategoryView />;
+
+  case 'trip-add-item-list':
+    return <TripAddItemListView />;
+
+  case 'person':
         if (!viewState.personId) return null;
         return (
           <PersonView
@@ -62,8 +79,7 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         );
       
       default:
-        // Fallback view
-        return currentTripId ? <HomeView onViewChange={onTripViewChange} /> : <TripsList onTripSelected={onNavigateToTripHome} />;
+        return currentTripId ? <HomeView onViewChange={onTripViewChange} /> : <TripsList />;
     }
   };
 
