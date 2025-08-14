@@ -6,6 +6,7 @@ import PersonView from './PersonView';
 import CategoryView from './CategoryView';
 import TripPeopleView from './TripPeopleView';
 import TripBagsView from './TripBagsView';
+import BagDetailView from './BagDetailView';
 import TripItemsView from './TripItemsView';
 import TripAddItemView from './TripAddItemView';
 import { TripAddSubcategoryView } from './TripAddSubcategoryView';
@@ -18,6 +19,7 @@ interface PackingAppContentProps {
   onTripViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo') => void;
   onNavigateToTripHome: () => void;
   onPersonClick: (personId: string) => void;
+  onBagClick: (bagId: string) => void;
   onCategoryClick: (categoryId: string, personId?: string) => void;
   onBackToList: () => void;
 }
@@ -27,6 +29,7 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
   onTripViewChange,
   onNavigateToTripHome,
   onPersonClick,
+  onBagClick,
   onCategoryClick,
   onBackToList
 }) => {
@@ -45,7 +48,12 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         return <TripPeopleView onBack={onBackToList} onPersonClick={onPersonClick} />;
       
       case 'trip-bags':
-        return <TripBagsView />;
+        return <TripBagsView onBagClick={onBagClick} />;
+      
+      case 'bag':
+        const { currentBagId } = useAppContext();
+        if (!currentBagId) return null;
+        return <BagDetailView bagId={currentBagId} onBack={onBackToList} />;
 
       case 'trip-items':
     return <TripItemsView />;

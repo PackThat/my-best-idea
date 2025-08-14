@@ -1,29 +1,32 @@
 // src/components/TripBagsView.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from './ui/button';
-import { Plus, Trash2, Briefcase, X } from 'lucide-react';
-// These imports are no longer needed here as BagSelector handles new bag creation internally
-// import { Input } from './ui/input';
-// import { Label } from './ui/label';
-// import { CirclePicker } from 'react-color';
-
-import { BagSelector } from './BagSelector'; // Make sure this path is correct
+import { Plus, Trash2, Briefcase, X, Edit2, ArrowLeft } from 'lucide-react';
+import { BagSelector } from './BagSelector';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Bag } from '@/types';
+import EditBagDialog from './EditBagDialog';
 
+interface TripBagsViewProps {
+  onBagClick: (bagId: string) => void;
+}
 
-export const TripBagsView: React.FC = () => {
+export const TripBagsView: React.FC<TripBagsViewProps> = ({ onBagClick }) => {
   const {
     currentTrip,
-    bags, // We are getting 'bags' from the AppContext here
+    bags,
     addBagToTrip,
     removeBagFromTrip,
     setView,
+    updateBag,
+    items,
   } = useAppContext();
 
   const [showBagSelector, setShowBagSelector] = useState(false);
+  const [editingBag, setEditingBag] = useState<Bag | null>(null);
 
   const tripBags = useMemo(() => {
     if (!currentTrip || !currentTrip.bagIds) {
@@ -31,36 +34,29 @@ export const TripBagsView: React.FC = () => {
     }
     return currentTrip.bagIds
       .map(bagId => bags.find(bag => bag.id === bagId))
-      .filter((bag): bag is typeof bags[0] => bag !== undefined);
+      .filter((bag): bag is Bag => bag !== undefined);
   }, [currentTrip, bags]);
 
-  const bagItemCounts = useMemo(() => {
-    const counts: { [key: number]: number } = {};
-    if (currentTrip && currentTrip.items) {
-      currentTrip.items.forEach(item => {
-        if (item.bagId) {
-          counts[item.bagId] = (counts[item.bagId] || 0) + item.quantity;
-        }
-      });
-    }
-    return counts;
-  }, [currentTrip]);
-
-  const bagPackedCounts = useMemo(() => {
-    const counts: { [key: number]: number } = {};
-    if (currentTrip && currentTrip.items) {
-      currentTrip.items.forEach(item => {
-        if (item.bagId && item.packed) {
-          counts[item.bagId] = (counts[item.bagId] || 0) + item.quantity;
-        }
-      });
-    }
-    return counts;
-  }, [currentTrip]);
+  const getBagStats = (bagId: number) => {
+    const bagItems = items.filter(item => item.bagId === bagId);
+    const packedCount = bagItems.filter(item => item.packed).length;
+    const totalCount = bagItems.length;
+    return { packed: packedCount, total: totalCount };
+  };
 
   const handleBagSelected = async (bagId: number) => {
     await addBagToTrip(bagId);
     setShowBagSelector(false);
+  };
+
+  const handleEditBag = (bag: Bag, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingBag(bag);
+  };
+
+  const handleSaveBagEdit = (bagId: number, updates: Partial<Bag>) => {
+    updateBag(bagId, updates);
+    setEditingBag(null);
   };
 
   const handleRemoveBagFromTrip = async (bagId: number, e: React.MouseEvent) => {
@@ -82,7 +78,7 @@ export const TripBagsView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => setView('trip-home')}>
-            <Briefcase className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Trip
           </Button>
           <h2 className="text-2xl font-bold">Bags</h2>
@@ -99,9 +95,8 @@ export const TripBagsView: React.FC = () => {
         <Card className="bg-card">
           <CardHeader><CardTitle>Select or Add Bag</CardTitle></CardHeader>
           <CardContent>
-            {/* THIS IS THE CRITICAL FIX: Passing the 'bags' prop */}
             <BagSelector
-              bags={bags} // <--- bags prop is now correctly passed from useAppContext
+              bags={bags}
               onBagSelected={handleBagSelected}
             />
           </CardContent>
@@ -110,13 +105,10 @@ export const TripBagsView: React.FC = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {tripBags.map((bag) => {
-          const stats = {
-            total: bagItemCounts[bag.id] || 0,
-            packed: bagPackedCounts[bag.id] || 0
-          };
+          const stats = getBagStats(bag.id);
           return (
-            <Card key={bag.id} className="hover:shadow-lg transition-all cursor-pointer bg-card">
-              <CardHeader className="pb-3">
+            <Card key={bag.id} className="flex flex-col bg-card">
+              <CardHeader className="flex-grow pb-3">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {bag.color && ( <div className="w-4 h-4 rounded-full" style={{ backgroundColor: bag.color }} /> )}
@@ -124,6 +116,7 @@ export const TripBagsView: React.FC = () => {
                     <span>{bag.name}</span>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => handleEditBag(bag, e)}><Edit2 className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
@@ -141,26 +134,46 @@ export const TripBagsView: React.FC = () => {
                     </AlertDialog>
                   </div>
                 </CardTitle>
+                <div className="flex items-center gap-2 text-sm pt-2">
+                  {stats.total > 0 ? (
+                    <>
+                      <Badge variant={stats.packed === stats.total ? "default" : "secondary"}>
+                        {stats.packed}/{stats.total}
+                      </Badge>
+                      <span className="text-muted-foreground">items packed</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">No items assigned</span>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Items Progress</span>
-                  <Badge variant={stats.packed === stats.total && stats.total > 0 ? "default" : "secondary"}>{stats.packed}/{stats.total}</Badge>
-                </div>
+                <Button variant="default" className="w-full" onClick={() => onBagClick(String(bag.id))}>
+                  Select
+                </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {currentTrip && tripBags.length === 0 && !showBagSelector ? (
+      {tripBags.length === 0 && !showBagSelector && (
         <Card className="bg-card">
           <CardContent className="p-6 text-center">
             <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">No bags added to this trip yet.</p>
           </CardContent>
         </Card>
-      ) : null}
+      )}
+
+      {editingBag && (
+        <EditBagDialog
+          open={!!editingBag}
+          onOpenChange={() => setEditingBag(null)}
+          bag={editingBag}
+          onSave={handleSaveBagEdit}
+        />
+      )}
     </div>
   );
 };

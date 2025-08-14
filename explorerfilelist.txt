@@ -3,6 +3,7 @@
 ├── components.json
 ├── eslint.config.js
 ├── explorerfilelist.txt
+├── explorerfilelist.txt~
 ├── index.html
 ├── package-lock.json
 ├── package.json
@@ -36,6 +37,7 @@
 │   │   ├── EditCategoryDialog.tsx
 │   │   ├── EditPersonDialog.tsx
 │   │   ├── EditSubcategoryDialog.tsx
+│   │   ├── EditTripItemDialog.tsx
 │   │   ├── HomeView.tsx
 │   │   ├── InlineBagForm.tsx
 │   │   ├── InlinePersonForm.tsx
@@ -46,6 +48,7 @@
 │   │   ├── ItemSelectionDialog.tsx
 │   │   ├── ItemsImportView.tsx
 │   │   ├── ItemsManagementView.tsx
+│   │   ├── NoteEditDialog.tsx
 │   │   ├── PackingApp.tsx
 │   │   ├── PackingAppContent.tsx
 │   │   ├── PackingHeader.tsx
@@ -155,4 +158,4 @@
 ├── tsconfig.node.json
 └── vite.config.ts
 
-11 directories, 145 files
+11 directories, 148 files

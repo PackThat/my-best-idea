@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Star, Minus, Plus } from 'lucide-react';
@@ -7,7 +7,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CatalogItem } from '@/types';
-import { cn } from '@/lib/utils';
 
 export const TripAddItemListView: React.FC = () => {
   const { 
@@ -19,25 +18,19 @@ export const TripAddItemListView: React.FC = () => {
     currentTrip,
     addingSubcategoryId,
     addingForPersonId,
-    setAddingForPersonId,
+    addingForBagId,
     addMultipleCatalogItemsToTripItems,
     updateCatalogItem,
   } = useAppContext();
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
   const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(addingForPersonId || undefined);
-  const [selectedBagId, setSelectedBagId] = useState<number | undefined>();
+  const [selectedBagId, setSelectedBagId] = useState<number | undefined>(addingForBagId || undefined);
   const [needsToBuy, setNeedsToBuy] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
-  useEffect(() => {
-    // This is a cleanup function. It runs when you leave this page.
-    // It clears the context so that the next time you add an item from the main list,
-    // a person isn't incorrectly pre-selected.
-    return () => {
-      setAddingForPersonId(null);
-    };
-  }, [setAddingForPersonId]);
+  // The context cleanup is now handled in TripAddItemView to persist the context
+  // while navigating between subcategories.
 
   const tripPeople = useMemo(() => {
     if (!currentTrip?.peopleIds) return [];
@@ -83,8 +76,9 @@ export const TripAddItemListView: React.FC = () => {
 
   const handleToggleFavoriteSelected = async () => {
     const selectedIds = Object.keys(selectedItems);
-    const updates = selectedIds.map(id => updateCatalogItem(id, { is_favorite: true }));
-    await Promise.all(updates);
+    // This is a placeholder for future functionality.
+    // For now, it doesn't need to do anything.
+    await Promise.all(selectedIds.map(id => updateCatalogItem(id, { is_favorite: true })));
   };
   
   if (!currentSubcategory) {
@@ -134,14 +128,14 @@ export const TripAddItemListView: React.FC = () => {
                 <Select value={String(selectedPersonId || 'unassigned')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>
                     <SelectTrigger className="flex-grow min-w-[150px]"><SelectValue placeholder="Assign Person" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        <SelectItem value="unassigned">Person Unassigned</SelectItem>
                         {tripPeople.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={String(selectedBagId || 'unassigned')} onValueChange={(val) => setSelectedBagId(val === 'unassigned' ? undefined : Number(val))}>
                     <SelectTrigger className="flex-grow min-w-[150px]"><SelectValue placeholder="Assign Bag" /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        <SelectItem value="unassigned">Bag Unassigned</SelectItem>
                         {tripBags.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
                     </SelectContent>
                 </Select>

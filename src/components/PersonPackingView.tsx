@@ -1,44 +1,41 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Plus, Package, ChevronRight } from 'lucide-react';
-import ItemSelectionDialog from './ItemSelectionDialog';
-import { Person, Category, Subcategory, Item } from '@/types';
+import { ArrowLeft, Package, ChevronRight, Plus } from 'lucide-react';
+import { Person, Category, Subcategory } from '@/types';
 
 interface PersonPackingViewProps {
   personId: string;
-  onBack: () => void;
 }
 
-const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack }) => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
+const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  
   const {
     people,
     items,
     categories,
     subcategories,
-    bags,
-    addItem,
-    addItemToPacking,
     updateItem,
+    setView,
+    setAddingForPersonId,
   } = useAppContext();
 
-  const person = people.find(p => p.id === personId);
-  const personItems = items.filter(item => item.personId === personId);
+  const person = people.find(p => p.id === Number(personId));
+  const personItems = items.filter(item => item.personId === Number(personId));
 
   if (!person) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={() => setView('trip-people')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Back to People
           </Button>
-          <h2 className="text-2xl font-bold text-gray-900">Person Not Found</h2>
+          <h2 className="text-2xl font-bold">Person Not Found</h2>
         </div>
       </div>
     );
@@ -96,7 +93,7 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h2 className="text-2xl font-bold text-gray-900">{subcategory?.name}</h2>
+          <h2 className="text-2xl font-bold">{subcategory?.name}</h2>
         </div>
         
         <div className="space-y-2">
@@ -105,7 +102,7 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
                   onClick={() => toggleItemPacked(item.id)}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <span className={`font-medium ${item.packed ? 'line-through text-gray-500' : ''}`}>
+                  <span className={`font-medium ${item.packed ? 'line-through text-muted-foreground' : ''}`}>
                     {item.name}
                   </span>
                   <Badge variant={item.packed ? "default" : "secondary"}>
@@ -132,7 +129,7 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h2 className="text-2xl font-bold text-gray-900">{category?.name}</h2>
+          <h2 className="text-2xl font-bold">{category?.name}</h2>
         </div>
         
         <div className="space-y-4">
@@ -141,7 +138,7 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
                   onClick={() => toggleItemPacked(item.id)}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <span className={`font-medium ${item.packed ? 'line-through text-gray-500' : ''}`}>
+                  <span className={`font-medium ${item.packed ? 'line-through text-muted-foreground' : ''}`}>
                     {item.name}
                   </span>
                   <Badge variant={item.packed ? "default" : "secondary"}>
@@ -172,22 +169,27 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => setView('trip-people')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to People
+            </Button>
+            <h2 className="text-2xl font-bold">{person.name}</h2>
+        </div>
+        <Button
+            onClick={() => {
+            if (person) {
+                setAddingForPersonId(person.id);
+                setView('trip-add-item');
+            }
+            }}
+            size="lg"
+        >
+            <Plus className="h-5 w-5 mr-2" />
+            Add Item
         </Button>
-        <h2 className="text-2xl font-bold text-gray-900">{person.name}</h2>
       </div>
-      
-      <Button 
-        onClick={() => setShowAddDialog(true)}
-        className="w-full bg-blue-600 hover:bg-blue-700"
-        size="lg"
-      >
-        <Plus className="h-5 w-5 mr-2" />
-        ADD ITEM
-      </Button>
       
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">CATEGORIES</h3>
@@ -197,7 +199,7 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-blue-600" />
+                  <Package className="h-5 w-5" />
                   <span className="font-medium">{category.name}</span>
                 </div>
                 <ChevronRight className="h-4 w-4" />
@@ -210,25 +212,13 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId, onBack 
           <Card>
             <CardContent className="p-6 text-center">
               <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-gray-500 mb-4">No items assigned to {person.name} yet.</p>
-              <p className="text-sm text-gray-400">Click "ADD ITEM" to get started!</p>
+              <p className="text-muted-foreground mb-4">No items assigned to {person.name} yet.</p>
+              <p className="text-sm text-muted-foreground">Click "Add Item" to get started!</p>
             </CardContent>
           </Card>
         )}
       </div>
 
-      <ItemSelectionDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        categories={categories}
-        subcategories={subcategories}
-        items={items}
-        people={people}
-        bags={bags}
-        onAddItemToPacking={addItemToPacking}
-        onAddNewItem={addItem}
-        preselectedPersonId={personId}
-      />
     </div>
   );
 };

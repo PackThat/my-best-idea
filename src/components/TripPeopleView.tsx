@@ -95,10 +95,10 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
         {currentTripPeople.map((person) => {
           const stats = getPersonStats(person.id); // Pass person.id as number
           return (
-            <Card key={person.id} className="hover:shadow-lg transition-all cursor-pointer bg-card">
-              <CardHeader className="pb-3">
+            <Card key={person.id} className="flex flex-col bg-card">
+              <CardHeader className="flex-grow pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2" onClick={() => onPersonClick(String(person.id))}> {/* Convert to string for onPersonClick */}
+                  <div className="flex items-center gap-2">
                     {person.color && ( <div className="w-4 h-4 rounded-full" style={{ backgroundColor: person.color }} /> )}
                     <User className="h-5 w-5" />
                     <span>{person.name}</span>
@@ -116,18 +116,29 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={(e) => handleRemoveFromTrip(person.id, e)}>Remove</AlertDialogAction> {/* Pass person.id as number */}
+                          <AlertDialogAction onClick={(e) => handleRemoveFromTrip(person.id, e)}>Remove</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
                 </CardTitle>
-              </CardHeader>
-              <CardContent onClick={() => onPersonClick(String(person.id))}> {/* Convert to string for onPersonClick */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Items Progress</span>
-                  <Badge variant={stats.packed === stats.total && stats.total > 0 ? "default" : "secondary"}>{stats.packed}/{stats.total}</Badge>
+                <div className="flex items-center gap-2 text-sm pt-2">
+                  {stats.total > 0 ? (
+                    <>
+                      <Badge variant={stats.packed === stats.total ? "default" : "secondary"}>
+                        {stats.packed}/{stats.total}
+                      </Badge>
+                      <span className="text-muted-foreground">items packed</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">No items assigned</span>
+                  )}
                 </div>
+              </CardHeader>
+              <CardContent>
+                <Button variant="default" className="w-full" onClick={() => onPersonClick(String(person.id))}>
+                  Select
+                </Button>
               </CardContent>
             </Card>
           );

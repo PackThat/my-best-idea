@@ -85,7 +85,8 @@ export const PackingApp: React.FC = () => {
 
   const handlePersonClick = useCallback((personId: string) => {
     selectPerson(personId);
-  }, [selectPerson]);
+    setView('person-detail');
+  }, [selectPerson, setView]);
 
   const handleCategoryClick = useCallback((categoryId: string) => {
     selectCategoryForView(categoryId);
@@ -93,7 +94,8 @@ export const PackingApp: React.FC = () => {
 
   const handleBagClick = useCallback((bagId: string) => {
     selectBag(bagId);
-  }, [selectBag]);
+    setView('bag-detail');
+  }, [selectBag, setView]);
 
   const handleBackToList = useCallback(() => {
     if (view === 'trip-people' || view === 'trip-bags' || view === 'trip-items') {
@@ -134,6 +136,7 @@ export const PackingApp: React.FC = () => {
       onTripViewChange={handleTripViewChange}
       onNavigateToTripHome={handleNavigateToTripHome}
       onPersonClick={handlePersonClick}
+      onBagClick={handleBagClick}
       onCategoryClick={handleCategoryClick}
       onBackToList={handleBackToList}
     />

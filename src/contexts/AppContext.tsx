@@ -22,6 +22,8 @@ interface AppContextType {
   setAddingSubcategoryId: (id: string | null) => void;
   addingForPersonId: number | null;
   setAddingForPersonId: (id: number | null) => void;
+  addingForBagId: number | null;
+  setAddingForBagId: (id: number | null) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
   isLoading: boolean;
@@ -37,6 +39,7 @@ interface AppContextType {
   currentTripId: string | null;
   currentPerson: Person | null;
   currentBag: Bag | null;
+  currentBagId: string | null;
   currentCategory: Category | null;
   selectPerson: (personId: string | null) => void;
   selectBag: (bagId: string | null) => void;
@@ -72,7 +75,7 @@ export const useAppContext = () => {
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [view, setView] = useState<AppView>('my-trips');
+  const [view, setViewInternal] = useState<AppView>('my-trips');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,21 +92,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [addingCategoryId, setAddingCategoryId] = useState<string | null>(null);
   const [addingSubcategoryId, setAddingSubcategoryId] = useState<string | null>(null);
   const [addingForPersonId, setAddingForPersonId] = useState<number | null>(null);
+  const [addingForBagId, setAddingForBagId] = useState<number | null>(null);
+
+  const setView = useCallback((newView: AppView) => {
+    const isInsideAddItemFlow = ['trip-add-item', 'trip-add-subcategory', 'trip-add-item-list'].includes(newView);
+    if (!isInsideAddItemFlow) {
+        setAddingForPersonId(null);
+        setAddingForBagId(null);
+    }
+    setViewInternal(newView);
+  }, [setViewInternal, setAddingForPersonId, setAddingForBagId]);
 
   const currentTrip = useMemo(() => trips.find(trip => trip.id === currentTripId) || null, [trips, currentTripId]);
   const currentPerson = useMemo(() => people.find(person => String(person.id) === currentPersonId) || null, [people, currentPersonId]);
   const currentBag = useMemo(() => bags.find(bag => String(bag.id) === currentBagId) || null, [bags, currentBagId]);
   const currentCategory = useMemo(() => categories.find(category => category.id === currentCategoryForViewId) || null, [categories, currentCategoryForViewId]);
   const currentTripItems = useMemo(() => currentTrip?.items || [], [currentTrip]);
-  const currentTripTodos = useMemo(() => currentTrip?.todos || [], [currentTrip]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [
-          peopleResult, bagsResult, tripsResult, categoriesResult, subcategoriesResult, catalogItemsResult,
-        ] = await Promise.all([
+        const [peopleResult, bagsResult, tripsResult, categoriesResult, subcategoriesResult, catalogItemsResult] = await Promise.all([
           supabase.from('people').select('*'),
           supabase.from('bags').select('*'),
           supabase.from('trips').select('*'),
@@ -126,14 +136,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         } else {
           setView('my-trips');
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
+      } catch (error) { console.error("Error fetching data:", error); } 
+      finally { setIsLoading(false); }
     };
     fetchData();
-  }, []);
+  }, [setView]);
 
   useEffect(() => {
     if (currentTripId) localStorage.setItem('currentTripId', currentTripId);
@@ -148,17 +155,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const updatesForSupabase: { [key: string]: any } = {};
     if (updates.peopleIds !== undefined) { updatesForSupabase.trip_people = updates.peopleIds; }
     if (updates.bagIds !== undefined) { updatesForSupabase.trip_bags = updates.bagIds; }
-    if (updates.tripTheme !== undefined) { updatesForSupabase.trip_theme = updates.tripTheme; }
-    if (updates.backgroundImageUrl !== undefined) { updatesForSupabase.background_image_url = updates.backgroundImageUrl; }
     if (updates.name !== undefined) { updatesForSupabase.name = updates.name; }
     if (updates.date !== undefined) { updatesForSupabase.date = updates.date; }
     if (updates.items !== undefined) { updatesForSupabase.items = updates.items; }
-    if (updates.todos !== undefined) { updatesForSupabase.todos = updates.todos; }
     
     const { data, error } = await supabase.from('trips').update(updatesForSupabase).eq('id', tripId).select().single();
-    
     if (error) { console.error("Error updating trip:", error); return; }
-    
     if (data) {
       const updatedTrip = { ...data, tripTheme: data.trip_theme, backgroundImageUrl: data.background_image_url, peopleIds: data.trip_people, bagIds: data.trip_bags };
       setTrips(prev => prev.map(trip => (trip.id === tripId ? updatedTrip : trip)));
@@ -178,9 +180,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const deleteTrip = useCallback(async (tripId: string) => {
     await supabase.from('trips').delete().eq('id', tripId);
     setTrips(prev => prev.filter(trip => trip.id !== tripId));
-    if (currentTripId === tripId) {
-      clearCurrentTrip();
-    }
+    if (currentTripId === tripId) { clearCurrentTrip(); }
   }, [currentTripId, clearCurrentTrip, setTrips]);
 
   const createPerson = useCallback(async (personData: Omit<Person, 'id' | 'createdAt'>) => {
@@ -211,6 +211,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!currentTrip) return;
     const updatedPeopleIds = (currentTrip.peopleIds || []).filter(id => id !== personId);
     await updateTrip(currentTrip.id, { peopleIds: updatedPeopleIds });
+    const updatedItems = (currentTrip.items || []).map(item => item.personId === personId ? { ...item, personId: undefined } : item);
+    await updateTrip(currentTrip.id, { items: updatedItems });
   }, [currentTrip, updateTrip]);
 
   const createBag = useCallback(async (bagData: Omit<Bag, 'id' | 'createdAt'>) => {
@@ -241,39 +243,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!currentTrip) return;
     const updatedBagIds = (currentTrip.bagIds || []).filter(id => id !== bagId);
     await updateTrip(currentTrip.id, { bagIds: updatedBagIds });
+    const updatedItems = (currentTrip.items || []).map(item => item.bagId === bagId ? { ...item, bagId: undefined } : item);
+    await updateTrip(currentTrip.id, { items: updatedItems });
   }, [currentTrip, updateTrip]);
 
-  const selectCategory = useCallback((categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    setView('subcategory-management');
-  }, [setView]);
-
-  const selectSubcategory = useCallback((subcategoryId: string) => {
-    setSelectedSubcategoryId(subcategoryId);
-    setView('item-catalog-list');
-  }, [setView]);
-
-  const selectPerson = useCallback((personId: string | null) => {
-    setCurrentPersonId(personId);
-    setView(personId ? 'person-detail' : 'people-management');
-  }, [setView]);
-
-  const selectBag = useCallback((bagId: string | null) => {
-    setCurrentBagId(bagId);
-    setView(bagId ? 'bag-detail' : 'bags-management');
-  }, [setView]);
-
-  const selectCategoryForView = useCallback((categoryId: string | null) => {
-    setCurrentCategoryForViewId(categoryId);
-    setView(categoryId ? 'category-detail' : 'item-catalog-list');
-  }, [setView]);
+  const selectCategory = useCallback((categoryId: string) => { setView('subcategory-management'); setSelectedCategoryId(categoryId); }, [setView]);
+  const selectSubcategory = useCallback((subcategoryId: string) => { setView('item-catalog-list'); setSelectedSubcategoryId(subcategoryId); }, [setView]);
+  const selectPerson = useCallback((personId: string | null) => { setCurrentPersonId(personId); }, []);
+  const selectBag = useCallback((bagId: string | null) => { setCurrentBagId(bagId); }, []);
+  const selectCategoryForView = useCallback((categoryId: string | null) => { setView(categoryId ? 'category-detail' : 'item-catalog-list'); setCurrentCategoryForViewId(categoryId); }, [setView]);
 
   const updateCatalogItem = useCallback(async (itemId: string, updates: Partial<CatalogItem>) => {
     const { data, error } = await supabase.from('catalog_items').update({ is_favorite: updates.is_favorite }).eq('id', itemId).select().single();
     if (error) { console.error("Error updating catalog item:", error); return; }
-    if (data) {
-      setCatalogItems(prev => prev.map(i => (i.id === itemId ? { ...i, is_favorite: data.is_favorite } : i)));
-    }
+    if (data) { setCatalogItems(prev => prev.map(i => (i.id === itemId ? { ...i, is_favorite: data.is_favorite } : i))); }
   }, [setCatalogItems]);
 
   const updateItem = useCallback(async (itemId: string, updates: Partial<Item>) => {
@@ -298,9 +281,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const catalogItem = catalogItems.find(ci => ci.id === itemData.catalogItemId);
       if (catalogItem) {
         newItems.push({
-          id: uuidv4(), name: catalogItem.name, catalogItemId: catalogItem.id,
-          categoryId: catalogItem.categoryId, subcategoryId: catalogItem.subcategoryId,
-          packed: false, quantity: itemData.quantity, isToBuy: itemData.isToBuy || false,
+          id: uuidv4(), name: catalogItem.name, catalogItemId: catalogItem.id, categoryId: catalogItem.categoryId, 
+          subcategoryId: catalogItem.subcategoryId, packed: false, quantity: itemData.quantity, isToBuy: itemData.isToBuy || false,
           bagId, personId, notes: itemData.notes, createdAt: new Date().toISOString(),
         });
       }
@@ -309,22 +291,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [currentTrip, catalogItems, updateTrip]);
 
   const value = {
-    view, setView, selectedCategoryId, selectCategory, selectedSubcategoryId, selectSubcategory,
-    addingCategoryId, setAddingCategoryId, addingSubcategoryId, setAddingSubcategoryId,
-    addingForPersonId, setAddingForPersonId,
-    sidebarOpen, toggleSidebar, isLoading, categories, subcategories, catalog_items: catalogItems,
-    bags, people, items: currentTripItems, todos: [], trips, currentTrip, currentTripId,
-    currentPerson, currentBag, currentCategory, selectPerson, selectBag, selectCategoryForView,
-    createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip, createPerson, updatePerson,
-    deletePerson, addPersonToTrip, removePersonFromTrip, createBag, updateBag, deleteBag,
-    addBagToTrip, removeBagFromTrip,
-    updateCatalogItem, updateItem, deleteItem, addMultipleCatalogItemsToTripItems,
-    // Dummy functions for unimplemented features
-    addCategory: async () => null, updateCategory: async () => {}, deleteCategory: async () => {},
-    addSubcategory: async () => null, updateSubcategory: async () => {}, deleteSubcategory: async () => {},
-    addCatalogItem: async () => null, deleteCatalogItem: async () => {},
-    addItemToTrip: async () => {},
-    addSingleCatalogItemToTripItems: async () => {},
+    view, setView, selectedCategoryId, selectCategory, selectedSubcategoryId, selectSubcategory, addingCategoryId, 
+    setAddingCategoryId, addingSubcategoryId, setAddingSubcategoryId, addingForPersonId, setAddingForPersonId,
+    addingForBagId, setAddingForBagId, sidebarOpen, toggleSidebar, isLoading, categories, subcategories, 
+    catalog_items: catalogItems, bags, people, items: currentTripItems, todos: [], trips, currentTrip, 
+    currentTripId, currentPerson, currentBag, currentBagId, currentCategory, selectPerson, selectBag, 
+    selectCategoryForView, createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip, createPerson, 
+    updatePerson, deletePerson, addPersonToTrip, removePersonFromTrip, createBag, updateBag, deleteBag, 
+    addBagToTrip, removeBagFromTrip, updateCatalogItem, updateItem, deleteItem, addMultipleCatalogItemsToTripItems,
   };
 
   return (
