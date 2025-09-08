@@ -4,35 +4,72 @@
 
 @layer base {
   :root {
-    --background: 185 75% 86%; /* Light Teal */
-    --foreground: 220 19% 25%;
-
-    --card: 33 67% 96%; /* Sandy Beige */
-    --card-foreground: 220 19% 45%;
-
-    --popover: 33 67% 96%;
-    --popover-foreground: 220 19% 45%;
-
-    --primary: 187 65% 35%; /* Deep Teal */
-    --primary-foreground: 33 67% 96%; 
-
-    --secondary: 33 67% 91%; 
-    --secondary-foreground: 220 19% 35%;
-
-    --muted: 220 19% 90%;
-    --muted-foreground: 220 19% 55%;
-
-    --accent: 220 19% 90%;
-    --accent-foreground: 220 19% 25%;
-
-    --destructive: 33 99% 70%; 
-    --destructive-foreground: 220 19% 25%;
-
-    --border: 220 19% 85%;
-    --input: 220 19% 85%;
-    --ring: 187 65% 35%;
-
+    --background: 208 21% 69%;
+    --foreground: 234 16% 35%;
+    --card: 36 50% 95%;
+    --card-foreground: 234 16% 35%;
+    --popover: 36 50% 95%;
+    --popover-foreground: 234 16% 35%;
+    --primary: 234 16% 35%;
+    --primary-foreground: 36 50% 95%;
+    --secondary: 36 50% 95%;
+    --secondary-foreground: 234 16% 35%;
+    --muted: 208 21% 85%;
+    --muted-foreground: 208 21% 69%;
+    --accent: 36 50% 98%;
+    --accent-foreground: 234 16% 35%;
+    --destructive: 227 25% 22%;
+    --destructive-foreground: 36 50% 95%;
+    --border: 208 21% 85%;
+    --input: 36 50% 95%;
+    --ring: 234 16% 35%;
     --radius: 0.5rem;
+    --header: 30 35% 60%;
+    --header-foreground: 227 25% 22%;
+    /* Sidebar Light Theme */
+    --sidebar: 208 21% 69%;
+    --sidebar-foreground: 234 16% 35%;
+    --sidebar-muted-foreground: 234 16% 35%;
+    --sidebar-button: 36 50% 95%;
+    --sidebar-button-foreground: 227 25% 22%;
+    --sidebar-button-active: 30 35% 60%;
+    --sidebar-button-active-foreground: 227 25% 22%;
+    --sidebar-badge: 234 16% 35%;
+    --sidebar-badge-foreground: 36 50% 95%;
+  }
+
+  .dark {
+    --background: 227 25% 22%;
+    --foreground: 36 50% 95%;
+    --card: 234 16% 35%;
+    --card-foreground: 208 21% 69%;
+    --popover: 234 16% 35%;
+    --popover-foreground: 208 21% 69%;
+    --primary: 30 35% 60%;
+    --primary-foreground: 227 25% 22%;
+    --secondary: 227 25% 22%;
+    --secondary-foreground: 30 35% 60%;
+    --muted: 227 25% 15%;
+    --muted-foreground: 208 21% 69%;
+    --accent: 36 50% 95%;
+    --accent-foreground: 227 25% 22%;
+    --destructive: 208 21% 69%;
+    --destructive-foreground: 227 25% 22%;
+    --border: 234 16% 35%;
+    --input: 234 16% 35%;
+    --ring: 30 35% 60%;
+    --header: 30 35% 60%;
+    --header-foreground: 227 25% 22%;
+    /* Sidebar Dark Theme */
+    --sidebar: 227 25% 22%;
+    --sidebar-foreground: 30 35% 60%;
+    --sidebar-muted-foreground: 208 21% 69%;
+    --sidebar-button: 30 35% 60%;
+    --sidebar-button-foreground: 227 25% 22%;
+    --sidebar-button-active: 234 16% 35%;
+    --sidebar-button-active-foreground: 36 50% 95%;
+    --sidebar-badge: 234 16% 35%;
+    --sidebar-badge-foreground: 36 50% 95%;
   }
 }
 
@@ -41,6 +78,7 @@
     @apply bg-background text-foreground;
   }
 }
+
 /* Hide spin buttons on number inputs */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 

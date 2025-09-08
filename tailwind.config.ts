@@ -7,7 +7,7 @@ const config = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -19,6 +19,11 @@ const config = {
     },
     extend: {
       colors: {
+        sand: '#FAF3E9',
+        'dark-blue': '#2A3246',
+        'mid-blue': '#4A4E69',
+        'light-blue': '#9EB3C2',
+        tan: '#C4976E',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -51,6 +56,29 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        header: {
+          DEFAULT: "hsl(var(--header))",
+          foreground: "hsl(var(--header-foreground))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          muted: {
+            foreground: "hsl(var(--sidebar-muted-foreground))",
+          },
+          button: {
+            DEFAULT: "hsl(var(--sidebar-button))",
+            foreground: "hsl(var(--sidebar-button-foreground))",
+            active: {
+              DEFAULT: "hsl(var(--sidebar-button-active))",
+              foreground: "hsl(var(--sidebar-button-active-foreground))",
+            },
+          },
+          badge: {
+            DEFAULT: "hsl(var(--sidebar-badge))",
+            foreground: "hsl(var(--sidebar-badge-foreground))",
+          },
         },
       },
       borderRadius: {

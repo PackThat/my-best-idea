@@ -18,7 +18,7 @@ const PackingHeader: React.FC<PackingHeaderProps> = ({
   const { toggleSidebar, currentTripId } = useAppContext();
 
   return (
-    <div className="bg-primary text-primary-foreground p-4">
+    <div className="bg-header text-header-foreground p-4">
       {/* This is now a 3-column grid to perfectly center the title */}
       <div className="grid grid-cols-3 items-center">
         
@@ -28,7 +28,7 @@ const PackingHeader: React.FC<PackingHeaderProps> = ({
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="text-primary-foreground hover:bg-white/20"
+            className="hover:bg-black/10"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -47,7 +47,7 @@ const PackingHeader: React.FC<PackingHeaderProps> = ({
               variant="ghost"
               size="sm"
               onClick={onBackClick}
-              className="text-primary-foreground hover:bg-white/20 flex items-center gap-2"
+              className="hover:bg-black/10 flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               {backButtonText}

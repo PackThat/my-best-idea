@@ -2,11 +2,11 @@ import React from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Backpack, ClipboardList, ShoppingBag, ListTodo } from 'lucide-react';
+import { Users, Backpack, ClipboardList, ShoppingBag, ListTodo, Settings } from 'lucide-react';
 
 // Define the props the component will accept
 interface HomeViewProps {
-  onViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'todo') => void;
+  onViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'todo' | 'settings') => void;
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
@@ -73,6 +73,10 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
           <ListTodo className="h-6 w-6" />
           <span>To Do</span>
           <Badge variant="default">{totalTodosCount}</Badge>
+        </Button>
+        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('settings')}>
+          <Settings className="h-6 w-6" />
+          <span>Settings</span>
         </Button>
       </div>
     </div>

@@ -21,7 +21,6 @@ export const PackingApp: React.FC = () => {
       case 'create-trip-page':
         return { type: 'list' };
       case 'trip-home':
-      case 'trip-settings':
       case 'global-tobuy':
       case 'global-todo':
       case 'items-management':
@@ -42,6 +41,8 @@ export const PackingApp: React.FC = () => {
         return { type: 'trip-add-subcategory' };
       case 'trip-add-item-list':
         return { type: 'trip-add-item-list' };
+      case 'trip-settings':
+        return { type: 'trip-settings' };
       case 'person-detail':
         return { type: 'person', personId: currentPerson?.id ? String(currentPerson.id) : undefined };
       case 'bag-detail':
@@ -53,8 +54,11 @@ export const PackingApp: React.FC = () => {
     }
   }, [view, currentPerson, currentBag, currentCategory]);
 
-  const handleTripViewChange = useCallback((newTripSubView: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo') => {
+  const handleTripViewChange = useCallback((newTripSubView: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo' | 'settings') => {
     switch (newTripSubView) {
+      case 'settings':
+        setView('trip-settings');
+        break;
       case 'people':
         setView('trip-people');
         break;

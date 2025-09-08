@@ -12,11 +12,12 @@ import TripAddItemView from './TripAddItemView';
 import { TripAddSubcategoryView } from './TripAddSubcategoryView';
 import { TripAddItemListView } from './TripAddItemListView';
 import TripToBuyView from './TripToBuyView';
+import TripSettingsView from './TripSettingsView';
 import { ViewState } from '@/types';
 
 interface PackingAppContentProps {
   viewState: ViewState;
-  onTripViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo') => void;
+  onTripViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo' | 'settings') => void;
   onNavigateToTripHome: () => void;
   onPersonClick: (personId: string) => void;
   onBagClick: (bagId: string) => void;
@@ -68,9 +69,12 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
     return <TripAddSubcategoryView />;
 
   case 'trip-add-item-list':
-    return <TripAddItemListView />;
+        return <TripAddItemListView />;
 
-  case 'person':
+      case 'trip-settings':
+        return <TripSettingsView />;
+
+      case 'person':
         if (!viewState.personId) return null;
         return (
           <PersonView
