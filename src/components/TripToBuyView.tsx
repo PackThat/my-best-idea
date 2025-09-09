@@ -23,7 +23,6 @@ const ItemsAccordion: React.FC<{
   onEditNote: (item: Item) => void;
   mode: 'packing' | 'tobuy';
 }> = ({ title, items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote, mode }) => {
-  const { catalog_items } = useAppContext();
 
   const groupItemsBy = (items: Item[], key: keyof Item) => {
     return items.reduce((acc, item) => {
@@ -74,7 +73,7 @@ const ItemsAccordion: React.FC<{
                         {subcategoryItems.map(item => (
                           <PackingListItem 
                             key={item.id} item={item} people={people} bags={bags}
-                            catalog_items={catalog_items} onUpdate={onUpdate} onDelete={onDelete}
+                            onUpdate={onUpdate} onDelete={onDelete}
                             updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
                             mode={mode}
                           />
@@ -104,40 +103,45 @@ export const TripToBuyView: React.FC = () => {
   const toBuyItems = (currentTrip?.items || []).filter(item => item.isToBuy);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setView('trip-home')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Trip
-          </Button>
-          <h2 className="text-2xl font-bold">To Buy List</h2>
+    <div className="w-full md:max-w-screen-lg mx-auto">
+      <div className="space-y-6">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
+          <div className="justify-self-start">
+            <Button variant="outline" onClick={() => setView('trip-home')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Trip
+            </Button>
+          </div>
+          <h2 className="text-2xl font-bold justify-self-center">To Buy List</h2>
+          <div className="w-[110px]" />
+        </div>
+        
+        <div className="w-full md:max-w-screen-md mx-auto">
+          {toBuyItems.length > 0 ? (
+            <ItemsAccordion
+              title="To Buy"
+              items={toBuyItems}
+              categories={categories}
+              subcategories={subcategories}
+              people={people}
+              bags={bags}
+              onUpdate={updateItem}
+              onDelete={deleteItem}
+              updateCatalogItem={updateCatalogItem}
+              onEditItem={setEditingItem}
+              onEditNote={setEditingNoteItem}
+              mode="tobuy"
+            />
+          ) : (
+            <Card className="bg-card">
+              <CardContent className="p-6 text-center">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">Nothing on your shopping list yet.</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
-      
-      {toBuyItems.length > 0 ? (
-        <ItemsAccordion
-          title="To Buy"
-          items={toBuyItems}
-          categories={categories}
-          subcategories={subcategories}
-          people={people}
-          bags={bags}
-          onUpdate={updateItem}
-          onDelete={deleteItem}
-          updateCatalogItem={updateCatalogItem}
-          onEditItem={setEditingItem}
-          onEditNote={setEditingNoteItem}
-          mode="tobuy"
-        />
-      ) : (
-        <Card className="bg-card">
-          <CardContent className="p-6 text-center">
-            <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">Nothing on your shopping list yet.</p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

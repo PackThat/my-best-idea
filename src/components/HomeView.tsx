@@ -20,8 +20,10 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
 
   if (!currentTrip) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <p className="text-xl text-muted-foreground">Loading trip details or no trip selected...</p>
+      <div className="w-full md:max-w-screen-lg mx-auto">
+        <div className="flex justify-center items-center h-full">
+          <p className="text-xl text-muted-foreground">Loading trip details or no trip selected...</p>
+        </div>
       </div>
     );
   }
@@ -29,8 +31,6 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
   const tripPeople = allPeople.filter(person => currentTrip.peopleIds?.includes(person.id));
   const tripBags = allBags.filter(bag => currentTrip.bagIds?.includes(bag.id));
   
-  // Note: Your 'Item' type in AppContext uses 'isToBuy', but your 'TodoItem' does not have a 'completed' property.
-  // The counts below will be adjusted to reflect the available data.
   const peopleCount = tripPeople.length;
   const bagsCount = tripBags.length;
   const packedItemsCount = items.filter(item => item.packed).length;
@@ -39,45 +39,47 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
   const totalTodosCount = todos.length;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">{currentTrip.name}</h2>
+    <div className="w-full md:max-w-screen-lg mx-auto">
+      <div className="space-y-6">
+        <h2 className="text-3xl font-bold tracking-tight">{currentTrip.name}</h2>
 
-      <p className="text-muted-foreground">
-        Select an option below to manage your trip details.
-      </p>
+        <p className="text-muted-foreground">
+          Select an option below to manage your trip details.
+        </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4">
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('people')}>
-          <Users className="h-6 w-6" />
-          <span>People</span>
-          <Badge variant="default">{peopleCount}</Badge>
-        </Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('bags')}>
-          <Backpack className="h-6 w-6" />
-          <span>Bags</span>
-          <Badge variant="default">{bagsCount}</Badge>
-        </Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { console.log("1. HomeView: 'Items' button clicked."); onViewChange('items'); }}>
-          <ClipboardList className="h-6 w-6" />
-          <span>Items</span>
-          <Badge variant="default">
-            {packedItemsCount}/{totalItemsCount}
-          </Badge>
-        </Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('tobuy')}>
-          <ShoppingBag className="h-6 w-6" />
-          <span>To Buy</span>
-          <Badge variant="default">{toBuyCount}</Badge>
-        </Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => alert('To Do view not implemented yet.')}>
-          <ListTodo className="h-6 w-6" />
-          <span>To Do</span>
-          <Badge variant="default">{totalTodosCount}</Badge>
-        </Button>
-        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('settings')}>
-          <Settings className="h-6 w-6" />
-          <span>Settings</span>
-        </Button>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4">
+          <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('people')}>
+            <Users className="h-6 w-6" />
+            <span>People</span>
+            <Badge variant="default">{peopleCount}</Badge>
+          </Button>
+          <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('bags')}>
+            <Backpack className="h-6 w-6" />
+            <span>Bags</span>
+            <Badge variant="default">{bagsCount}</Badge>
+          </Button>
+          <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { console.log("1. HomeView: 'Items' button clicked."); onViewChange('items'); }}>
+            <ClipboardList className="h-6 w-6" />
+            <span>Items</span>
+            <Badge variant="default">
+              {packedItemsCount}/{totalItemsCount}
+            </Badge>
+          </Button>
+          <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('tobuy')}>
+            <ShoppingBag className="h-6 w-6" />
+            <span>To Buy</span>
+            <Badge variant="default">{toBuyCount}</Badge>
+          </Button>
+          <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => alert('To Do view not implemented yet.')}>
+            <ListTodo className="h-6 w-6" />
+            <span>To Do</span>
+            <Badge variant="default">{totalTodosCount}</Badge>
+          </Button>
+          <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => onViewChange('settings')}>
+            <Settings className="h-6 w-6" />
+            <span>Settings</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

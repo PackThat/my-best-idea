@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronRight, Search, Star, Minus, Plus, User, Briefcase } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Search, Star, Minus, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Category, Subcategory, CatalogItem } from '@/types';
@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { cn } from '@/lib/utils';
 
 export const TripAddItemView: React.FC = () => {
   const { 
@@ -17,7 +18,6 @@ export const TripAddItemView: React.FC = () => {
     subcategories, 
     catalog_items, 
     setAddingCategoryId,
-    setAddingSubcategoryId,
     people,
     bags,
     currentTrip,
@@ -96,10 +96,8 @@ export const TripAddItemView: React.FC = () => {
   const handleExitAddItemMode = () => {
     if(addingForPersonId) {
       setView('person-detail');
-      setAddingForPersonId(null);
     } else if (addingForBagId) {
       setView('bag-detail');
-      setAddingForBagId(null);
     } else {
       setView('trip-items');
     }
@@ -120,7 +118,7 @@ export const TripAddItemView: React.FC = () => {
         <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow">
           <div className="flex items-center gap-2">
             <span>{item.name}</span>
-            {item.is_favorite && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
+            {item.is_favorite && <Star className={cn("h-4 w-4 fill-ring text-ring")} />}
           </div>
           <div className="text-xs text-muted-foreground">
             {category?.name}{subcategory && ` / ${subcategory.name}`}
@@ -163,62 +161,64 @@ export const TripAddItemView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       <div className="flex items-center gap-4">
         {renderHeader()}
         <h2 className="text-2xl font-bold">Add Items</h2>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Quick Add/Search Item"
-          className="pl-11"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {searchResults ? (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 mt-4">Matching Items</h3>
-          {searchResults.items.length > 0 ? (
-            <Card className="p-2"><div className="space-y-1">{searchResults.items.map(renderItemRow)}</div></Card>
-          ) : (
-            <p className="text-muted-foreground text-center py-4">No items found.</p>
-          )}
+      <div className="w-full md:max-w-screen-md mx-auto space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Quick Add/Search Item"
+            className="pl-11"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      ) : (
-        <div className="space-y-2">
-            {favoriteItems.length > 0 && (
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="favorites" className="border rounded-md">
-                        <AccordionTrigger className="text-base font-medium px-4 py-2 hover:no-underline bg-muted/50 hover:bg-muted rounded-t-md">Favorites</AccordionTrigger>
-                        <AccordionContent className="p-2 border-t">
-                            {favoriteItems.map(renderItemRow)}
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
+
+        {searchResults ? (
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2 mt-4">Matching Items</h3>
+            {searchResults.items.length > 0 ? (
+              <Card className="p-2"><div className="space-y-1">{searchResults.items.map(renderItemRow)}</div></Card>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No items found.</p>
             )}
+          </div>
+        ) : (
+          <>
+              {favoriteItems.length > 0 && (
+                  <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="favorites" className="border rounded-md bg-card">
+                          <AccordionTrigger className="text-base font-medium px-4 py-2 hover:no-underline rounded-t-md">Favorites</AccordionTrigger>
+                          <AccordionContent className="p-2 border-t">
+                              {favoriteItems.map(renderItemRow)}
+                          </AccordionContent>
+                      </AccordionItem>
+                  </Accordion>
+              )}
 
-            {sortedCategories.map(category => (
-                <Card 
-                key={category.id} 
-                className="hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => handleCategoryClick(category.id)}
-                >
-                <CardContent className="p-4 flex justify-between items-center">
-                    <span className="font-medium">{category.name}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </CardContent>
-                </Card>
-            ))}
-        </div>
-      )}
+              {sortedCategories.map(category => (
+                  <Card 
+                  key={category.id} 
+                  className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
+                  onClick={() => handleCategoryClick(category.id)}
+                  >
+                  <CardContent className="py-2 px-4 flex justify-between items-center">
+                      <span className="font-medium">{category.name}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </CardContent>
+                  </Card>
+              ))}
+          </>
+        )}
+      </div>
       
       {isFooterVisible && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+          <div className="w-full md:max-w-screen-md mx-auto flex items-center justify-between gap-4">
              <div className="flex items-center gap-4 flex-grow flex-wrap">
                 <p className="font-semibold text-sm whitespace-nowrap">{getSelectedCount()} items selected</p>
                 <Select value={String(selectedPersonId || 'unassigned')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>

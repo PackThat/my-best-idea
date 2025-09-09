@@ -12,7 +12,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <div className="flex h-screen bg-background">
       <div className="flex flex-col flex-1">
   <PackingHeader />
-  <main className="flex-1 overflow-auto p-6 max-w-screen-2xl mx-auto">
+  <main className="flex-1 overflow-auto p-4">
           {children}
         </main>
       </div>

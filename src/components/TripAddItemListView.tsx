@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CatalogItem } from '@/types';
+import { cn } from '@/lib/utils';
 
 export const TripAddItemListView: React.FC = () => {
   const { 
@@ -17,20 +18,15 @@ export const TripAddItemListView: React.FC = () => {
     bags,
     currentTrip,
     addingSubcategoryId,
-    addingForPersonId,
-    addingForBagId,
     addMultipleCatalogItemsToTripItems,
     updateCatalogItem,
   } = useAppContext();
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
-  const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(addingForPersonId || undefined);
-  const [selectedBagId, setSelectedBagId] = useState<number | undefined>(addingForBagId || undefined);
+  const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(useAppContext().addingForPersonId || undefined);
+  const [selectedBagId, setSelectedBagId] = useState<number | undefined>(useAppContext().addingForBagId || undefined);
   const [needsToBuy, setNeedsToBuy] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-
-  // The context cleanup is now handled in TripAddItemView to persist the context
-  // while navigating between subcategories.
 
   const tripPeople = useMemo(() => {
     if (!currentTrip?.peopleIds) return [];
@@ -76,8 +72,6 @@ export const TripAddItemListView: React.FC = () => {
 
   const handleToggleFavoriteSelected = async () => {
     const selectedIds = Object.keys(selectedItems);
-    // This is a placeholder for future functionality.
-    // For now, it doesn't need to do anything.
     await Promise.all(selectedIds.map(id => updateCatalogItem(id, { is_favorite: true })));
   };
   
@@ -87,7 +81,7 @@ export const TripAddItemListView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       <div className="flex items-center gap-4">
         <Button variant="outline" onClick={() => setView('trip-add-subcategory')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -96,7 +90,7 @@ export const TripAddItemListView: React.FC = () => {
         <h2 className="text-2xl font-bold">{currentSubcategory.name}</h2>
       </div>
 
-      <div className="space-y-1">
+      <div className="w-full md:max-w-screen-md mx-auto space-y-1">
         {itemsInSubcategory.map((item) => {
           const isSelected = !!selectedItems[item.id];
           const quantity = selectedItems[item.id] || 0;
@@ -106,7 +100,7 @@ export const TripAddItemListView: React.FC = () => {
               <Checkbox id={`item-${item.id}`} checked={isSelected} onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} />
               <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow flex items-center gap-2">
                 <span>{item.name}</span>
-                {item.is_favorite && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
+                {item.is_favorite && <Star className={cn("h-4 w-4 fill-ring text-ring")} />}
               </Label>
               {isSelected && (
                 <div className="flex items-center gap-1">
@@ -122,7 +116,7 @@ export const TripAddItemListView: React.FC = () => {
       
       {isFooterVisible && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+          <div className="w-full md:max-w-screen-md mx-auto flex items-center justify-between gap-4">
              <div className="flex items-center gap-4 flex-grow flex-wrap">
                 <p className="font-semibold text-sm whitespace-nowrap">{getSelectedCount()} items selected</p>
                 <Select value={String(selectedPersonId || 'unassigned')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>

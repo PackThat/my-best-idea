@@ -15,7 +15,8 @@
     --secondary: 36 50% 95%;
     --secondary-foreground: 234 16% 35%;
     --muted: 208 21% 85%;
-    --muted-foreground: 208 21% 69%;
+    --muted-foreground: 234 16% 35%;
+    --foreground-hover: 227 25% 22%;
     --accent: 36 50% 98%;
     --accent-foreground: 234 16% 35%;
     --destructive: 227 25% 22%;
@@ -41,6 +42,7 @@
   .dark {
     --background: 227 25% 22%;
     --foreground: 36 50% 95%;
+    --foreground-hover: 0 0% 100%;
     --card: 234 16% 35%;
     --card-foreground: 208 21% 69%;
     --popover: 234 16% 35%;

@@ -66,114 +66,118 @@ export const TripBagsView: React.FC<TripBagsViewProps> = ({ onBagClick }) => {
 
   if (!currentTrip) {
     return (
-      <Card className="h-full flex flex-col justify-center items-center p-4">
-        <CardTitle className="text-xl text-muted-foreground">No trip selected.</CardTitle>
-        <CardDescription className="text-muted-foreground">Please select a trip from "My Trips" to manage bags.</CardDescription>
-      </Card>
+      <div className="w-full md:max-w-screen-lg mx-auto">
+        <Card className="h-full flex flex-col justify-center items-center p-4">
+          <CardTitle className="text-xl text-muted-foreground">No trip selected.</CardTitle>
+          <CardDescription className="text-muted-foreground">Please select a trip from "My Trips" to manage bags.</CardDescription>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setView('trip-home')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Trip
-          </Button>
-          <h2 className="text-2xl font-bold">Bags</h2>
+    <div className="w-full md:max-w-screen-lg mx-auto">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => setView('trip-home')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Trip
+            </Button>
+            <h2 className="text-2xl font-bold">Bags</h2>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowBagSelector(!showBagSelector)}>
+              {showBagSelector ? <X className="h-5 w-5 mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
+              {showBagSelector ? 'Cancel' : 'Add Bag'}
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowBagSelector(!showBagSelector)}>
-            {showBagSelector ? <X className="h-5 w-5 mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
-            {showBagSelector ? 'Cancel' : 'Add Bag'}
-          </Button>
+
+        {showBagSelector && (
+          <Card className="bg-card">
+            <CardHeader><CardTitle>Select or Add Bag</CardTitle></CardHeader>
+            <CardContent>
+              <BagSelector
+                bags={bags}
+                onBagSelected={handleBagSelected}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {tripBags.map((bag) => {
+            const stats = getBagStats(bag.id);
+            return (
+              <Card key={bag.id} className="flex flex-col bg-card">
+                <CardHeader className="flex-grow pb-3">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {bag.color && ( <div className="w-4 h-4 rounded-full" style={{ backgroundColor: bag.color }} /> )}
+                      <Briefcase className="h-5 w-5" />
+                      <span>{bag.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => handleEditBag(bag, e)}><Edit2 className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Bag from Trip</AlertDialogTitle>
+                            <AlertDialogDescription>Are you sure you want to remove {bag.name} from this trip?</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={(e) => handleRemoveBagFromTrip(bag.id, e)}>Remove</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardTitle>
+                  <div className="flex items-center gap-2 text-sm pt-2">
+                    {stats.total > 0 ? (
+                      <>
+                        <Badge variant={stats.packed === stats.total ? "default" : "secondary"}>
+                          {stats.packed}/{stats.total}
+                        </Badge>
+                        <span className="text-muted-foreground">items packed</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">No items assigned</span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="default" className="w-full" onClick={() => onBagClick(String(bag.id))}>
+                    Select
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
+
+        {tripBags.length === 0 && !showBagSelector && (
+          <Card className="bg-card">
+            <CardContent className="p-6 text-center">
+              <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No bags added to this trip yet.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {editingBag && (
+          <EditBagDialog
+            open={!!editingBag}
+            onOpenChange={() => setEditingBag(null)}
+            bag={editingBag}
+            onSave={handleSaveBagEdit}
+          />
+        )}
       </div>
-
-      {showBagSelector && (
-        <Card className="bg-card">
-          <CardHeader><CardTitle>Select or Add Bag</CardTitle></CardHeader>
-          <CardContent>
-            <BagSelector
-              bags={bags}
-              onBagSelected={handleBagSelected}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {tripBags.map((bag) => {
-          const stats = getBagStats(bag.id);
-          return (
-            <Card key={bag.id} className="flex flex-col bg-card">
-              <CardHeader className="flex-grow pb-3">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {bag.color && ( <div className="w-4 h-4 rounded-full" style={{ backgroundColor: bag.color }} /> )}
-                    <Briefcase className="h-5 w-5" />
-                    <span>{bag.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => handleEditBag(bag, e)}><Edit2 className="h-4 w-4" /></Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove Bag from Trip</AlertDialogTitle>
-                          <AlertDialogDescription>Are you sure you want to remove {bag.name} from this trip?</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={(e) => handleRemoveBagFromTrip(bag.id, e)}>Remove</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardTitle>
-                <div className="flex items-center gap-2 text-sm pt-2">
-                  {stats.total > 0 ? (
-                    <>
-                      <Badge variant={stats.packed === stats.total ? "default" : "secondary"}>
-                        {stats.packed}/{stats.total}
-                      </Badge>
-                      <span className="text-muted-foreground">items packed</span>
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground">No items assigned</span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button variant="default" className="w-full" onClick={() => onBagClick(String(bag.id))}>
-                  Select
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {tripBags.length === 0 && !showBagSelector && (
-        <Card className="bg-card">
-          <CardContent className="p-6 text-center">
-            <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">No bags added to this trip yet.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {editingBag && (
-        <EditBagDialog
-          open={!!editingBag}
-          onOpenChange={() => setEditingBag(null)}
-          bag={editingBag}
-          onSave={handleSaveBagEdit}
-        />
-      )}
     </div>
   );
 };
