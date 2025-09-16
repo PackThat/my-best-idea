@@ -58,7 +58,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
       <AccordionTrigger className="text-lg font-semibold">
         <div className="flex items-center gap-2">
           <span>{title}</span>
-          <Badge variant="default">{items.length}</Badge>
+          <Badge className="bg-counter-badge text-counter-badge-foreground">{items.length}</Badge>
         </div>
       </AccordionTrigger>
       <AccordionContent>

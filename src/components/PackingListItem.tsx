@@ -71,7 +71,7 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={handleFavoriteToggle}>
-              <Star className={cn("h-4 w-4", isFavorite && "fill-ring text-ring")} />
+              <Star className={cn("h-4 w-4", isFavorite && "fill-icon-active text-icon-active")} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{isFavorite ? 'Remove from favorites' : 'Add to favorites'}</TooltipContent>
@@ -80,7 +80,7 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
            <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => updateItem(item.id, { isToBuy: !item.isToBuy })}>
-                  <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-primary")} />
+                  <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-icon-active")} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{item.isToBuy ? 'Remove from To Buy list' : 'Add to To Buy list'}</TooltipContent>
@@ -104,7 +104,7 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
         </Tooltip>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80">
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
@@ -127,7 +127,7 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
 };
 
 export const PackingListItem: React.FC<PackingListItemProps> = (props) => {
-  const { item, onUpdate, onEdit, mode = 'packing' } = props;
+  const { item, onUpdate, mode = 'packing' } = props;
 
   const handleCheckboxChange = (checked: boolean) => {
     if (mode === 'packing') {
@@ -149,16 +149,13 @@ export const PackingListItem: React.FC<PackingListItemProps> = (props) => {
               onCheckedChange={handleCheckboxChange}
             />
             <div className="flex-grow">
-              <span 
-                className="font-medium text-foreground hover:text-foreground-hover transition-colors cursor-pointer"
-                onClick={() => onEdit(item)}
-              >
+              <span className="font-medium text-foreground">
                 {item.quantity} x {item.name}
               </span>
             </div>
           </div>
           <div className="flex items-center justify-between pl-9 pt-2">
-            <ItemActions {...props} />
+            <ItemActions {...props} mode={mode} />
           </div>
         </div>
 
@@ -170,14 +167,11 @@ export const PackingListItem: React.FC<PackingListItemProps> = (props) => {
             onCheckedChange={handleCheckboxChange}
           />
           <div className="flex-grow">
-            <span 
-              className="font-medium text-foreground hover:text-foreground-hover transition-colors cursor-pointer"
-              onClick={() => onEdit(item)}
-            >
+            <span className="font-medium text-foreground">
               {item.quantity} x {item.name}
             </span>
           </div>
-          <ItemActions {...props} />
+          <ItemActions {...props} mode={mode} />
         </div>
       </div>
     </TooltipProvider>

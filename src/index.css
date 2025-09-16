@@ -5,25 +5,25 @@
 @layer base {
   :root {
     --background: 208 21% 69%;
-    --foreground: 234 16% 35%;
-    --card: 36 50% 95%;
-    --card-foreground: 234 16% 35%;
-    --popover: 36 50% 95%;
-    --popover-foreground: 234 16% 35%;
+    --foreground: 227 25% 22%;
+    --card: 33 55% 90%;
+    --card-foreground: 227 25% 22%;
+    --popover: 33 55% 90%;
+    --popover-foreground: 227 25% 22%;
     --primary: 234 16% 35%;
     --primary-foreground: 36 50% 95%;
-    --secondary: 36 50% 95%;
-    --secondary-foreground: 234 16% 35%;
+    --secondary: 33 55% 90%;
+    --secondary-foreground: 227 25% 22%;
     --muted: 208 21% 85%;
     --muted-foreground: 234 16% 35%;
     --foreground-hover: 227 25% 22%;
-    --accent: 36 50% 98%;
-    --accent-foreground: 234 16% 35%;
+    --accent: 33 55% 95%;
+    --accent-foreground: 227 25% 22%;
     --destructive: 227 25% 22%;
-    --destructive-foreground: 36 50% 95%;
+    --destructive-foreground: 33 55% 90%;
     --border: 208 21% 85%;
-    --input: 36 50% 95%;
-    --ring: 234 16% 35%;
+    --input: 30 35% 60%;
+    --focus-ring: 234 16% 35%;
     --radius: 0.5rem;
     --header: 30 35% 60%;
     --header-foreground: 227 25% 22%;
@@ -37,6 +37,12 @@
     --sidebar-button-active-foreground: 227 25% 22%;
     --sidebar-badge: 234 16% 35%;
     --sidebar-badge-foreground: 36 50% 95%;
+    /* Counter Badge Light Theme */
+    --counter-badge: 30 35% 60%;
+    --counter-badge-foreground: 227 25% 22%;
+    /* New Dedicated Classes */
+    --icon-active: 30 35% 60%;
+    --search-background: 30 35% 60%;
   }
 
   .dark {
@@ -72,6 +78,9 @@
     --sidebar-button-active-foreground: 36 50% 95%;
     --sidebar-badge: 234 16% 35%;
     --sidebar-badge-foreground: 36 50% 95%;
+    /* Counter Badge Dark Theme */
+    --counter-badge: 234 16% 35%;
+    --counter-badge-foreground: 36 50% 95%;
   }
 }
 

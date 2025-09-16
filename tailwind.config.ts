@@ -26,7 +26,7 @@ const config = {
         tan: '#C4976E',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
+        ring: "hsl(var(--focus-ring))",
         background: "hsl(var(--background))",
         foreground: {
           DEFAULT: "hsl(var(--foreground))",
@@ -82,6 +82,16 @@ const config = {
             DEFAULT: "hsl(var(--sidebar-badge))",
             foreground: "hsl(var(--sidebar-badge-foreground))",
           },
+        },
+        'counter-badge': {
+          DEFAULT: "hsl(var(--counter-badge))",
+          foreground: "hsl(var(--counter-badge-foreground))",
+        },
+        icon: {
+          active: "hsl(var(--icon-active))",
+        },
+        search: {
+          background: "hsl(var(--search-background))",
         },
       },
       borderRadius: {

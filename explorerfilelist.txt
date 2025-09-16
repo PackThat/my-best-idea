@@ -3,7 +3,6 @@
 ├── components.json
 ├── eslint.config.js
 ├── explorerfilelist.txt
-├── explorerfilelist.txt~
 ├── index.html
 ├── package-lock.json
 ├── package.json
@@ -71,10 +70,11 @@
 │   │   ├── TripBagsView.tsx
 │   │   ├── TripCategoryView.tsx
 │   │   ├── TripItemsView.tsx
-│   │   ├── TripMainView.tsx
-│   │   ├── TripNavigationView.tsx
+│   │   ├── TripMainView.tsx.old
+│   │   ├── TripNavigationView.tsx.old
 │   │   ├── TripPeopleView.tsx
-│   │   ├── TripSelector.tsx
+│   │   ├── TripSelector.tsx.old
+│   │   ├── TripSettingsView.tsx
 │   │   ├── TripSubcategoryView.tsx
 │   │   ├── TripToBuyView.tsx
 │   │   ├── TripsList.tsx
