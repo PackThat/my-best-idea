@@ -1,18 +1,40 @@
-name: heartbeat
-
 on:
   schedule:
-    - cron: '0 0 */6 * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch: {}
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Call heartbeat function
+      - name: Call heartbeat function (with retries and timeout)
         env:
           HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
         run: |
-          http_code=$(curl -s -o /tmp/heartbeat_response.json -w "%{http_code}" -X POST "$HEARTBEAT_URL")
-          echo "HTTP status: $http_code"
-          cat /tmp/heartbeat_response.json || true
+          set -euo pipefail
+          attempt=1
+          max_attempts=3
+
+          until [ $attempt -gt $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts..."
+            # The 'curl' command now includes:
+            # -f: Fail silently (no output) on server errors
+            # --max-time 15: Timeout after 15 seconds
+            # || true: Prevents the script from exiting if curl fails, so the loop can continue
+            http_code=$(curl -s -o /tmp/heartbeat_response.json -w "%{http_code}" -X POST -f --max-time 15 "$HEARTBEAT_URL" || true)
+
+            if [ "$http_code" = "200" ] || [ "$http_code" = "201" ] || [ "$http_code" = "204" ]; then
+              echo "Heartbeat succeeded with HTTP status: $http_code"
+              cat /tmp/heartbeat_response.json || true
+              exit 0
+            else
+              echo "Heartbeat returned HTTP status: $http_code"
+              cat /tmp/heartbeat_response.json || true
+              attempt=$((attempt + 1))
+              # Wait longer after each failed attempt (5s, 10s, 15s)
+              sleep $((attempt * 5))
+            fi
+          done
+
+          echo "Heartbeat failed after $max_attempts attempts"
+          exit 1
