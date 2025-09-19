@@ -2,15 +2,17 @@ name: Supabase Heartbeat
 
 on:
   schedule:
-    # This runs the job at 00:00 UTC on every 5th day of the month.
-    # It's infrequent enough to be efficient but often enough to keep Supabase active.
+    # Runs at 00:00 UTC on every 5th day of the month.
     - cron: '0 0 */5 * *'
   workflow_dispatch:
-    # This allows you to run the workflow manually from the Actions tab on GitHub.
+    # Allows you to run the workflow manually.
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
       - name: Send heartbeat ping to Supabase
-        run: curl -sSf "${{ secrets.HEARTBEAT_URL }}"
+        run: >
+          curl -sSf -X POST "${{ secrets.HEARTBEA_URL }}"
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}"
