@@ -1,40 +1,48 @@
+name: Heartbeat
+
 on:
   schedule:
-    - cron: '0 0 */6 * *'
-  workflow_dispatch: {}
+    # run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
 jobs:
-  ping:
+  heartbeat:
     runs-on: ubuntu-latest
     steps:
-      - name: Call heartbeat function (with retries and timeout)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Call heartbeat function
         env:
           HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }} # optional; only set if your function requires it
         run: |
-          set -euo pipefail
-          attempt=1
+          if [ -z "$HEARTBEAT_URL" ]; then
+            echo "ERROR: HEARTBEAT_URL secret is not set. Add it in repository Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+          # Try up to 3 times with a short backoff
           max_attempts=3
-
+          attempt=1
           until [ $attempt -gt $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts..."
-            # The 'curl' command now includes:
-            # -f: Fail silently (no output) on server errors
-            # --max-time 15: Timeout after 15 seconds
-            # || true: Prevents the script from exiting if curl fails, so the loop can continue
-            http_code=$(curl -s -o /tmp/heartbeat_response.json -w "%{http_code}" -X POST -f --max-time 15 "$HEARTBEAT_URL" || true)
-
-            if [ "$http_code" = "200" ] || [ "$http_code" = "201" ] || [ "$http_code" = "204" ]; then
-              echo "Heartbeat succeeded with HTTP status: $http_code"
-              cat /tmp/heartbeat_response.json || true
-              exit 0
+            echo "Attempt $attempt: GET $HEARTBEAT_URL"
+            if [ -n "$SUPABASE_ANON_KEY" ]; then
+              resp=$(curl -s -o /dev/stderr -w "%{http_code}" -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" --max-time 10 "$HEARTBEAT_URL")
             else
-              echo "Heartbeat returned HTTP status: $http_code"
-              cat /tmp/heartbeat_response.json || true
-              attempt=$((attempt + 1))
-              # Wait longer after each failed attempt (5s, 10s, 15s)
-              sleep $((attempt * 5))
+              resp=$(curl -s -o /dev/stderr -w "%{http_code}" --max-time 10 "$HEARTBEAT_URL")
             fi
+
+            if [ "$resp" = "200" ] || [ "$resp" = "204" ]; then
+              echo "Heartbeat successful (HTTP $resp)."
+              exit 0
+            fi
+
+            echo "Heartbeat failed (HTTP $resp). Retrying..."
+            attempt=$((attempt+1))
+            sleep $((attempt * 2))
           done
 
-          echo "Heartbeat failed after $max_attempts attempts"
+          echo "Heartbeat failed after $max_attempts attempts."
           exit 1
