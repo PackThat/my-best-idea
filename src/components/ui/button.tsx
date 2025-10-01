@@ -15,7 +15,7 @@ const buttonVariants = cva(
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         // STYLE FOR NAVIGATIONAL BUTTONS: Beige bg, Grey text
         outline:
-          "border border-input bg-card text-card-foreground hover:bg-card/80",
+          "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-secondary hover:text-secondary-foreground",
