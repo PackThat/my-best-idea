@@ -89,7 +89,7 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => onEditNote(item)}>
-              <MessageSquare className={cn("h-4 w-4", item.notes && "text-primary")} />
+              <MessageSquare className={cn("h-4 w-4", item.notes && "text-icon-active")} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{item.notes ? 'Edit note' : 'Add a note'}</TooltipContent>

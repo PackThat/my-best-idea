@@ -60,6 +60,10 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'trip-card': {
+          DEFAULT: "hsl(var(--trip-card))",
+          foreground: "hsl(var(--trip-card-foreground))",
+        },
         header: {
           DEFAULT: "hsl(var(--header))",
           foreground: "hsl(var(--header-foreground))",
@@ -78,9 +82,9 @@ const config = {
               foreground: "hsl(var(--sidebar-button-active-foreground))",
             },
           },
-          badge: {
-            DEFAULT: "hsl(var(--sidebar-badge))",
-            foreground: "hsl(var(--sidebar-badge-foreground))",
+          'counter-badge': {
+            DEFAULT: "hsl(var(--sidebar-counter-badge))",
+            foreground: "hsl(var(--sidebar-counter-badge-foreground))",
           },
         },
         'counter-badge': {

@@ -61,14 +61,14 @@ export const PackingSidebar: React.FC = () => {
   return (
     <div className={cn(
       "fixed inset-y-0 left-0 z-50 w-64 border-r transform transition-transform duration-200 ease-in-out",
-      "bg-sidebar text-sidebar-foreground",
+      "bg-sidebar", // Use the theme variable for the background
       sidebarOpen ? 'translate-x-0' : '-translate-x-full'
     )}>
       <ScrollArea className="flex-1 h-full">
         <div className="p-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bold text-lg text-sidebar-foreground">PackThat!</h3>
-            <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-black/10 dark:hover:bg-white/10" onClick={toggleSidebar}>
+          <div className="flex justify-between items-center bg-sidebar-header text-sidebar-header-foreground rounded-md px-2 py-1">
+            <h3 className="font-bold text-lg">PackThat!</h3>
+            <Button variant="ghost" size="icon" className="hover:bg-black/10 dark:hover:bg-white/10" onClick={toggleSidebar}>
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -80,7 +80,7 @@ export const PackingSidebar: React.FC = () => {
 
               return (
                 <React.Fragment key={item.id}>
-                  {showSection && <h3 className="text-sm font-semibold text-sidebar-muted-foreground px-2 pt-4 pb-2">{item.section}</h3>}
+                  {showSection && <h3 className="text-sm font-semibold text-sidebar-foreground px-2 pt-4 pb-2">{item.section}</h3>}
                   <Button
                     className={cn(
                       "w-full justify-start h-10",
@@ -93,7 +93,12 @@ export const PackingSidebar: React.FC = () => {
                     <item.icon className="h-4 w-4 mr-2" />
                     {item.label}
                     {item.count !== undefined && (
-                      <Badge className="ml-auto bg-sidebar-badge text-sidebar-badge-foreground">{item.count}</Badge>
+                       <Badge className={cn(
+                        "ml-auto rounded-full w-6 h-6 flex items-center justify-center",
+                        "bg-sidebar-counter-badge text-sidebar-counter-badge-foreground"
+                      )}>
+                        {item.count}
+                      </Badge>
                     )}
                   </Button>
                 </React.Fragment>

@@ -32,7 +32,7 @@ export const TripsList: React.FC = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No date';
-    // The current time is 3:14 PM Tuesday, September 9, 2025 in Echuca, Victoria, Australia.
+    // The current time is 12:58 PM Wednesday, October 1, 2025 in Echuca, Victoria, Australia.
     return new Date(dateString).toLocaleDateString('en-AU', { timeZone: 'Australia/Melbourne', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
@@ -93,7 +93,7 @@ export const TripsList: React.FC = () => {
             {trips.map((trip) => (
               <Card key={trip.id} className="flex flex-col bg-card">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-lg cursor-pointer" onClick={() => loadTrip(trip.id)}>
+                  <CardTitle className="text-lg cursor-pointer text-card-foreground" onClick={() => loadTrip(trip.id)}>
                     {trip.name}
                   </CardTitle>
                   <div className="flex items-center text-sm text-muted-foreground pt-1">
@@ -107,7 +107,7 @@ export const TripsList: React.FC = () => {
                     
                     <Dialog open={!!editTrip && editTrip.id === trip.id} onOpenChange={(isOpen) => !isOpen && setEditTrip(null)}>
                       <DialogTrigger asChild>
-                        <Button size="icon" variant="outline" onClick={() => setEditTrip(trip)}><Edit2 className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="secondary" onClick={() => setEditTrip(trip)}><Edit2 className="h-4 w-4" /></Button>
                       </DialogTrigger>
                       <DialogContent className="bg-card text-card-foreground">
                         <DialogHeader><DialogTitle>Edit Trip</DialogTitle></DialogHeader>
@@ -125,7 +125,7 @@ export const TripsList: React.FC = () => {
                     
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="outline"><Trash2 className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="secondary"><Trash2 className="h-4 w-4" /></Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-card text-card-foreground">
                         <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete the "{trip.name}" trip and all its data.</AlertDialogDescription></AlertDialogHeader>
