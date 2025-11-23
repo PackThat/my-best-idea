@@ -55,7 +55,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
 
   return (
     <AccordionItem value={title.toLowerCase().replace(/ /g, '-')}>
-      <AccordionTrigger className="text-lg font-semibold">
+      <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
         <div className="flex items-center gap-2">
           <span>{title}</span>
           <Badge className="bg-counter-badge text-counter-badge-foreground">{items.length}</Badge>
@@ -135,7 +135,7 @@ export const TripItemsView: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="justify-self-start">
-            <Button variant="outline" onClick={() => setView('trip-home')}>
+            <Button variant="default" onClick={() => setView('trip-home')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Trip
             </Button>

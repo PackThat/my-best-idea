@@ -181,7 +181,7 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
       <div className="space-y-6">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="justify-self-start">
-            <Button variant="outline" onClick={onBack}>
+            <Button variant="default" onClick={onBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to People
             </Button>

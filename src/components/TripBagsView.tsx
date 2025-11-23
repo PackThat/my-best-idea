@@ -80,7 +80,7 @@ export const TripBagsView: React.FC<TripBagsViewProps> = ({ onBagClick }) => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => setView('trip-home')}>
+            <Button variant="default" onClick={() => setView('trip-home')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Trip
             </Button>
@@ -119,10 +119,10 @@ export const TripBagsView: React.FC<TripBagsViewProps> = ({ onBagClick }) => {
                       <span>{bag.name}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => handleEditBag(bag, e)}><Edit2 className="h-4 w-4" /></Button>
+                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => handleEditBag(bag, e)}><Edit2 className="h-4 w-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -140,7 +140,7 @@ export const TripBagsView: React.FC<TripBagsViewProps> = ({ onBagClick }) => {
                   <div className="flex items-center gap-2 text-sm pt-2">
                     {stats.total > 0 ? (
                       <>
-                        <Badge variant={stats.packed === stats.total ? "default" : "secondary"}>
+                        <Badge className="bg-counter-badge text-counter-badge-foreground">
                           {stats.packed}/{stats.total}
                         </Badge>
                         <span className="text-muted-foreground">items packed</span>

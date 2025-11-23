@@ -49,7 +49,7 @@ export const NoteEditDialog: React.FC<NoteEditDialogProps> = ({
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
           placeholder="Type your note here... (e.g., Pack the red ones)"
-          className="min-h-[120px] bg-accent"
+          className="min-h-[120px] bg-muted text-foreground"
           autoFocus
         />
         <DialogFooter className="sm:justify-between">

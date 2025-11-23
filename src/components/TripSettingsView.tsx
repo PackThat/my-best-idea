@@ -19,7 +19,7 @@ export const TripSettingsView: React.FC = () => {
     <div className="w-full md:max-w-screen-lg mx-auto">
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setView('trip-home')}>
+          <Button variant="default" onClick={() => setView('trip-home')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Trip
           </Button>

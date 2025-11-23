@@ -12,7 +12,7 @@ import { Person } from '@/types';
 
 interface TripPeopleViewProps {
   onBack: () => void;
-  onPersonClick: (personId: string) => void; // This expects a string, so we'll convert
+  onPersonClick: (personId: string) => void;
 }
 
 const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }) => {
@@ -28,19 +28,16 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
     currentTrip,
   } = useAppContext();
 
-  // Filter global people to get only those associated with the current trip
-  // Ensure that p.id (number) is compared with currentTrip?.peopleIds (number[])
   const currentTripPeople = people.filter(p => currentTrip?.peopleIds?.includes(p.id));
 
-  const getPersonStats = (personId: number) => { // Expect personId as number
-    // Ensure item.personId (number | undefined) is compared with personId (number)
+  const getPersonStats = (personId: number) => {
     const personItems = items.filter(item => item.personId === personId);
     const packedCount = personItems.filter(item => item.packed).length;
     const totalCount = personItems.length;
     return { packed: packedCount, total: totalCount };
   };
 
-  const handlePersonSelect = (personId: number) => { // Expect personId as number
+  const handlePersonSelect = (personId: number) => {
     addPersonToTrip(personId);
     setShowPersonSelector(false);
   };
@@ -50,12 +47,12 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
     setEditingPerson(person);
   };
 
-  const handleSavePersonEdit = (personId: number, updates: Partial<Person>) => { // Expect personId as number
+  const handleSavePersonEdit = (personId: number, updates: Partial<Person>) => {
     updatePerson(personId, updates);
     setEditingPerson(null);
   };
 
-  const handleRemoveFromTrip = (personId: number, e: React.MouseEvent) => { // Expect personId as number
+  const handleRemoveFromTrip = (personId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     removePersonFromTrip(personId);
   };
@@ -65,7 +62,7 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={onBack}>
+            <Button variant="default" onClick={onBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Trip
             </Button>
@@ -85,7 +82,7 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
             <CardContent>
               <PersonSelector
                 people={people}
-                onPersonSelect={handlePersonSelect} // Passes number
+                onPersonSelect={handlePersonSelect}
                 placeholder="Choose a person to add..."
               />
             </CardContent>
@@ -94,7 +91,7 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {currentTripPeople.map((person) => {
-            const stats = getPersonStats(person.id); // Pass person.id as number
+            const stats = getPersonStats(person.id);
             return (
               <Card key={person.id} className="flex flex-col bg-card">
                 <CardHeader className="flex-grow pb-3">
@@ -105,10 +102,10 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
                       <span>{person.name}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => handleEditPerson(person, e)}><Edit2 className="h-4 w-4" /></Button>
+                      <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => handleEditPerson(person, e)}><Edit2 className="h-4 w-4" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}><Trash2 className="h-4 w-4" /></Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -126,7 +123,7 @@ const TripPeopleView: React.FC<TripPeopleViewProps> = ({ onBack, onPersonClick }
                   <div className="flex items-center gap-2 text-sm pt-2">
                     {stats.total > 0 ? (
                       <>
-                        <Badge variant={stats.packed === stats.total ? "default" : "secondary"}>
+                        <Badge className="bg-counter-badge text-counter-badge-foreground">
                           {stats.packed}/{stats.total}
                         </Badge>
                         <span className="text-muted-foreground">items packed</span>
