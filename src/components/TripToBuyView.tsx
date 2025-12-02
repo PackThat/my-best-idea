@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PackingListItem } from './PackingListItem';
 import { Category, Subcategory, Item, Person, Bag, CatalogItem } from '@/types';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
-// This is the same helper component we built inside TripItemsView
+// This is the same helper component we built inside TripItemsView, updated with new styling
 const ItemsAccordion: React.FC<{
   title: string;
   items: Item[];
@@ -22,7 +22,7 @@ const ItemsAccordion: React.FC<{
   onEditItem: (item: Item) => void;
   onEditNote: (item: Item) => void;
   mode: 'packing' | 'tobuy';
-}> = ({ title, items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote, mode }) => {
+}> = ({ items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote, mode }) => {
 
   const groupItemsBy = (items: Item[], key: keyof Item) => {
     return items.reduce((acc, item) => {
@@ -45,7 +45,7 @@ const ItemsAccordion: React.FC<{
   });
 
   return (
-    <Accordion type="multiple" defaultValue={[title.toLowerCase().replace(/ /g, '-')]} className="w-full space-y-2">
+    <Accordion type="multiple" className="w-full space-y-1">
       {sortedCategoryIds.map(categoryId => {
         const category = categories.find(c => c.id === categoryId);
         const categoryName = categoryId === 'uncategorized' ? 'Uncategorized' : category?.name;
@@ -58,26 +58,34 @@ const ItemsAccordion: React.FC<{
         });
 
         return (
-          <AccordionItem value={categoryId} key={categoryId} className="border rounded-md bg-card px-4">
-            <AccordionTrigger>{categoryName} ({categoryItems.length})</AccordionTrigger>
-            <AccordionContent className="pt-2">
+          <AccordionItem value={categoryId} key={categoryId} className="border rounded-md bg-card overflow-hidden">
+            <AccordionTrigger className="px-3 py-2 text-base font-semibold hover:bg-muted data-[state=open]:bg-muted rounded-md">
+              {categoryName} ({categoryItems.length})
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 px-2">
               <Accordion type="multiple" className="w-full">
                 {sortedSubcategoryIds.map(subcategoryId => {
                   const subcategory = subcategories.find(sc => sc.id === subcategoryId);
                   const subName = subcategoryId === 'uncategorized' ? 'Uncategorized' : subcategory?.name;
                   const subcategoryItems = itemsBySubcategory[subcategoryId];
                   return (
-                    <AccordionItem value={subcategoryId} key={subcategoryId}>
-                      <AccordionTrigger className="text-sm">{subName} ({subcategoryItems.length})</AccordionTrigger>
-                      <AccordionContent className="pl-4">
-                        {subcategoryItems.map(item => (
-                          <PackingListItem 
-                            key={item.id} item={item} people={people} bags={bags}
-                            onUpdate={onUpdate} onDelete={onDelete}
-                            updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
-                            mode={mode}
-                          />
-                        ))}
+                    <AccordionItem value={subcategoryId} key={subcategoryId} className="border-0">
+                      <AccordionTrigger className={cn("px-2 py-2 text-sm font-medium rounded-sm hover:bg-accent",
+                        "data-[state=open]:bg-secondary data-[state=open]:text-secondary-foreground"
+                      )}>
+                        {subName} ({subcategoryItems.length})
+                      </AccordionTrigger>
+                      <AccordionContent className="pl-4 pt-1">
+                        <div className="border-l-2">
+                          {subcategoryItems.map(item => (
+                            <PackingListItem 
+                              key={item.id} item={item} people={people} bags={bags}
+                              onUpdate={onUpdate} onDelete={onDelete}
+                              updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
+                              mode={mode}
+                            />
+                          ))}
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                   )
@@ -107,7 +115,7 @@ export const TripToBuyView: React.FC = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="justify-self-start">
-            <Button variant="outline" onClick={() => setView('trip-home')}>
+            <Button variant="default" onClick={() => setView('trip-home')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Trip
             </Button>
