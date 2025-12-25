@@ -118,7 +118,7 @@ export const TripAddItemView: React.FC = () => {
         <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow">
           <div className="flex items-center gap-2">
             <span>{item.name}</span>
-            {item.is_favorite && <Star className={cn("h-4 w-4 fill-ring text-ring")} />}
+            {item.is_favorite && <Star className={cn("h-4 w-4 fill-icon-active text-icon-active")} />}
           </div>
           <div className="text-xs text-muted-foreground">
             {category?.name}{subcategory && ` / ${subcategory.name}`}
@@ -138,7 +138,7 @@ export const TripAddItemView: React.FC = () => {
   const renderHeader = () => {
     if (addingForPersonId && currentPerson) {
       return (
-        <Button variant="outline" onClick={handleExitAddItemMode}>
+        <Button variant="default" onClick={handleExitAddItemMode}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to {currentPerson.name}
         </Button>
@@ -146,14 +146,14 @@ export const TripAddItemView: React.FC = () => {
     }
     if (addingForBagId && currentBag) {
       return (
-        <Button variant="outline" onClick={handleExitAddItemMode}>
+        <Button variant="default" onClick={handleExitAddItemMode}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to {currentBag.name}
         </Button>
       );
     }
     return (
-      <Button variant="outline" onClick={() => setView('trip-items')}>
+      <Button variant="default" onClick={() => setView('trip-items')}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Packing List
       </Button>
@@ -169,10 +169,10 @@ export const TripAddItemView: React.FC = () => {
 
       <div className="w-full md:max-w-screen-md mx-auto space-y-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[hsl(var(--search-foreground))]" />
           <Input
             placeholder="Quick Add/Search Item"
-            className="pl-11"
+            className="pl-11 bg-[hsl(var(--search-background))] text-[hsl(var(--search-foreground))] border-transparent placeholder:text-[hsl(var(--search-foreground))]/70 focus-visible:bg-[hsl(var(--search-active-background))] focus-visible:border-[hsl(var(--search-active-border))] focus-visible:ring-[hsl(var(--search-active-border))]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
