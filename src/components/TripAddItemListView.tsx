@@ -39,7 +39,13 @@ export const TripAddItemListView: React.FC = () => {
   }, [currentTrip, bags]);
 
   const currentSubcategory = subcategories.find(sc => sc.id === addingSubcategoryId);
-  const itemsInSubcategory = catalog_items.filter(item => item.subcategoryId === addingSubcategoryId);
+  
+  // FIXED: Filter AND Sort alphabetically
+  const itemsInSubcategory = useMemo(() => {
+    return catalog_items
+      .filter(item => item.subcategoryId === addingSubcategoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [catalog_items, addingSubcategoryId]);
 
   const handleItemSelect = (itemId: string, isSelected: boolean) => {
     setSelectedItems(prev => {
@@ -83,7 +89,8 @@ export const TripAddItemListView: React.FC = () => {
   return (
     <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => setView('trip-add-subcategory')}>
+        {/* FIXED: Changed variant to default (Mid Blue) */}
+        <Button variant="default" onClick={() => setView('trip-add-subcategory')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Subcategories
         </Button>
@@ -96,11 +103,12 @@ export const TripAddItemListView: React.FC = () => {
           const quantity = selectedItems[item.id] || 0;
 
           return (
-            <div key={item.id} className="flex items-center space-x-2 py-2 border-b">
+            <div key={item.id} className="flex items-center space-x-2 py-2 border-b last:border-b-0">
               <Checkbox id={`item-${item.id}`} checked={isSelected} onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} />
               <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow flex items-center gap-2">
                 <span>{item.name}</span>
-                {item.is_favorite && <Star className={cn("h-4 w-4 fill-ring text-ring")} />}
+                {/* FIXED: Updated star icon to use correct theme variable */}
+                {item.is_favorite && <Star className={cn("h-4 w-4 fill-icon-active text-icon-active")} />}
               </Label>
               {isSelected && (
                 <div className="flex items-center gap-1">

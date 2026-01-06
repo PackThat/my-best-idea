@@ -9,7 +9,11 @@ export const TripAddSubcategoryView: React.FC = () => {
   const { setView, categories, subcategories, addingCategoryId, setAddingSubcategoryId } = useAppContext();
 
   const selectedCategory = categories.find(c => c.id === addingCategoryId);
-  const categorySubcategories = subcategories.filter(sc => sc.categoryId === addingCategoryId);
+  
+  // Filter AND Sort alphabetically
+  const categorySubcategories = subcategories
+    .filter(sc => sc.categoryId === addingCategoryId)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   if (!selectedCategory) {
     setView('trip-add-item');
@@ -22,23 +26,24 @@ export const TripAddSubcategoryView: React.FC = () => {
   };
 
   return (
-    <div className="w-full md:max-w-screen-lg mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => setView('trip-add-item')}>
+        {/* FIXED: Explicitly set to 'default' for Mid Blue background */}
+        <Button variant="default" onClick={() => setView('trip-add-item')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Categories
         </Button>
         <h2 className="text-2xl font-bold">{selectedCategory.name}</h2>
       </div>
 
-      <div className="w-full md:max-w-screen-md mx-auto space-y-2">
+      <div className="space-y-2">
         {categorySubcategories.map(subcategory => (
           <Card 
             key={subcategory.id} 
-            className="hover:bg-accent transition-colors cursor-pointer bg-card"
+            className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
             onClick={() => handleSubcategoryClick(subcategory)}
           >
-            <CardContent className="py-2 px-4 flex justify-between items-center">
+            <CardContent className="p-4 flex justify-between items-center">
               <span className="font-medium">{subcategory.name}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </CardContent>

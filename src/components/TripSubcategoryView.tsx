@@ -9,10 +9,13 @@ export const TripAddSubcategoryView: React.FC = () => {
   const { setView, categories, subcategories, addingCategoryId, setAddingSubcategoryId } = useAppContext();
 
   const selectedCategory = categories.find(c => c.id === addingCategoryId);
-  const categorySubcategories = subcategories.filter(sc => sc.categoryId === addingCategoryId);
+  
+  // FIXED: Filter AND Sort alphabetically
+  const categorySubcategories = subcategories
+    .filter(sc => sc.categoryId === addingCategoryId)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   if (!selectedCategory) {
-    // This can happen if the state is lost, just send them back.
     setView('trip-add-item');
     return null;
   }
@@ -25,9 +28,10 @@ export const TripAddSubcategoryView: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => setView('trip-add-item')}>
+        {/* THIS BUTTON MUST BE variant="default" TO BE BLUE */}
+        <Button variant="default" onClick={() => setView('trip-add-item')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Categories
+          TESTING BUTTON
         </Button>
         <h2 className="text-2xl font-bold">{selectedCategory.name}</h2>
       </div>
@@ -36,7 +40,7 @@ export const TripAddSubcategoryView: React.FC = () => {
         {categorySubcategories.map(subcategory => (
           <Card 
             key={subcategory.id} 
-            className="hover:bg-muted/50 transition-colors cursor-pointer"
+            className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
             onClick={() => handleSubcategoryClick(subcategory)}
           >
             <CardContent className="p-4 flex justify-between items-center">
