@@ -7,7 +7,8 @@
     /* Base Color Palette */
     --c-dark-blue: 227 25% 22%;
     --c-mid-blue: 234 16% 35%;
-    --c-light-blue: 208 21% 69%;
+    /* Saturation reduced from 21% to 14% for better readability */
+    --c-light-blue: 208 14% 69%; 
     --c-tan: 30 35% 60%;
     --c-sand: 36 50% 95%;
     --c-creamier-sand: 33 55% 90%;
@@ -26,13 +27,14 @@
     --primary-foreground: var(--c-sand);
     --secondary: var(--c-creamier-sand);
     --secondary-foreground: var(--c-mid-blue);
-    --muted: 208 21% 85%;
+    /* Muted/Border saturation also reduced to 14% to match background */
+    --muted: 208 14% 85%;
     --muted-foreground: var(--c-mid-blue);
     --accent: 33 55% 95%;
     --accent-foreground: var(--c-mid-blue);
     --destructive: var(--c-dark-blue);
     --destructive-foreground: var(--c-sand);
-    --border: 208 21% 85%;
+    --border: 208 14% 85%;
     --input: var(--c-sand);
     --focus-ring: var(--c-mid-blue);
     --radius: 0.5rem;
