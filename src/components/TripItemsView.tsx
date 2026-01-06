@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { PackingListItem } from './PackingListItem';
 import { Category, Subcategory, Item, Person, Bag, CatalogItem } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import EditTripItemDialog from './EditTripItemDialog';
 import NoteEditDialog from './NoteEditDialog';
 
@@ -62,34 +63,77 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
         </div>
       </AccordionTrigger>
       <AccordionContent>
-        <div className="space-y-2">
+        <Accordion type="multiple" className="w-full space-y-1 pl-2">
           {sortedCategoryIds.map(categoryId => {
             const category = categories.find(c => c.id === categoryId);
             const categoryName = categoryId === 'uncategorized' ? 'Uncategorized' : category?.name;
             const categoryItems = itemsByCategory[categoryId];
+
+            const itemsWithNoSubcategory = categoryItems.filter(item => !item.subcategoryId);
+            const itemsWithSubcategory = categoryItems.filter(item => item.subcategoryId);
+            const itemsBySubcategory = groupItemsBy(itemsWithSubcategory, 'subcategoryId');
+            const sortedSubcategoryIds = Object.keys(itemsBySubcategory).sort((a,b) => {
+              const subA = subcategories.find(s => s.id === a)?.name || '';
+              const subB = subcategories.find(s => s.id === b)?.name || '';
+              return subA.localeCompare(subB);
+            });
             
             return (
-              <div key={categoryId} className="py-2">
-                <h4 className="font-semibold text-muted-foreground mb-2">{categoryName}</h4>
-                <div className="pl-2 border-l-2">
-                  {categoryItems.map(item => (
-                    <PackingListItem 
-                      key={item.id} 
-                      item={item}
-                      people={people}
-                      bags={bags}
-                      onUpdate={onUpdate}
-                      onDelete={onDelete}
-                      updateCatalogItem={updateCatalogItem}
-                      onEdit={onEditItem}
-                      onEditNote={onEditNote}
-                    />
-                  ))}
-                </div>
-              </div>
+              <AccordionItem value={categoryId} key={categoryId} className="border rounded-md bg-card overflow-hidden">
+                <AccordionTrigger className="px-3 py-2 text-base font-semibold hover:bg-muted data-[state=open]:bg-muted rounded-md">
+                  {categoryName} ({categoryItems.length})
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 px-2">
+                  <div className="border-l-2">
+                    {itemsWithNoSubcategory.map(item => (
+                      <PackingListItem 
+                        key={item.id} 
+                        item={item}
+                        people={people}
+                        bags={bags}
+                        onUpdate={onUpdate}
+                        onDelete={onDelete}
+                        updateCatalogItem={updateCatalogItem}
+                        onEdit={onEditItem}
+                        onEditNote={onEditNote}
+                      />
+                    ))}
+                  </div>
+
+                   {sortedSubcategoryIds.length > 0 && (
+                    <Accordion type="multiple" className="w-full">
+                      {sortedSubcategoryIds.map(subcategoryId => {
+                        const subcategory = subcategories.find(sc => sc.id === subcategoryId);
+                        const subName = subcategoryId === 'uncategorized' ? 'Uncategorized' : subcategory?.name;
+                        const subcategoryItems = itemsBySubcategory[subcategoryId];
+                        return (
+                          <AccordionItem value={subcategoryId} key={subcategoryId} className="border-0">
+                            <AccordionTrigger className={cn("px-2 py-2 text-sm font-medium rounded-sm hover:bg-accent",
+                              "data-[state=open]:bg-secondary data-[state=open]:text-secondary-foreground"
+                            )}>
+                              {subName} ({subcategoryItems.length})
+                            </AccordionTrigger>
+                            <AccordionContent className="pl-4 pt-1">
+                              <div className="border-l-2">
+                                {subcategoryItems.map(item => (
+                                  <PackingListItem 
+                                    key={item.id} item={item} people={people} bags={bags}
+                                    onUpdate={onUpdate} onDelete={onDelete}
+                                    updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
+                                  />
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )
+                      })}
+                    </Accordion>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
             )
           })}
-        </div>
+        </Accordion>
       </AccordionContent>
     </AccordionItem>
   );
