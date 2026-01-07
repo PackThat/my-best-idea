@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Item, Person, Bag, CatalogItem } from '@/types';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,6 +7,7 @@ import { Star, MessageSquare, Edit2, Trash2, User, Backpack, DollarSign } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppContext } from '@/contexts/AppContext';
+import { NoteEditDialog } from './NoteEditDialog';
 
 interface PackingListItemProps {
   item: Item;
@@ -16,17 +17,19 @@ interface PackingListItemProps {
   onDelete: (itemId: string) => void;
   updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
   onEdit: (item: Item) => void;
-  onEditNote: (item: Item) => void;
+  onEditNote: (item: Item) => void; 
   contextPersonId?: number;
   contextBagId?: number;
   mode?: 'packing' | 'tobuy';
 }
 
 // Helper component for details and actions to avoid code duplication
-const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
-  item, people, bags, onDelete, updateCatalogItem, onEdit, onEditNote, contextPersonId, contextBagId, mode
+const ItemActions: React.FC<PackingListItemProps> = ({
+  item, people, bags, onDelete, updateCatalogItem, onEdit, onUpdate, contextPersonId, contextBagId, mode
 }) => {
   const { catalog_items, updateItem } = useAppContext();
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+
   const assignedPerson = people.find(p => p.id === item.personId);
   const assignedBag = bags.find(b => b.id === item.bagId);
   const catalogItem = item.catalogItemId ? catalog_items.find(ci => ci.id === item.catalogItemId) : null;
@@ -36,6 +39,10 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
     if (catalogItem) {
       updateCatalogItem(catalogItem.id, { is_favorite: !isFavorite });
     }
+  };
+
+  const handleSaveNote = (itemId: string, newNote: string | undefined) => {
+    onUpdate(itemId, { notes: newNote });
   };
 
   return (
@@ -80,20 +87,24 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
            <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => updateItem(item.id, { isToBuy: !item.isToBuy })}>
-                  <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-icon-active")} />
+                  {/* Added stroke-[3px] to make it BOLD when active */}
+                  <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-icon-active stroke-[3px]")} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{item.isToBuy ? 'Remove from To Buy list' : 'Add to To Buy list'}</TooltipContent>
             </Tooltip>
         )}
+        
+        {/* NOTES BUTTON */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => onEditNote(item)}>
-              <MessageSquare className={cn("h-4 w-4", item.notes && "text-icon-active")} />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => setIsNoteDialogOpen(true)}>
+              <MessageSquare className={cn("h-4 w-4", item.notes && "fill-icon-active text-icon-active")} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>{item.notes ? 'Edit note' : 'Add a note'}</TooltipContent>
         </Tooltip>
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => onEdit(item)}>
@@ -121,6 +132,13 @@ const ItemActions: React.FC<Omit<PackingListItemProps, 'onUpdate'>> = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <NoteEditDialog 
+            open={isNoteDialogOpen}
+            onOpenChange={setIsNoteDialogOpen}
+            item={item}
+            onSaveNote={handleSaveNote}
+        />
       </div>
     </>
   );

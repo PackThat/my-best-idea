@@ -26,9 +26,9 @@ export const TripAddSubcategoryView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    // Outer Container matched to TripAddItemView (md:max-w-screen-lg)
+    <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       <div className="flex items-center gap-4">
-        {/* FIXED: Explicitly set to 'default' for Mid Blue background */}
         <Button variant="default" onClick={() => setView('trip-add-item')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Categories
@@ -36,14 +36,17 @@ export const TripAddSubcategoryView: React.FC = () => {
         <h2 className="text-2xl font-bold">{selectedCategory.name}</h2>
       </div>
 
-      <div className="space-y-2">
+      {/* Inner Container matched to TripAddItemView (md:max-w-screen-md + space-y-2) */}
+      <div className="w-full md:max-w-screen-md mx-auto space-y-2">
         {categorySubcategories.map(subcategory => (
           <Card 
             key={subcategory.id} 
+            // Exact class string from TripAddItemView
             className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
             onClick={() => handleSubcategoryClick(subcategory)}
           >
-            <CardContent className="p-4 flex justify-between items-center">
+            {/* Exact padding and layout from TripAddItemView */}
+            <CardContent className="py-2 px-4 flex justify-between items-center">
               <span className="font-medium">{subcategory.name}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </CardContent>
