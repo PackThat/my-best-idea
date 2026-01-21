@@ -72,6 +72,8 @@ export interface TodoItem {
   isComplete: boolean;
   createdAt: string;
 }
+
+// Updated ViewState to include the new Catalog Management views
 export type ViewState =
   | { type: 'list' }
   | { type: 'home' }
@@ -85,5 +87,8 @@ export type ViewState =
   | { type: 'trip-add-item' }
   | { type: 'trip-add-subcategory' }
   | { type: 'trip-add-item-list' }
-  | { type: 'trip-settings' };
-  
+  | { type: 'trip-settings' }
+  // --- NEW VIEWS ---
+  | { type: 'items-management' }
+  | { type: 'catalog-subcategory-list' }
+  | { type: 'catalog-item-list' };

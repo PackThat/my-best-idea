@@ -13,6 +13,9 @@ import { TripAddSubcategoryView } from './TripAddSubcategoryView';
 import { TripAddItemListView } from './TripAddItemListView';
 import TripToBuyView from './TripToBuyView';
 import TripSettingsView from './TripSettingsView';
+import { ItemsManagementView } from './ItemsManagementView';
+import CatalogSubcategoryListView from '@/components/CatalogSubcategoryListView';
+import { CatalogItemListView } from './CatalogItemListView'; 
 import { ViewState } from '@/types';
 
 interface PackingAppContentProps {
@@ -37,7 +40,6 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
   const { currentTripId } = useAppContext();
 
   const renderContent = () => {
-    console.log("3. PackingAppContent: Told to render type -", viewState.type);
     switch (viewState.type) {
       case 'home':
         return <HomeView onViewChange={onTripViewChange} />;
@@ -57,19 +59,28 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         return <BagDetailView bagId={currentBagId} onBack={onBackToList} />;
 
       case 'trip-items':
-    return <TripItemsView />;
+        return <TripItemsView />;
 
-  case 'trip-tobuy':
-    return <TripToBuyView />;
+      case 'trip-tobuy':
+        return <TripToBuyView />;
 
-  case 'trip-add-item':
-    return <TripAddItemView />;
+      case 'trip-add-item':
+        return <TripAddItemView />;
 
-  case 'trip-add-subcategory':
-    return <TripAddSubcategoryView />;
+      case 'trip-add-subcategory':
+        return <TripAddSubcategoryView />;
 
-  case 'trip-add-item-list':
+      case 'trip-add-item-list':
         return <TripAddItemListView />;
+
+      case 'items-management':
+        return <ItemsManagementView />;
+      
+      case 'catalog-subcategory-list':
+        return <CatalogSubcategoryListView />;
+
+      case 'catalog-item-list':
+        return <CatalogItemListView />;
 
       case 'trip-settings':
         return <TripSettingsView />;
@@ -83,7 +94,9 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
           />
         );
       
+      // FIX: Added 'category-detail' so the app recognizes the click from the sidebar/catalog
       case 'category':
+      case 'category-detail' as any: 
         if (!viewState.categoryId) return null;
         return (
           <CategoryView

@@ -9,6 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+
+// Import specific selectors to match the rest of the app
+import PersonSelector from './PersonSelector'; 
+import { BagSelector } from './BagSelector';
 
 export const TripAddItemListView: React.FC = () => {
   const { 
@@ -21,6 +26,7 @@ export const TripAddItemListView: React.FC = () => {
     addingSubcategoryId,
     addMultipleCatalogItemsToTripItems,
     updateCatalogItem,
+    updateTrip, 
   } = useAppContext();
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
@@ -34,8 +40,14 @@ export const TripAddItemListView: React.FC = () => {
   
   const [isAdding, setIsAdding] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  
+  // "Add New" Dialog States
+  const [isAddPersonDialogOpen, setIsAddPersonDialogOpen] = useState(false);
+  const [isAddBagDialogOpen, setIsAddBagDialogOpen] = useState(false);
 
-  // Filter & Sort People Alphabetically
+  // --- DERIVED LISTS ---
+
+  // 1. People ON the trip
   const tripPeople = useMemo(() => {
     if (!currentTrip?.peopleIds) return [];
     return people
@@ -43,11 +55,27 @@ export const TripAddItemListView: React.FC = () => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [currentTrip, people]);
 
-  // Filter & Sort Bags Alphabetically
+  // 2. People NOT on the trip (Passed to Selector)
+  const availablePeople = useMemo(() => {
+    if (!currentTrip?.peopleIds) return people;
+    return people
+      .filter(p => !currentTrip.peopleIds!.includes(p.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [currentTrip, people]);
+
+  // 3. Bags ON the trip
   const tripBags = useMemo(() => {
     if (!currentTrip?.bagIds) return [];
     return bags
       .filter(b => currentTrip.bagIds!.includes(b.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [currentTrip, bags]);
+
+  // 4. Bags NOT on the trip (Passed to Selector)
+  const availableBags = useMemo(() => {
+    if (!currentTrip?.bagIds) return bags;
+    return bags
+      .filter(b => !currentTrip.bagIds!.includes(b.id))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [currentTrip, bags]);
 
@@ -58,6 +86,8 @@ export const TripAddItemListView: React.FC = () => {
       .filter(item => item.subcategoryId === addingSubcategoryId)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [catalog_items, addingSubcategoryId]);
+
+  // --- HANDLERS ---
 
   const handleItemSelect = (itemId: string, isSelected: boolean) => {
     setSelectedItems(prev => {
@@ -71,6 +101,39 @@ export const TripAddItemListView: React.FC = () => {
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) handleItemSelect(itemId, false);
     else setSelectedItems(prev => ({ ...prev, [itemId]: newQuantity }));
+  };
+
+  // Logic when a person is selected/created via the PersonSelector dialog
+  const handlePersonSelectedFromDialog = async (personId: number) => {
+    if (!currentTrip) return;
+    
+    // Check if they are already on the trip (PersonSelector might have added them if they were new)
+    // If not, we add them now (for existing universal people).
+    const isAlreadyOnTrip = currentTrip.peopleIds?.includes(personId);
+    
+    if (!isAlreadyOnTrip) {
+         const newPeopleIds = [...(currentTrip.peopleIds || []), personId];
+         await updateTrip(currentTrip.id, { peopleIds: newPeopleIds });
+    }
+
+    setSelectedPersonId(personId); // Auto-select them in the footer
+    setIsAddPersonDialogOpen(false);
+  };
+
+  // Logic when a bag is selected/created via the BagSelector dialog
+  const handleBagSelectedFromDialog = async (bagId: number) => {
+    if (!currentTrip) return;
+
+    // BagSelector usually just creates the bag, so we almost always need to add it to the trip here
+    const isAlreadyOnTrip = currentTrip.bagIds?.includes(bagId);
+
+    if (!isAlreadyOnTrip) {
+        const newBagIds = [...(currentTrip.bagIds || []), bagId];
+        await updateTrip(currentTrip.id, { bagIds: newBagIds });
+    }
+
+    setSelectedBagId(bagId); // Auto-select them in the footer
+    setIsAddBagDialogOpen(false);
   };
   
   const getSelectedCount = () => Object.keys(selectedItems).length;
@@ -140,70 +203,73 @@ export const TripAddItemListView: React.FC = () => {
         })}
       </div>
       
-      {/* Footer Container - Cream Background */}
+      {/* Footer Container */}
       {isFooterVisible && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
           <div className="w-full md:max-w-screen-md mx-auto space-y-4">
              
-             {/* Row 1: "X Selected" ... GAP ... Icons */}
+             {/* Row 1: Icons */}
              <div className="flex items-center gap-12">
                 <p className="font-semibold text-sm whitespace-nowrap">{getSelectedCount()} selected</p>
-                
-                {/* Icons Group */}
                 <div className="flex items-center gap-4">
-                   {/* To Buy Icon */}
                    <button 
                       onClick={() => setNeedsToBuy(!needsToBuy)}
-                      title="To Buy"
-                      className={cn(
-                        "transition-all focus:outline-none",
-                        needsToBuy ? "text-icon-active" : "text-muted-foreground hover:text-foreground"
-                      )}
+                      className={cn("transition-all focus:outline-none", needsToBuy ? "text-icon-active" : "text-muted-foreground hover:text-foreground")}
                     >
                       <DollarSign className={cn("h-5 w-5", needsToBuy && "stroke-[3px]")} />
                    </button>
-
-                   {/* Favorite Icon */}
                    <button 
                       onClick={() => setMarkAsFavorite(!markAsFavorite)}
-                      title="Mark as Favorite"
-                      className={cn(
-                        "transition-all focus:outline-none",
-                        markAsFavorite ? "text-icon-active" : "text-muted-foreground hover:text-foreground"
-                      )}
+                      className={cn("transition-all focus:outline-none", markAsFavorite ? "text-icon-active" : "text-muted-foreground hover:text-foreground")}
                     >
                       <Star className={cn("h-5 w-5", markAsFavorite && "fill-current")} />
                    </button>
-
-                   {/* Note Icon - Corrected to use fill-icon-active */}
                    <button 
                       onClick={() => setIsNoteDialogOpen(true)}
-                      title="Add Note"
-                      className={cn(
-                        "transition-all focus:outline-none",
-                        bulkNote ? "text-icon-active" : "text-muted-foreground hover:text-foreground"
-                      )}
+                      className={cn("transition-all focus:outline-none", bulkNote ? "text-icon-active" : "text-muted-foreground hover:text-foreground")}
                     >
                       <MessageSquare className={cn("h-5 w-5", bulkNote && "fill-icon-active text-icon-active")} />
                    </button>
                 </div>
              </div>
 
-             {/* Row 2: Dropdowns and Add Button */}
+             {/* Row 2: Dropdowns */}
              <div className="flex flex-wrap items-center gap-3">
-                <Select value={String(selectedPersonId || 'unassigned')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>
+                {/* PERSON SELECTOR */}
+                <Select 
+                    value={String(selectedPersonId || 'unassigned')} 
+                    onValueChange={(val) => {
+                        if (val === 'add_new') setIsAddPersonDialogOpen(true);
+                        else setSelectedPersonId(val === 'unassigned' ? undefined : Number(val));
+                    }}
+                >
                     <SelectTrigger className="flex-grow h-10 bg-background"><SelectValue placeholder="Assign Person" /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="unassigned">Person Unassigned</SelectItem>
                         {tripPeople.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
+                        <Separator className="my-1" />
+                        <SelectItem value="add_new" className="font-semibold text-primary">
+                            + Add New Person...
+                        </SelectItem>
                     </SelectContent>
                 </Select>
                 
-                 <Select value={String(selectedBagId || 'unassigned')} onValueChange={(val) => setSelectedBagId(val === 'unassigned' ? undefined : Number(val))}>
+                {/* BAG SELECTOR */}
+                 <Select 
+                    value={String(selectedBagId || 'unassigned')} 
+                    onValueChange={(val) => {
+                        if (val === 'add_new') setIsAddBagDialogOpen(true);
+                        else setSelectedBagId(val === 'unassigned' ? undefined : Number(val));
+                    }}
+                >
                     <SelectTrigger className="flex-grow h-10 bg-background"><SelectValue placeholder="Assign Bag" /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="unassigned">Bag Unassigned</SelectItem>
                         {tripBags.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
+                        <Separator className="my-1" />
+                        <SelectItem value="add_new" className="font-semibold text-primary">
+                            + Add New Bag...
+                        </SelectItem>
                     </SelectContent>
                 </Select>
 
@@ -220,28 +286,62 @@ export const TripAddItemListView: React.FC = () => {
         <DialogContent className="bg-card text-card-foreground">
           <DialogHeader>
             <DialogTitle>Add Note</DialogTitle>
-            <DialogDescription>
-              This text will be added as a note to each selected item individually.
-            </DialogDescription>
+            <DialogDescription>This text will be added as a note to each selected item individually.</DialogDescription>
           </DialogHeader>
           <Textarea 
-            placeholder="Type your note here... (e.g., Pack the red ones)" 
+            placeholder="Type your note here..." 
             value={bulkNote}
             onChange={(e) => setBulkNote(e.target.value)}
             className="min-h-[120px] bg-muted text-foreground"
             autoFocus
           />
           <DialogFooter className="sm:justify-between">
-            <Button variant="destructive" onClick={() => { setBulkNote(''); setIsNoteDialogOpen(false); }} className="mt-2 sm:mt-0">
-                Clear Note
-            </Button>
+            <Button variant="destructive" onClick={() => { setBulkNote(''); setIsNoteDialogOpen(false); }} className="mt-2 sm:mt-0">Clear Note</Button>
             <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)}>
-                Cancel
-                </Button>
+                <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)}>Cancel</Button>
                 <Button onClick={() => setIsNoteDialogOpen(false)}>Save Note</Button>
             </div>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ADD PERSON DIALOG (Uses PersonSelector for consistency) */}
+      <Dialog open={isAddPersonDialogOpen} onOpenChange={setIsAddPersonDialogOpen}>
+        <DialogContent className="bg-card text-card-foreground">
+            <DialogHeader>
+                <DialogTitle>Add Person to Trip</DialogTitle>
+                <DialogDescription>Select from your list or create a new person.</DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <PersonSelector 
+                    people={availablePeople}
+                    onPersonSelect={handlePersonSelectedFromDialog}
+                    placeholder="Select or create a person..."
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddPersonDialogOpen(false)}>Cancel</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ADD BAG DIALOG (Uses BagSelector for consistency) */}
+      <Dialog open={isAddBagDialogOpen} onOpenChange={setIsAddBagDialogOpen}>
+        <DialogContent className="bg-card text-card-foreground">
+            <DialogHeader>
+                <DialogTitle>Add Bag to Trip</DialogTitle>
+                <DialogDescription>Select from your list or create a new bag.</DialogDescription>
+            </DialogHeader>
+             <div className="py-4">
+                <BagSelector 
+                    bags={availableBags}
+                    onBagSelected={handleBagSelectedFromDialog}
+                    placeholder="Select or create a bag..."
+                />
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddBagDialogOpen(false)}>Cancel</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

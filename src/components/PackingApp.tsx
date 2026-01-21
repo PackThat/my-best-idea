@@ -1,9 +1,11 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import PackingAppContent from './PackingAppContent';
 import { ViewState } from '@/types';
 
 export const PackingApp: React.FC = () => {
+  const { tripId: urlTripId } = useParams<{ tripId: string }>();
   const {
     view, setView,
     currentTripId, loadTrip, clearCurrentTrip,
@@ -15,18 +17,29 @@ export const PackingApp: React.FC = () => {
     currentCategory
   } = useAppContext();
 
+  // FIX: Automatically load the trip if the ID is in the URL
+  useEffect(() => {
+    if (urlTripId && urlTripId !== currentTripId) {
+      loadTrip(urlTripId);
+    }
+  }, [urlTripId, currentTripId, loadTrip]);
+
   const viewState: ViewState = useMemo(() => {
     switch (view) {
       case 'my-trips':
       case 'create-trip-page':
         return { type: 'list' };
+
       case 'trip-home':
       case 'global-tobuy':
       case 'global-todo':
-      case 'items-management':
-      case 'subcategory-management':
-      case 'item-catalog-list':
         return { type: 'home' };
+
+      case 'items-management':
+        return { type: 'items-management' } as any; 
+      case 'catalog-subcategory-list':
+        return { type: 'catalog-subcategory-list' } as any;
+      
       case 'trip-people':
         return { type: 'trip-people' };
       case 'trip-bags':
@@ -43,12 +56,14 @@ export const PackingApp: React.FC = () => {
         return { type: 'trip-add-item-list' };
       case 'trip-settings':
         return { type: 'trip-settings' };
+
       case 'person-detail':
         return { type: 'person', personId: currentPerson?.id ? String(currentPerson.id) : undefined };
       case 'bag-detail':
         return { type: 'bag', bagId: currentBag?.id ? String(currentBag.id) : undefined };
       case 'category-detail':
         return { type: 'category', categoryId: currentCategory?.id ? String(currentCategory.id) : undefined };
+        
       default:
         return { type: 'home' };
     }
@@ -80,12 +95,13 @@ export const PackingApp: React.FC = () => {
   }, [setView]);
 
   const handleNavigateToTripHome = useCallback(() => {
-    if (currentTripId) {
-        loadTrip(currentTripId);
+    const targetId = urlTripId || currentTripId;
+    if (targetId) {
+        loadTrip(targetId);
     } else {
         setView('trip-home');
     }
-  }, [currentTripId, loadTrip, setView]);
+  }, [urlTripId, currentTripId, loadTrip, setView]);
 
   const handlePersonClick = useCallback((personId: string) => {
     selectPerson(personId);
@@ -105,34 +121,23 @@ export const PackingApp: React.FC = () => {
     if (view === 'trip-people' || view === 'trip-bags' || view === 'trip-items') {
       setView('trip-home');
     } else if (view === 'person-detail') {
-        if (currentTripId) {
-            setView('trip-people');
-        } else {
-            setView('people-management');
-        }
+        const hasTrip = urlTripId || currentTripId;
+        setView(hasTrip ? 'trip-people' : 'people-management');
         selectPerson(null);
     } else if (view === 'bag-detail') {
-        if (currentTripId) {
-            setView('trip-bags');
-        } else {
-            setView('bags-management');
-        }
+        const hasTrip = urlTripId || currentTripId;
+        setView(hasTrip ? 'trip-bags' : 'bags-management');
         selectBag(null);
     } else if (view === 'category-detail') {
-        if (currentTripId) {
-            setView('trip-items');
-        } else {
-            setView('item-catalog-list');
-        }
+        const hasTrip = urlTripId || currentTripId;
+        setView(hasTrip ? 'trip-items' : 'items-management'); 
         selectCategoryForView(null);
-    } else if (view === 'trip-home' && currentTripId) {
+    } else if (view === 'trip-home' && (urlTripId || currentTripId)) {
         clearCurrentTrip();
     } else {
         setView('my-trips');
     }
-  }, [view, currentTripId, clearCurrentTrip, setView, selectPerson, selectBag, selectCategoryForView]);
-
-  console.log("2. PackingApp: Rendering with view state -", view);
+  }, [view, urlTripId, currentTripId, clearCurrentTrip, setView, selectPerson, selectBag, selectCategoryForView]);
 
   return (
     <PackingAppContent

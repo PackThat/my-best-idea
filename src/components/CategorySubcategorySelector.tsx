@@ -86,12 +86,9 @@ export const CategorySubcategorySelector: React.FC<CategorySubcategorySelectorPr
                   onClick={() => handleCategorySelect(category.id)}
                 >
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between text-sm">
-                      <span>{category.name}</span>
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: category.color }}
-                      />
+                    {/* FIXED: Removed the color dot logic causing the error */}
+                    <CardTitle className="text-sm">
+                      {category.name}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
