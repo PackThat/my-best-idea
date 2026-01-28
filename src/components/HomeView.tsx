@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Backpack, ClipboardList, ShoppingBag, ListTodo, Settings } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-// Define the props the component will accept
 interface HomeViewProps {
   onViewChange: (view: 'people' | 'bags' | 'items' | 'tobuy' | 'todo' | 'settings') => void;
 }
@@ -18,14 +17,10 @@ const HomeView: React.FC<HomeViewProps> = ({ onViewChange }) => {
     todos
   } = useAppContext();
 
+  // FIX: If no trip is selected, just return null (don't show the error message)
+  // This allows the Catalog views to show up without being blocked.
   if (!currentTrip) {
-    return (
-      <div className="w-full md:max-w-screen-lg mx-auto">
-        <div className="flex justify-center items-center h-full">
-          <p className="text-xl text-muted-foreground">Loading trip details or no trip selected...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const tripPeople = allPeople.filter(person => currentTrip.peopleIds?.includes(person.id));

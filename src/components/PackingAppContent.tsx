@@ -37,9 +37,22 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
   onCategoryClick,
   onBackToList
 }) => {
+  // We remove the direct currentTripId check here to prevent the "Loading" override
   const { currentTripId } = useAppContext();
 
   const renderContent = () => {
+    // Explicitly handle the category-detail/category types first
+    if (viewState.type === 'category' || (viewState.type as string) === 'category-detail') {
+      if (!viewState.categoryId) return <div>No category selected</div>;
+      return (
+        <CategoryView
+          categoryId={viewState.categoryId}
+          personId={viewState.personId}
+          onBack={onBackToList}
+        />
+      );
+    }
+
     switch (viewState.type) {
       case 'home':
         return <HomeView onViewChange={onTripViewChange} />;
@@ -94,24 +107,17 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
           />
         );
       
-      // FIX: Added 'category-detail' so the app recognizes the click from the sidebar/catalog
-      case 'category':
-      case 'category-detail' as any: 
-        if (!viewState.categoryId) return null;
-        return (
-          <CategoryView
-            categoryId={viewState.categoryId}
-            personId={viewState.personId}
-            onBack={onBackToList}
-          />
-        );
-      
       default:
+        // This is the fallback. If we have an ID in the URL, show home. Otherwise list.
         return currentTripId ? <HomeView onViewChange={onTripViewChange} /> : <TripsList />;
     }
   };
 
-  return renderContent();
+  return (
+    <div className="h-full w-full">
+      {renderContent()}
+    </div>
+  );
 };
 
 export default PackingAppContent;

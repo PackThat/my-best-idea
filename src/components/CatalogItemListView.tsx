@@ -35,9 +35,18 @@ export const CatalogItemListView: React.FC = () => {
   const currentCategory = categories.find(c => c.id === addingCategoryId);
   const currentSubcategory = subcategories.find(sc => sc.id === addingSubcategoryId);
 
-  // Filter items logic
-  const visibleItems = useMemo(() => {
-    let items = catalog_items.filter(i => i.subcategoryId === addingSubcategoryId);
+  const isFavoritesView = currentCategory?.name === 'Favourites';
+
+  // --- Filtering & Grouping Logic ---
+  
+  const relevantItems = useMemo(() => {
+    let items: CatalogItem[] = [];
+
+    if (isFavoritesView) {
+        items = catalog_items.filter(i => i.is_favorite);
+    } else {
+        items = catalog_items.filter(i => i.subcategoryId === addingSubcategoryId);
+    }
 
     if (searchTerm.trim()) {
         const lowerTerm = searchTerm.toLowerCase();
@@ -45,12 +54,33 @@ export const CatalogItemListView: React.FC = () => {
     }
 
     return items.sort((a, b) => a.name.localeCompare(b.name));
-  }, [catalog_items, searchTerm, addingSubcategoryId]);
+  }, [catalog_items, searchTerm, addingSubcategoryId, isFavoritesView]);
 
-  // LOGIC: Show button if Search is empty (Drill Down) OR Search is 3+ chars
-  const showAddButton = searchTerm.length === 0 || searchTerm.length >= 3;
+  const groupedFavorites = useMemo(() => {
+    if (!isFavoritesView) return null;
 
-  if (!currentCategory || !currentSubcategory) {
+    const groups: Record<string, CatalogItem[]> = {};
+
+    relevantItems.forEach(item => {
+        const sub = subcategories.find(s => s.id === item.subcategoryId);
+        const groupName = sub ? sub.name : "Uncategorized";
+        
+        if (!groups[groupName]) groups[groupName] = [];
+        groups[groupName].push(item);
+    });
+
+    return Object.keys(groups).sort().reduce((acc, key) => {
+        acc[key] = groups[key];
+        return acc;
+    }, {} as Record<string, CatalogItem[]>);
+
+  }, [relevantItems, isFavoritesView, subcategories]);
+
+
+  const showAddButton = !isFavoritesView && (searchTerm.length === 0 || searchTerm.length >= 3);
+
+  // Safety Check
+  if (!currentCategory || (!currentSubcategory && !isFavoritesView)) {
     setView('catalog-subcategory-list');
     return null;
   }
@@ -88,7 +118,7 @@ export const CatalogItemListView: React.FC = () => {
   };
 
   const handleAddNewItem = async () => {
-    if (!newItemName.trim()) return;
+    if (!newItemName.trim() || !currentSubcategory) return;
     setIsAdding(true);
     await addCatalogItem({
         name: newItemName,
@@ -109,6 +139,37 @@ export const CatalogItemListView: React.FC = () => {
   const getSelectedCount = () => Object.keys(selectedItems).length;
   const isFooterVisible = getSelectedCount() > 0;
 
+  // Helper component to render a single item row
+  const renderItemRow = (item: CatalogItem) => {
+    const isSelected = !!selectedItems[item.id];
+    return (
+        <div key={item.id} className="flex items-center space-x-2 py-2 border-b border-border/50 last:border-b-0 hover:bg-muted/30 transition-colors group">
+            <Checkbox 
+                id={`item-${item.id}`} 
+                checked={isSelected} 
+                onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} 
+            />
+            <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow select-none">
+                <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">{item.name}</span>
+                    <div onClick={(e) => toggleFavorite(e, item)} className="cursor-pointer">
+                        <Star className={cn("h-4 w-4 hover:scale-110 transition-transform", item.is_favorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20 hover:text-yellow-400")} />
+                    </div>
+                </div>
+            </Label>
+            
+            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={(e) => handleEdit(e, item)}>
+                    <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={(e) => handleDeleteClick(e, item)}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+    );
+  };
+
   return (
     <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       {/* Header */}
@@ -119,68 +180,68 @@ export const CatalogItemListView: React.FC = () => {
                 Back
             </Button>
             <div className="flex flex-col">
-                <h2 className="text-2xl font-bold">{currentSubcategory.name}</h2>
+                <h2 className="text-2xl font-bold">
+                    {isFavoritesView ? "All Favourites" : currentSubcategory?.name}
+                </h2>
                 <span className="text-sm text-muted-foreground">{currentCategory.name}</span>
             </div>
         </div>
       </div>
 
       <div className="w-full md:max-w-screen-md mx-auto space-y-4">
-        {/* Search Bar */}
+        {/* Search Bar - FIXED COLORS */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[hsl(var(--search-foreground))]" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={`Search ${currentSubcategory.name} (min 3 chars)...`}
-            className="pl-11 bg-[hsl(var(--search-background))] text-[hsl(var(--search-foreground))] border-transparent placeholder:text-[hsl(var(--search-foreground))]/70 focus-visible:bg-[hsl(var(--search-active-background))] focus-visible:border-[hsl(var(--search-active-border))] focus-visible:ring-[hsl(var(--search-active-border))]"
+            placeholder={isFavoritesView ? "Search favourites..." : `Search ${currentSubcategory?.name} (min 3 chars)...`}
+            // 1. bg-search-background (Tan) for normal state
+            // 2. text-foreground (Dark Blue) for typing
+            // 3. placeholder:text-muted-foreground (Solid Mid-Blue/Grey) for readable prompt
+            // 4. focus-visible:bg-card (Off-White) for active state
+            className="pl-11 bg-search-background text-foreground border-transparent placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:bg-card focus-visible:border-border"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        {/* Item List */}
+        {/* Item List Area */}
         <div className="space-y-1">
-            {visibleItems.length > 0 ? (
-                visibleItems.map(item => {
-                    const isSelected = !!selectedItems[item.id];
-                    return (
-                        <div key={item.id} className="flex items-center space-x-2 py-2 border-b last:border-b-0 hover:bg-muted/30 transition-colors group">
-                            <Checkbox 
-                                id={`item-${item.id}`} 
-                                checked={isSelected} 
-                                onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} 
-                            />
-                            <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow select-none">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">{item.name}</span>
-                                    <div onClick={(e) => toggleFavorite(e, item)} className="cursor-pointer">
-                                        <Star className={cn("h-4 w-4 hover:scale-110 transition-transform", item.is_favorite ? "fill-icon-active text-icon-active" : "text-muted-foreground/20 hover:text-icon-active")} />
-                                    </div>
-                                </div>
-                            </Label>
-                            
-                            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={(e) => handleEdit(e, item)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={(e) => handleDeleteClick(e, item)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+            
+            {/* FAVORITES VIEW */}
+            {isFavoritesView && groupedFavorites ? (
+                Object.keys(groupedFavorites).length > 0 ? (
+                    Object.entries(groupedFavorites).map(([groupName, items]) => (
+                        <div key={groupName} className="mb-6">
+                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 border-b pb-1">
+                                {groupName}
+                            </h3>
+                            <div className="bg-card rounded-md px-2">
+                                {items.map(renderItemRow)}
                             </div>
                         </div>
-                    );
-                })
+                    ))
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>No favourites found matching your search.</p>
+                    </div>
+                )
             ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                    <p>No items found.</p>
-                </div>
+            /* STANDARD VIEW */
+                relevantItems.length > 0 ? (
+                    relevantItems.map(renderItemRow)
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>No items found.</p>
+                    </div>
+                )
             )}
 
-            {/* THE ADD BUTTON - Appended separately so it never disappears due to list logic */}
+            {/* THE ADD BUTTON */}
             {showAddButton && (
                  <div className="pt-6 pb-2">
                     <Button 
-                        variant="outline" 
-                        className="w-full border-dashed border-2 text-muted-foreground hover:text-foreground hover:border-primary/50"
+                        variant="default"
+                        className="w-full shadow-md"
                         onClick={handleOpenAddDialog}
                     >
                         <Plus className="h-4 w-4 mr-2" />
@@ -191,16 +252,16 @@ export const CatalogItemListView: React.FC = () => {
         </div>
       </div>
 
-      {/* Bulk Action Footer */}
+      {/* Footer */}
       {isFooterVisible && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
           <div className="w-full md:max-w-screen-md mx-auto flex items-center justify-between gap-4">
              <div className="flex items-center gap-4">
                 <p className="font-semibold text-sm">{getSelectedCount()} items selected</p>
              </div>
              <div className="flex gap-2">
-                 <Button variant="destructive">Mass Delete</Button>
-                 <Button variant="secondary">Mass Move</Button>
+                 <Button variant="destructive">Delete Selected</Button>
+                 <Button variant="secondary">Move Selected</Button>
              </div>
           </div>
         </div>
@@ -212,7 +273,7 @@ export const CatalogItemListView: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
             <DialogDescription>
-                Adding to <strong>{currentSubcategory.name}</strong>
+                Adding to <strong>{currentSubcategory?.name}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -223,6 +284,7 @@ export const CatalogItemListView: React.FC = () => {
                 onChange={(e) => setNewItemName(e.target.value)} 
                 placeholder="e.g. Reading Glasses"
                 autoFocus
+                className="bg-input focus-visible:bg-card"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddNewItem()}
             />
           </div>

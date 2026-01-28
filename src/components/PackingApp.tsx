@@ -1,12 +1,12 @@
 import React, { useMemo, useCallback, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom'; // Added useLocation
+import { useParams, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import PackingAppContent from './PackingAppContent';
 import { ViewState } from '@/types';
 
 export const PackingApp: React.FC = () => {
   const { tripId: urlTripId } = useParams<{ tripId: string }>();
-  const location = useLocation(); // To track where we are
+  const location = useLocation();
   const {
     view, setView,
     currentTripId, loadTrip, clearCurrentTrip,
@@ -15,60 +15,75 @@ export const PackingApp: React.FC = () => {
     selectBag,
     currentBag,
     selectCategoryForView,
-    currentCategory
+    currentCategory,
+    selectSubcategory, // Needed for back button logic
+    selectCategory     // Needed for back button logic
   } = useAppContext();
 
-  // FIX: Only load the trip from the URL if we are NOT in the Catalog
+  // 1. URL SYNC LOGIC
   useEffect(() => {
-    const isCatalogPath = location.pathname.includes('/catalog') || 
-                          ['items-management', 'catalog-subcategory-list', 'category-detail'].includes(view);
+    // List of views that are "Global" and should NOT load a trip from URL
+    const isCatalogView = [
+      'items-management', 
+      'catalog-subcategory-list', 
+      'subcategory-management',
+      'category-detail',
+      'item-catalog-list',
+      'catalog-item-list'
+    ].includes(view as string);
     
-    // If we have a Trip ID in the URL but we ARE NOT in the catalog, load the trip.
-    if (urlTripId && urlTripId !== currentTripId && !isCatalogPath) {
+    const isCatalogPath = location.pathname.includes('/catalog');
+    
+    if (urlTripId && urlTripId !== currentTripId && !isCatalogView && !isCatalogPath) {
       loadTrip(urlTripId);
     }
   }, [urlTripId, currentTripId, loadTrip, view, location.pathname]);
 
+  // 2. VIEW STATE CALCULATION
   const viewState: ViewState = useMemo(() => {
     switch (view) {
+      // --- List Views ---
       case 'my-trips':
       case 'create-trip-page':
         return { type: 'list' };
 
+      // --- Global Dashboards ---
       case 'trip-home':
       case 'global-tobuy':
       case 'global-todo':
         return { type: 'home' };
 
+      // --- Catalog Views ---
       case 'items-management':
         return { type: 'items-management' } as any; 
-      case 'catalog-subcategory-list':
-        return { type: 'catalog-subcategory-list' } as any;
       
-      case 'trip-people':
-        return { type: 'trip-people' };
-      case 'trip-bags':
-        return { type: 'trip-bags' };
-      case 'trip-items':
-        return { type: 'trip-items' };
-      case 'trip-tobuy':
-        return { type: 'trip-tobuy' };
-      case 'trip-add-item':
-        return { type: 'trip-add-item' };
-      case 'trip-add-subcategory':
-        return { type: 'trip-add-subcategory' };
-      case 'trip-add-item-list':
-        return { type: 'trip-add-item-list' };
-      case 'trip-settings':
-        return { type: 'trip-settings' };
+      // Handle both names for the subcategory list
+      case 'catalog-subcategory-list':
+      case 'subcategory-management':
+        return { type: 'catalog-subcategory-list' } as any;
 
+      // FIX: This maps the Sidebar's 'item-catalog-list' to the Content's 'catalog-item-list'
+      case 'item-catalog-list':
+      case 'catalog-item-list':
+        return { type: 'catalog-item-list' } as any;
+      
+      // --- Trip Specific Views ---
+      case 'trip-people': return { type: 'trip-people' };
+      case 'trip-bags': return { type: 'trip-bags' };
+      case 'trip-items': return { type: 'trip-items' };
+      case 'trip-tobuy': return { type: 'trip-tobuy' };
+      case 'trip-add-item': return { type: 'trip-add-item' };
+      case 'trip-add-subcategory': return { type: 'trip-add-subcategory' };
+      case 'trip-add-item-list': return { type: 'trip-add-item-list' };
+      case 'trip-settings': return { type: 'trip-settings' };
+
+      // --- Detail Views ---
       case 'person-detail':
         return { type: 'person', personId: currentPerson?.id ? String(currentPerson.id) : undefined };
       case 'bag-detail':
         return { type: 'bag', bagId: currentBag?.id ? String(currentBag.id) : undefined };
       
-      // Explicitly handle the category view for items
-      case 'category':
+      // FIX: Removed the invalid "case 'category':" that caused the TS error
       case 'category-detail':
         return { 
           type: 'category', 
@@ -80,16 +95,17 @@ export const PackingApp: React.FC = () => {
     }
   }, [view, currentPerson, currentBag, currentCategory]);
 
+  // 3. NAVIGATION HANDLERS
   const handleTripViewChange = useCallback((newTripSubView: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo' | 'settings') => {
-    switch (newTripSubView) {
-      case 'settings': setView('trip-settings'); break;
-      case 'people': setView('trip-people'); break;
-      case 'bags': setView('trip-bags'); break;
-      case 'items': setView('trip-items'); break;
-      case 'tobuy': setView('trip-tobuy'); break;
-      case 'trips': setView('my-trips'); break;
-      default: setView('trip-home');
-    }
+    const viewMap: Record<string, any> = {
+        'settings': 'trip-settings',
+        'people': 'trip-people',
+        'bags': 'trip-bags',
+        'items': 'trip-items',
+        'tobuy': 'trip-tobuy',
+        'trips': 'my-trips'
+    };
+    setView(viewMap[newTripSubView] || 'trip-home');
   }, [setView]);
 
   const handleNavigateToTripHome = useCallback(() => {
@@ -109,7 +125,6 @@ export const PackingApp: React.FC = () => {
 
   const handleCategoryClick = useCallback((categoryId: string) => {
     selectCategoryForView(categoryId);
-    // Force the view to stay on the item list
     setView('category-detail');
   }, [selectCategoryForView, setView]);
 
@@ -132,12 +147,21 @@ export const PackingApp: React.FC = () => {
     } else if (view === 'category-detail') {
         setView('catalog-subcategory-list');
         selectCategoryForView(null);
+    
+    // BACK BUTTON LOGIC FOR CATALOG
+    } else if (['item-catalog-list', 'catalog-item-list'].includes(view)) {
+        setView('subcategory-management'); 
+        if (selectSubcategory) selectSubcategory(null as any); 
+    } else if (['catalog-subcategory-list', 'subcategory-management'].includes(view)) {
+        setView('items-management'); 
+        if (selectCategory) selectCategory(null as any); 
+
     } else if (view === 'trip-home' && (urlTripId || currentTripId)) {
         clearCurrentTrip();
     } else {
         setView('my-trips');
     }
-  }, [view, urlTripId, currentTripId, clearCurrentTrip, setView, selectPerson, selectBag, selectCategoryForView]);
+  }, [view, urlTripId, currentTripId, clearCurrentTrip, setView, selectPerson, selectBag, selectCategoryForView, selectSubcategory, selectCategory]);
 
   return (
     <PackingAppContent
