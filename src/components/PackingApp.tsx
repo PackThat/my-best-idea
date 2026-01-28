@@ -1,11 +1,12 @@
 import React, { useMemo, useCallback, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom'; // Added useLocation
 import { useAppContext } from '@/contexts/AppContext';
 import PackingAppContent from './PackingAppContent';
 import { ViewState } from '@/types';
 
 export const PackingApp: React.FC = () => {
   const { tripId: urlTripId } = useParams<{ tripId: string }>();
+  const location = useLocation(); // To track where we are
   const {
     view, setView,
     currentTripId, loadTrip, clearCurrentTrip,
@@ -17,12 +18,16 @@ export const PackingApp: React.FC = () => {
     currentCategory
   } = useAppContext();
 
-  // FIX: Automatically load the trip if the ID is in the URL
+  // FIX: Only load the trip from the URL if we are NOT in the Catalog
   useEffect(() => {
-    if (urlTripId && urlTripId !== currentTripId) {
+    const isCatalogPath = location.pathname.includes('/catalog') || 
+                          ['items-management', 'catalog-subcategory-list', 'category-detail'].includes(view);
+    
+    // If we have a Trip ID in the URL but we ARE NOT in the catalog, load the trip.
+    if (urlTripId && urlTripId !== currentTripId && !isCatalogPath) {
       loadTrip(urlTripId);
     }
-  }, [urlTripId, currentTripId, loadTrip]);
+  }, [urlTripId, currentTripId, loadTrip, view, location.pathname]);
 
   const viewState: ViewState = useMemo(() => {
     switch (view) {
@@ -61,8 +66,14 @@ export const PackingApp: React.FC = () => {
         return { type: 'person', personId: currentPerson?.id ? String(currentPerson.id) : undefined };
       case 'bag-detail':
         return { type: 'bag', bagId: currentBag?.id ? String(currentBag.id) : undefined };
+      
+      // Explicitly handle the category view for items
+      case 'category':
       case 'category-detail':
-        return { type: 'category', categoryId: currentCategory?.id ? String(currentCategory.id) : undefined };
+        return { 
+          type: 'category', 
+          categoryId: currentCategory?.id ? String(currentCategory.id) : undefined 
+        };
         
       default:
         return { type: 'home' };
@@ -71,26 +82,13 @@ export const PackingApp: React.FC = () => {
 
   const handleTripViewChange = useCallback((newTripSubView: 'people' | 'bags' | 'items' | 'tobuy' | 'trips' | 'todo' | 'settings') => {
     switch (newTripSubView) {
-      case 'settings':
-        setView('trip-settings');
-        break;
-      case 'people':
-        setView('trip-people');
-        break;
-      case 'bags':
-        setView('trip-bags');
-        break;
-      case 'items':
-        setView('trip-items');
-        break;
-      case 'tobuy':
-        setView('trip-tobuy');
-        break;
-      case 'trips':
-        setView('my-trips');
-        break;
-      default:
-        setView('trip-home');
+      case 'settings': setView('trip-settings'); break;
+      case 'people': setView('trip-people'); break;
+      case 'bags': setView('trip-bags'); break;
+      case 'items': setView('trip-items'); break;
+      case 'tobuy': setView('trip-tobuy'); break;
+      case 'trips': setView('my-trips'); break;
+      default: setView('trip-home');
     }
   }, [setView]);
 
@@ -98,6 +96,7 @@ export const PackingApp: React.FC = () => {
     const targetId = urlTripId || currentTripId;
     if (targetId) {
         loadTrip(targetId);
+        setView('trip-home');
     } else {
         setView('trip-home');
     }
@@ -110,7 +109,9 @@ export const PackingApp: React.FC = () => {
 
   const handleCategoryClick = useCallback((categoryId: string) => {
     selectCategoryForView(categoryId);
-  }, [selectCategoryForView]);
+    // Force the view to stay on the item list
+    setView('category-detail');
+  }, [selectCategoryForView, setView]);
 
   const handleBagClick = useCallback((bagId: string) => {
     selectBag(bagId);
@@ -129,8 +130,7 @@ export const PackingApp: React.FC = () => {
         setView(hasTrip ? 'trip-bags' : 'bags-management');
         selectBag(null);
     } else if (view === 'category-detail') {
-        const hasTrip = urlTripId || currentTripId;
-        setView(hasTrip ? 'trip-items' : 'items-management'); 
+        setView('catalog-subcategory-list');
         selectCategoryForView(null);
     } else if (view === 'trip-home' && (urlTripId || currentTripId)) {
         clearCurrentTrip();
