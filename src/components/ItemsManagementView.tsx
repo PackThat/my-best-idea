@@ -50,6 +50,7 @@ export const ItemsManagementView: React.FC = () => {
 
   const handleCategoryClick = (categoryId: string) => {
     setAddingCategoryId(categoryId);
+    // Explicitly set view to match what PackingApp expects
     setView('catalog-subcategory-list' as any); 
   };
 
@@ -140,6 +141,9 @@ export const ItemsManagementView: React.FC = () => {
     );
   };
 
+  // Logic to find the Favorites category if it exists
+  const favoritesCategory = categories.find(c => c.name === 'Favourites');
+
   return (
     <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       {/* Header */}
@@ -152,12 +156,13 @@ export const ItemsManagementView: React.FC = () => {
       </div>
 
       <div className="w-full md:max-w-screen-md mx-auto space-y-4">
-        {/* Search Bar - Matches TripAddItemView EXACTLY */}
+        {/* Search Bar - CONSISTENT STYLING APPLIED */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[hsl(var(--search-foreground))]" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search Catalog..."
-            className="pl-11 bg-[hsl(var(--search-background))] text-[hsl(var(--search-foreground))] border-transparent placeholder:text-[hsl(var(--search-foreground))]/70 focus-visible:bg-[hsl(var(--search-active-background))] focus-visible:border-[hsl(var(--search-active-border))] focus-visible:ring-[hsl(var(--search-active-border))]"
+            // Using the exact same classes as CatalogItemListView for perfect consistency
+            className="pl-11 bg-search-background text-foreground border-transparent placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:bg-card focus-visible:border-border"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -184,10 +189,16 @@ export const ItemsManagementView: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-2">
-             {/* Favorites Card - Text Only */}
+             {/* Favorites Card - NOW ACTIVE */}
              <Card 
                   className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
-                  onClick={() => console.log("Go to Favorites List")}
+                  onClick={() => {
+                      if (favoritesCategory) {
+                          handleCategoryClick(favoritesCategory.id);
+                      } else {
+                          console.warn("Favourites category not found in list");
+                      }
+                  }}
                 >
                   <CardContent className="py-2 px-4 flex justify-between items-center min-h-[40px]">
                       <span className="font-medium">Favorites</span>

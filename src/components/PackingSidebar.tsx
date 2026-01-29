@@ -34,17 +34,41 @@ export const PackingSidebar: React.FC = () => {
     if (sidebarOpen) {
       toggleSidebar();
     }
-    setView(newView);
+
+    // --- NAVIGATION ROUTING LOGIC ---
+    
+    // 1. People Page (Has its own URL)
     if (newView === 'people-management' as any) {
+      setView(newView);
       return navigate('/people');
     }
+    
+    // 2. Bags Page (Has its own URL)
     if (newView === 'bags-management' as any) {
+      setView(newView);
       return navigate('/bags');
     }
+    
+    // 3. My Trips (Resets to Home)
     if (newView === 'my-trips') {
-      clearCurrentTrip();
+      clearCurrentTrip(); // Resets trip AND view
       return navigate('/');
     }
+
+    // 4. FIX: Item Catalog
+    if (newView === 'items-management') {
+        // STEP 1: Clear the trip first (which defaults view to 'my-trips')
+        clearCurrentTrip(); 
+        
+        // STEP 2: IMMEDIATELY override the view back to Catalog
+        // This ensures 'items-management' wins the race
+        setView('items-management');
+        
+        return navigate('/');
+    }
+
+    // Default for other internal views (like 'global-tobuy')
+    setView(newView);
   };
 
   const menuItems = [
@@ -61,7 +85,7 @@ export const PackingSidebar: React.FC = () => {
   return (
     <div className={cn(
       "fixed inset-y-0 left-0 z-50 w-64 border-r transform transition-transform duration-200 ease-in-out",
-      "bg-sidebar", // Use the theme variable for the background
+      "bg-sidebar", 
       sidebarOpen ? 'translate-x-0' : '-translate-x-full'
     )}>
       <ScrollArea className="flex-1 h-full">
