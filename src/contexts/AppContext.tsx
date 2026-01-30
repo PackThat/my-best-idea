@@ -84,6 +84,11 @@ interface AppContextType {
   updateCategory: (id: string, name: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 
+  // Subcategory Functions (ADDED)
+  addSubcategory: (categoryId: string, name: string) => Promise<void>;
+  updateSubcategory: (id: string, name: string) => Promise<void>;
+  deleteSubcategory: (id: string) => Promise<void>;
+
   addCatalogItem: (itemData: { name: string; categoryId: string; subcategoryId?: string }) => Promise<CatalogItem | null>;
   updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
   deleteCatalogItem: (itemId: string) => Promise<void>;
@@ -281,7 +286,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const selectBag = useCallback((bagId: string | null) => { setCurrentBagId(bagId); }, []);
   const selectCategoryForView = useCallback((categoryId: string | null) => { setView(categoryId ? 'category-detail' : 'item-catalog-list'); setCurrentCategoryForViewId(categoryId); }, [setView]);
 
-  // --- CATALOG MANAGEMENT FUNCTIONS (NEW) ---
+  // --- CATALOG MANAGEMENT FUNCTIONS ---
   const addCategory = useCallback(async (name: string) => {
     const { data, error } = await supabase.from('categories').insert({ name }).select().single();
     if (error) { console.error("Error adding category:", error); return; }
@@ -299,6 +304,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (error) { console.error("Error deleting category:", error); return; }
     setCategories(prev => prev.filter(c => c.id !== id));
   }, [setCategories]);
+
+  // --- SUBCATEGORY MANAGEMENT FUNCTIONS (ADDED) ---
+  const addSubcategory = useCallback(async (categoryId: string, name: string) => {
+    const { data, error } = await supabase.from('subcategories').insert({ category_id: categoryId, name }).select().single();
+    if (error) { console.error("Error adding subcategory:", error); return; }
+    setSubcategories(prev => [...prev, { id: data.id, name: data.name, categoryId: data.category_id, createdAt: data.created_at }]);
+  }, [setSubcategories]);
+
+  const updateSubcategory = useCallback(async (id: string, name: string) => {
+    const { error } = await supabase.from('subcategories').update({ name }).eq('id', id);
+    if (error) { console.error("Error updating subcategory:", error); return; }
+    setSubcategories(prev => prev.map(sc => sc.id === id ? { ...sc, name } : sc));
+  }, [setSubcategories]);
+
+  const deleteSubcategory = useCallback(async (id: string) => {
+    const { error } = await supabase.from('subcategories').delete().eq('id', id);
+    if (error) { console.error("Error deleting subcategory:", error); return; }
+    setSubcategories(prev => prev.filter(sc => sc.id !== id));
+  }, [setSubcategories]);
+  // ------------------------------------------
 
   const addCatalogItem = useCallback(async (itemData: { name: string; categoryId: string; subcategoryId?: string }) => {
     const { data, error } = await supabase.from('catalog_items').insert({
@@ -333,8 +358,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (error) { console.error("Error deleting catalog item:", error); return; }
     setCatalogItems(prev => prev.filter(i => i.id !== itemId));
   }, [setCatalogItems]);
-  // ------------------------------------------
-
+  
   const updateItem = useCallback(async (itemId: string, updates: Partial<Item>) => {
     if (!currentTrip) return;
     const updatedItems = (currentTrip.items || []).map(item => (item.id === itemId ? { ...item, ...updates } : item));
@@ -374,7 +398,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     currentTripId, currentPerson, currentBag, currentBagId, currentCategory, selectPerson, selectBag, 
     selectCategoryForView, createTrip, loadTrip, clearCurrentTrip, updateTrip, deleteTrip, createPerson, 
     updatePerson, deletePerson, addPersonToTrip, removePersonFromTrip, createBag, updateBag, deleteBag, 
-    addBagToTrip, removeBagFromTrip, addCategory, updateCategory, deleteCategory, addCatalogItem, updateCatalogItem, deleteCatalogItem, updateItem, deleteItem, addMultipleCatalogItemsToTripItems,
+    addBagToTrip, removeBagFromTrip, addCategory, updateCategory, deleteCategory, 
+    addSubcategory, updateSubcategory, deleteSubcategory, // <--- New functions added here
+    addCatalogItem, updateCatalogItem, deleteCatalogItem, updateItem, deleteItem, addMultipleCatalogItemsToTripItems,
   };
 
   return (
