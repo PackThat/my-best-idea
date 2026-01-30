@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, ChevronRight, Star, Pencil, Trash2 } from 'lucide-react';
+import { Search, Plus, ChevronRight, Star, Pencil, Trash2, Filter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,9 +24,10 @@ export const ItemsManagementView: React.FC = () => {
   } = useAppContext();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   
-  // Dialog States
+  // Selection & Dialog States
+  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [categoryName, setCategoryName] = useState('');
@@ -34,23 +35,49 @@ export const ItemsManagementView: React.FC = () => {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Sort Categories Alphabetically
-  const sortedCategories = useMemo(() => 
-    [...categories].sort((a, b) => a.name.localeCompare(b.name)), 
-  [categories]);
+  // --- Logic: Check if a Category has any favorites ---
+  const categoryHasFavorites = (categoryId: string) => {
+    return catalog_items.some(item => item.categoryId === categoryId && item.is_favorite);
+  };
 
-  // Search Logic
+  // Sort & Filter Categories
+  const visibleCategories = useMemo(() => {
+    // 1. Sort Alphabetically
+    let result = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+
+    // 2. Filter by Favorites Toggle
+    if (showFavoritesOnly) {
+        result = result.filter(c => categoryHasFavorites(c.id));
+    }
+    
+    // 3. Filter by Search (if user types "Clothes", show Clothes category)
+    // Note: We also have item search below, this is just filtering the category list itself
+    if (searchTerm.length >= 1) { // Filter categories as you type
+         const lowerTerm = searchTerm.toLowerCase();
+         // If the category name matches OR if the search result items belong to this category
+         // (Optional: for now let's just match category name for the list view)
+         // result = result.filter(c => c.name.toLowerCase().includes(lowerTerm));
+    }
+
+    return result;
+  }, [categories, showFavoritesOnly, catalog_items]); // Re-run if items change (e.g. someone favorites something)
+
+  // Search Logic (Drill down to specific items)
   const searchResults = useMemo(() => {
     if (searchTerm.length < 2) return null;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return catalog_items
+    let items = catalog_items
       .filter(i => i.name.toLowerCase().includes(lowercasedTerm))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [searchTerm, catalog_items]);
+    
+    if (showFavoritesOnly) {
+        items = items.filter(i => i.is_favorite);
+    }
+    return items;
+  }, [searchTerm, catalog_items, showFavoritesOnly]);
 
   const handleCategoryClick = (categoryId: string) => {
     setAddingCategoryId(categoryId);
-    // Explicitly set view to match what PackingApp expects
     setView('catalog-subcategory-list' as any); 
   };
 
@@ -141,9 +168,6 @@ export const ItemsManagementView: React.FC = () => {
     );
   };
 
-  // Logic to find the Favorites category if it exists
-  const favoritesCategory = categories.find(c => c.name === 'Favourites');
-
   return (
     <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24">
       {/* Header */}
@@ -156,22 +180,40 @@ export const ItemsManagementView: React.FC = () => {
       </div>
 
       <div className="w-full md:max-w-screen-md mx-auto space-y-4">
-        {/* Search Bar - CONSISTENT STYLING APPLIED */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search Catalog..."
-            // Using the exact same classes as CatalogItemListView for perfect consistency
-            className="pl-11 bg-search-background text-foreground border-transparent placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:bg-card focus-visible:border-border"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        {/* Search Bar & Favorites Filter */}
+        <div className="space-y-3">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search Catalog..."
+                    className="pl-11 bg-search-background text-foreground border-transparent placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:bg-card focus-visible:border-border"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            
+            {/* THE TOGGLE SWITCH */}
+            <div className="flex items-center space-x-2 px-1">
+                <Checkbox 
+                    id="show-favorites" 
+                    checked={showFavoritesOnly}
+                    onCheckedChange={(checked) => setShowFavoritesOnly(Boolean(checked))}
+                />
+                <Label 
+                    htmlFor="show-favorites" 
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none flex items-center gap-2"
+                >
+                    Show Favourites Only <Star className={cn("h-3 w-3", showFavoritesOnly ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                </Label>
+            </div>
         </div>
 
         {/* Content Area */}
         {searchResults ? (
           <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Matching Items ({searchResults.length})</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">
+                Matching Items ({searchResults.length}) {showFavoritesOnly && "(Favorites Only)"}
+            </h3>
             {searchResults.length > 0 ? (
               <Card className="p-2">
                 <div className="space-y-1">
@@ -181,64 +223,71 @@ export const ItemsManagementView: React.FC = () => {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                   <p>No items found matching "{searchTerm}"</p>
-                  <Button variant="link" className="mt-2" onClick={() => console.log("Add New Item with name:", searchTerm)}>
-                      + Create "{searchTerm}"
-                  </Button>
+                  {!showFavoritesOnly && (
+                    <Button variant="link" className="mt-2" onClick={() => console.log("Add New Item with name:", searchTerm)}>
+                        + Create "{searchTerm}"
+                    </Button>
+                  )}
               </div>
             )}
           </div>
         ) : (
           <div className="space-y-2">
-             {/* Favorites Card - NOW ACTIVE */}
-             <Card 
-                  className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
-                  onClick={() => {
-                      if (favoritesCategory) {
-                          handleCategoryClick(favoritesCategory.id);
-                      } else {
-                          console.warn("Favourites category not found in list");
-                      }
-                  }}
-                >
-                  <CardContent className="py-2 px-4 flex justify-between items-center min-h-[40px]">
-                      <span className="font-medium">Favorites</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </CardContent>
-             </Card>
-
              {/* Categories List */}
-             {sortedCategories.map(category => (
-                <Card 
-                  key={category.id} 
-                  className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
-                  onClick={() => handleCategoryClick(category.id)}
-                >
-                  <CardContent className="py-2 px-4 flex justify-between items-center min-h-[40px]">
-                      <span className="font-medium">{category.name}</span>
-                      
-                      {/* Edit/Delete Icons - Only visible for actual categories */}
-                      <div className="flex items-center gap-1">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            onClick={(e) => handleEditClick(e, category)}
+             {visibleCategories.length > 0 ? (
+                 visibleCategories.map(category => (
+                    // Hide the dummy "Favourites" category if it exists, as we have the toggle now
+                    (category.name !== 'Favourites' && category.name !== 'Favorites') && (
+                        <Card 
+                        key={category.id} 
+                        className="hover:bg-muted/50 transition-colors cursor-pointer bg-card"
+                        onClick={() => handleCategoryClick(category.id)}
                         >
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => handleDeleteClick(e, category)}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground ml-1" />
-                      </div>
-                  </CardContent>
-                </Card>
-             ))}
+                        <CardContent className="py-2 px-4 flex justify-between items-center min-h-[40px]">
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium">{category.name}</span>
+                                {showFavoritesOnly && (
+                                    // Visual confirmation that this category has favorites
+                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                )}
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                    onClick={(e) => handleEditClick(e, category)}
+                                >
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                    onClick={(e) => handleDeleteClick(e, category)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground ml-1" />
+                            </div>
+                        </CardContent>
+                        </Card>
+                    )
+                 ))
+             ) : (
+                 <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    {showFavoritesOnly ? (
+                        <div className="space-y-2">
+                            <Star className="h-8 w-8 text-muted-foreground/30 mx-auto" />
+                            <p className="text-muted-foreground">No categories have favourites yet.</p>
+                            <Button variant="link" onClick={() => setShowFavoritesOnly(false)}>Show all categories</Button>
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">No categories found.</p>
+                    )}
+                 </div>
+             )}
           </div>
         )}
       </div>
