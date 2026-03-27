@@ -1,12 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, ChevronRight, Plus, Pencil } from 'lucide-react';
-import { Person, Category, Subcategory, Item, Bag } from '@/types';
-import EditTripItemDialog from './EditTripItemDialog';
-import NoteEditDialog from './NoteEditDialog';
+import { ArrowLeft, Package, ChevronRight, Plus } from 'lucide-react';
+import { Person, Category, Subcategory } from '@/types';
 
 interface PersonPackingViewProps {
   personId: string;
@@ -19,27 +17,12 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId }) => {
   const {
     people,
     items,
-    bags,
-    currentTrip,
     categories,
     subcategories,
     updateItem,
     setView,
     setAddingForPersonId,
   } = useAppContext();
-
-  const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [editingNoteItem, setEditingNoteItem] = useState<Item | null>(null);
-
-  const tripBags = useMemo(() => {
-    if (!currentTrip?.bagIds) return [];
-    return bags.filter(b => currentTrip.bagIds!.includes(b.id));
-  }, [currentTrip, bags]);
-
-  const tripPeople = useMemo(() => {
-    if (!currentTrip?.peopleIds) return [];
-    return people.filter(p => currentTrip.peopleIds!.includes(p.id));
-  }, [currentTrip, people]);
 
   const person = people.find(p => p.id === Number(personId));
   const personItems = items.filter(item => item.personId === Number(personId));
@@ -63,10 +46,6 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId }) => {
     if (item) {
       updateItem(itemId, { packed: !item.packed });
     }
-  };
-
-  const handleSaveNote = (itemId: string, newNote: string | undefined) => {
-    updateItem(itemId, { notes: newNote });
   };
 
   const getCategoriesWithItems = () => {
@@ -122,23 +101,10 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId }) => {
             <Card key={item.id} className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => toggleItemPacked(item.id)}>
               <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`font-medium ${item.packed ? 'line-through text-muted-foreground' : ''}`}>
-                      {item.name}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Stops the item from being marked as 'Packed' when you click Edit
-                        setEditingItem(item);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className={`font-medium ${item.packed ? 'line-through text-muted-foreground' : ''}`}>
+                    {item.name}
+                  </span>
                   <Badge variant={item.packed ? "default" : "secondary"}>
                     {item.packed ? "Packed" : "Not Packed"}
                   </Badge>
@@ -146,30 +112,10 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId }) => {
               </CardContent>
             </Card>
           ))}
-          </div>
-  
-          {editingItem && (
-            <EditTripItemDialog
-              open={!!editingItem}
-              onOpenChange={() => setEditingItem(null)}
-              item={editingItem}
-              tripPeople={tripPeople}
-              tripBags={tripBags}
-              onSave={updateItem}
-            />
-          )}
-  
-          {editingNoteItem && (
-            <NoteEditDialog
-              open={!!editingNoteItem}
-              onOpenChange={() => setEditingNoteItem(null)}
-              item={editingNoteItem}
-              onSaveNote={handleSaveNote}
-            />
-          )}
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
   if (selectedCategory) {
     const category = categories.find(c => c.id === selectedCategory);
@@ -273,27 +219,8 @@ const PersonPackingView: React.FC<PersonPackingViewProps> = ({ personId }) => {
         )}
       </div>
 
-{editingItem && (
-  <EditTripItemDialog
-    open={!!editingItem}
-    onOpenChange={() => setEditingItem(null)}
-    item={editingItem}
-    tripPeople={tripPeople}
-    tripBags={tripBags}
-    onSave={updateItem}
-  />
-)}
-
-{editingNoteItem && (
-  <NoteEditDialog
-    open={!!editingNoteItem}
-    onOpenChange={() => setEditingNoteItem(null)}
-    item={editingNoteItem}
-    onSaveNote={handleSaveNote}
-  />
-)}
-</div>
-);
+    </div>
+  );
 };
 
 export default PersonPackingView;

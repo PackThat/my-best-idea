@@ -151,6 +151,11 @@ const BagDetailView: React.FC<BagDetailViewProps> = ({ bagId, onBack }) => {
   const unpackedItems = bagItems.filter(item => !item.packed);
   const packedItems = bagItems.filter(item => item.packed);
 
+  const tripBags = useMemo(() => {
+    if (!currentTrip?.bagIds) return [];
+    return bags.filter(b => currentTrip.bagIds!.includes(b.id));
+  }, [currentTrip, bags]);
+
   const tripPeople = useMemo(() => {
     if (!currentTrip?.peopleIds) return [];
     return people.filter(p => currentTrip.peopleIds!.includes(p.id));
@@ -246,7 +251,7 @@ const BagDetailView: React.FC<BagDetailViewProps> = ({ bagId, onBack }) => {
             onOpenChange={() => setEditingItem(null)}
             item={editingItem}
             tripPeople={tripPeople}
-            tripBags={[bag]}
+            tripBags={tripBags}
             onSave={updateItem}
           />
         )}

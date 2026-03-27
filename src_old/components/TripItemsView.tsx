@@ -1,24 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, User } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PackingListItem } from './PackingListItem';
 import { Category, Subcategory, Item, Person, Bag, CatalogItem } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import NoteEditDialog from './NoteEditDialog';
-import EditTripItemDialog from './EditTripItemDialog';
 import { cn } from '@/lib/utils';
+import EditTripItemDialog from './EditTripItemDialog';
+import NoteEditDialog from './NoteEditDialog';
 
 const groupItemsBy = (items: Item[], key: keyof Item) => {
   return items.reduce((acc, item) => {
-    const groupKey = item[key] as string | number | undefined;
-    const finalKey = groupKey === undefined ? 'uncategorized' : groupKey;
-    if (!acc[finalKey]) {
-      acc[finalKey] = [];
+    const groupKey = item[key] as string | number;
+    if (groupKey === undefined) {
+      acc['uncategorized'] = acc['uncategorized'] || [];
+      acc['uncategorized'].push(item);
+      return acc;
     }
-    acc[finalKey].push(item);
+    if (!acc[groupKey]) {
+      acc[groupKey] = [];
+    }
+    acc[groupKey].push(item);
     return acc;
   }, {} as Record<string | number, Item[]>);
 };
@@ -26,26 +29,26 @@ const groupItemsBy = (items: Item[], key: keyof Item) => {
 interface ItemsAccordionProps {
   title: string;
   items: Item[];
-  person: Person | null;
   categories: Category[];
   subcategories: Subcategory[];
   people: Person[];
   bags: Bag[];
   onUpdate: (itemId: string, updates: Partial<Item>) => void;
-  onDelete: (itemId: string) => void;
+  onDelete: (itemId:string) => void;
   updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
   onEditItem: (item: Item) => void;
   onEditNote: (item: Item) => void;
 }
 
 const ItemsAccordion: React.FC<ItemsAccordionProps> = ({ 
-  title, items, person, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote 
+  title, items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote 
 }) => {
   if (items.length === 0) return null;
 
   const itemsByCategory = groupItemsBy(items, 'categoryId');
   const sortedCategoryIds = Object.keys(itemsByCategory).sort((a, b) => {
-    if (a === 'uncategorized') return 1; if (b === 'uncategorized') return -1;
+    if (a === 'uncategorized') return 1;
+    if (b === 'uncategorized') return -1;
     const catA = categories.find(c => c.id === a)?.name || '';
     const catB = categories.find(c => c.id === b)?.name || '';
     return catA.localeCompare(catB);
@@ -53,7 +56,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
 
   return (
     <AccordionItem value={title.toLowerCase().replace(/ /g, '-')}>
-      <AccordionTrigger className="text-lg font-semibold">
+      <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
         <div className="flex items-center gap-2">
           <span>{title}</span>
           <Badge className="bg-counter-badge text-counter-badge-foreground">{items.length}</Badge>
@@ -65,7 +68,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
             const category = categories.find(c => c.id === categoryId);
             const categoryName = categoryId === 'uncategorized' ? 'Uncategorized' : category?.name;
             const categoryItems = itemsByCategory[categoryId];
-            
+
             const itemsWithNoSubcategory = categoryItems.filter(item => !item.subcategoryId);
             const itemsWithSubcategory = categoryItems.filter(item => item.subcategoryId);
             const itemsBySubcategory = groupItemsBy(itemsWithSubcategory, 'subcategoryId');
@@ -84,15 +87,20 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
                   <div className="border-l-2">
                     {itemsWithNoSubcategory.map(item => (
                       <PackingListItem 
-                        key={item.id} item={item} people={people} bags={bags}
-                        onUpdate={onUpdate} onDelete={onDelete}
-                        updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
-                        contextPersonId={person?.id}
+                        key={item.id} 
+                        item={item}
+                        people={people}
+                        bags={bags}
+                        onUpdate={onUpdate}
+                        onDelete={onDelete}
+                        updateCatalogItem={updateCatalogItem}
+                        onEdit={onEditItem}
+                        onEditNote={onEditNote}
                       />
                     ))}
                   </div>
 
-                  {sortedSubcategoryIds.length > 0 && (
+                   {sortedSubcategoryIds.length > 0 && (
                     <Accordion type="multiple" className="w-full">
                       {sortedSubcategoryIds.map(subcategoryId => {
                         const subcategory = subcategories.find(sc => sc.id === subcategoryId);
@@ -112,7 +120,6 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
                                     key={item.id} item={item} people={people} bags={bags}
                                     onUpdate={onUpdate} onDelete={onDelete}
                                     updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
-                                    contextPersonId={person?.id}
                                   />
                                 ))}
                               </div>
@@ -132,71 +139,54 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
   );
 };
 
-interface PersonViewProps {
-  personId: string;
-  onBack: () => void;
-}
 
-const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
+export const TripItemsView: React.FC = () => {
   const {
-    people, currentTrip, setView, categories, subcategories, bags,
-    updateItem, deleteItem, updateCatalogItem, setAddingForPersonId
+    currentTrip,
+    setView,
+    categories,
+    subcategories,
+    people,
+    bags,
+    updateItem,
+    deleteItem,
+    updateCatalogItem,
   } = useAppContext();
 
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [editingNoteItem, setEditingNoteItem] = useState<Item | null>(null);
 
-  const person = people.find(p => p.id === Number(personId));
-  const personItems = (currentTrip?.items || []).filter(item => item.personId === Number(personId));
-  const unpackedItems = personItems.filter(item => !item.packed);
-  const packedItems = personItems.filter(item => item.packed);
+  const allItems = currentTrip?.items || [];
+  const unpackedItems = allItems.filter(item => !item.packed);
+  const packedItems = allItems.filter(item => item.packed);
+  
+  const tripPeople = useMemo(() => {
+    if (!currentTrip?.peopleIds) return [];
+    return people.filter(p => currentTrip.peopleIds!.includes(p.id));
+  }, [currentTrip, people]);
 
   const tripBags = useMemo(() => {
     if (!currentTrip?.bagIds) return [];
     return bags.filter(b => currentTrip.bagIds!.includes(b.id));
   }, [currentTrip, bags]);
 
-  const tripPeople = useMemo(() => {
-    if (!currentTrip?.peopleIds) return [];
-    return people.filter(p => currentTrip.peopleIds!.includes(p.id));
-  }, [currentTrip, people]);
-
   const handleSaveNote = (itemId: string, newNote: string | undefined) => {
     updateItem(itemId, { notes: newNote });
   };
-  
-  const handleAddItemForPerson = () => {
-    if (person) {
-      setAddingForPersonId(person.id);
-      setView('trip-add-item');
-    }
-  };
-
-  if (!person) {
-    return (
-      <div className="w-full md:max-w-screen-lg mx-auto">
-        <p>Person not found.</p>
-        <Button onClick={onBack}>Back</Button>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full md:max-w-screen-lg mx-auto">
       <div className="space-y-6">
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div className="justify-self-start">
-            <Button variant="default" onClick={onBack}>
+            <Button variant="default" onClick={() => setView('trip-home')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to People
+              Back to Trip
             </Button>
           </div>
-          <div className="justify-self-center flex items-center gap-2">
-            <User className="h-6 w-6" />
-            <h2 className="text-2xl font-bold">{person.name}</h2>
-          </div>
+          <h2 className="text-2xl font-bold justify-self-center">Packing List</h2>
           <div className="justify-self-end">
-            <Button onClick={handleAddItemForPerson}>
+            <Button onClick={() => setView('trip-add-item')}>
               <Plus className="h-5 w-5 mr-2" />
               Add Item
             </Button>
@@ -208,7 +198,6 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             <ItemsAccordion
               title="To Be Packed"
               items={unpackedItems}
-              person={person}
               categories={categories}
               subcategories={subcategories}
               people={people}
@@ -222,7 +211,6 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             <ItemsAccordion
               title="Packed"
               items={packedItems}
-              person={person}
               categories={categories}
               subcategories={subcategories}
               people={people}
@@ -234,15 +222,6 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
               onEditNote={setEditingNoteItem}
             />
           </Accordion>
-          
-          {personItems.length === 0 && (
-             <Card className="bg-card mt-4">
-              <CardContent className="p-6 text-center">
-                <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No items assigned to {person.name} yet.</p>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {editingItem && (
@@ -269,4 +248,4 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
   );
 };
 
-export default PersonView;
+export default TripItemsView;

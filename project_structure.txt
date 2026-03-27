@@ -1,0 +1,103 @@
+My-Best-Idea/
+├── .idx/
+├── .vscode/
+├── dist/
+├── public/
+│   ├── Items.csv
+│   ├── placeholder.svg
+│   └── robots.txt
+├── src/
+│   ├── components/
+│   │   ├── .gitkeep
+│   │   ├── AddBagDialog.tsx
+│   │   ├── AddCategoryDialog.tsx
+│   │   ├── AddNewItemDialog.tsx
+│   │   ├── AddPersonDialog.tsx
+│   │   ├── AddSubcategoryDialog.tsx
+│   │   ├── AddToBuyItemDialog.tsx
+│   │   ├── AddTripDialog.tsx
+│   │   ├── AppLayout.tsx
+│   │   ├── BagDetailView.tsx
+│   │   ├── BagSelector.tsx
+│   │   ├── BagsListView.tsx
+│   │   ├── BagsManagementView.tsx
+│   │   ├── CatalogImportDialog.tsx
+│   │   ├── CatalogItemListView.tsx
+│   │   ├── CatalogSubcategoryListView.tsx
+│   │   ├── CategorySubcategorySelector.tsx
+│   │   ├── CategoryView.tsx
+│   │   ├── ColorPalette.tsx
+│   │   ├── EditBagDialog.tsx
+│   │   ├── EditCatalogItemDialog.tsx
+│   │   ├── EditCategoryDialog.tsx
+│   │   ├── EditPersonDialog.tsx
+│   │   ├── EditSubcategoryDialog.tsx
+│   │   ├── EditTripItemDialog.tsx
+│   │   ├── HomeView.tsx
+│   │   ├── InlineBagForm.tsx
+│   │   ├── InlinePersonForm.tsx
+│   │   ├── InlineTripForm.tsx
+│   │   ├── ItemAssignmentDialog.tsx
+│   │   ├── ItemCard.tsx
+│   │   ├── ItemSelectionDialog.tsx
+│   │   ├── ItemsImportView.tsx
+│   │   ├── ItemsManagementView.tsx
+│   │   ├── NoteEditDialog.tsx
+│   │   ├── PackingApp.tsx
+│   │   ├── PackingAppContent.tsx
+│   │   ├── PackingHeader.tsx
+│   │   ├── PackingList.tsx
+│   │   ├── PackingListItem.tsx
+│   │   ├── PackingSidebar.tsx
+│   │   ├── PeopleListView.tsx
+│   │   ├── PeopleManagementView.tsx
+│   │   ├── PersonBagsView.tsx
+│   │   ├── PersonPackingView.tsx
+│   │   ├── PersonSelector.tsx
+│   │   ├── PersonView.tsx
+│   │   ├── QuickEditDialog.tsx
+│   │   ├── SubcategoryManagementView.tsx
+│   │   ├── TripAddBagDialog.tsx
+│   │   ├── TripAddItemDialog.tsx
+│   │   ├── TripAddItemListView.tsx
+│   │   ├── TripAddItemView.tsx
+│   │   ├── TripAddSubcategoryView.tsx
+│   │   ├── TripBagsView.tsx
+│   │   ├── TripCategoryView.tsx
+│   │   ├── TripItemsView.tsx
+│   │   ├── TripMainView.tsx.old
+│   │   ├── TripNavigationView.tsx.old
+│   │   ├── TripPeopleView.tsx
+│   │   ├── TripSelector.tsx.old
+│   │   ├── TripSettingsView.tsx
+│   │   ├── TripSubcategoryView.tsx
+│   │   ├── TripToBuyView.tsx
+│   │   ├── TripsList.tsx
+│   │   └── theme-provider.tsx
+│   ├── contexts/
+│   ├── data/
+│   ├── hooks/
+│   ├── lib/
+│   ├── pages/
+│   ├── App.css
+│   ├── App.tsx
+│   ├── index.css
+│   └── main.tsx
+├── supabase/
+├── README.md
+├── backup.zip
+├── components.json
+├── components_files.txt
+├── deno.jsonc
+├── eslint.config.js
+├── heartbeat_diag.sh
+├── index.html
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── tailwind.config.ts
+├── tree.py
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts

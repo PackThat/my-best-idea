@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, User } from 'lucide-react';
+import { ArrowLeft, Plus, Briefcase } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PackingListItem } from './PackingListItem';
 import { Category, Subcategory, Item, Person, Bag, CatalogItem } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import NoteEditDialog from './NoteEditDialog';
 import EditTripItemDialog from './EditTripItemDialog';
-import { cn } from '@/lib/utils';
 
 const groupItemsBy = (items: Item[], key: keyof Item) => {
   return items.reduce((acc, item) => {
@@ -26,7 +26,7 @@ const groupItemsBy = (items: Item[], key: keyof Item) => {
 interface ItemsAccordionProps {
   title: string;
   items: Item[];
-  person: Person | null;
+  bag?: Bag | null;
   categories: Category[];
   subcategories: Subcategory[];
   people: Person[];
@@ -39,7 +39,7 @@ interface ItemsAccordionProps {
 }
 
 const ItemsAccordion: React.FC<ItemsAccordionProps> = ({ 
-  title, items, person, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote 
+  title, items, bag, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote 
 }) => {
   if (items.length === 0) return null;
 
@@ -53,7 +53,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
 
   return (
     <AccordionItem value={title.toLowerCase().replace(/ /g, '-')}>
-      <AccordionTrigger className="text-lg font-semibold">
+      <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
         <div className="flex items-center gap-2">
           <span>{title}</span>
           <Badge className="bg-counter-badge text-counter-badge-foreground">{items.length}</Badge>
@@ -87,7 +87,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
                         key={item.id} item={item} people={people} bags={bags}
                         onUpdate={onUpdate} onDelete={onDelete}
                         updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
-                        contextPersonId={person?.id}
+                        contextBagId={bag?.id}
                       />
                     ))}
                   </div>
@@ -112,7 +112,7 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
                                     key={item.id} item={item} people={people} bags={bags}
                                     onUpdate={onUpdate} onDelete={onDelete}
                                     updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
-                                    contextPersonId={person?.id}
+                                    contextBagId={bag?.id}
                                   />
                                 ))}
                               </div>
@@ -132,29 +132,24 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
   );
 };
 
-interface PersonViewProps {
-  personId: string;
+interface BagDetailViewProps {
+  bagId: string;
   onBack: () => void;
 }
 
-const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
+const BagDetailView: React.FC<BagDetailViewProps> = ({ bagId, onBack }) => {
   const {
-    people, currentTrip, setView, categories, subcategories, bags,
-    updateItem, deleteItem, updateCatalogItem, setAddingForPersonId
+    bags, currentTrip, setView, categories, subcategories, people,
+    updateItem, deleteItem, updateCatalogItem, setAddingForBagId
   } = useAppContext();
 
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [editingNoteItem, setEditingNoteItem] = useState<Item | null>(null);
 
-  const person = people.find(p => p.id === Number(personId));
-  const personItems = (currentTrip?.items || []).filter(item => item.personId === Number(personId));
-  const unpackedItems = personItems.filter(item => !item.packed);
-  const packedItems = personItems.filter(item => item.packed);
-
-  const tripBags = useMemo(() => {
-    if (!currentTrip?.bagIds) return [];
-    return bags.filter(b => currentTrip.bagIds!.includes(b.id));
-  }, [currentTrip, bags]);
+  const bag = bags.find(b => b.id === Number(bagId));
+  const bagItems = (currentTrip?.items || []).filter(item => item.bagId === Number(bagId));
+  const unpackedItems = bagItems.filter(item => !item.packed);
+  const packedItems = bagItems.filter(item => item.packed);
 
   const tripPeople = useMemo(() => {
     if (!currentTrip?.peopleIds) return [];
@@ -165,17 +160,17 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
     updateItem(itemId, { notes: newNote });
   };
   
-  const handleAddItemForPerson = () => {
-    if (person) {
-      setAddingForPersonId(person.id);
+  const handleAddItemForBag = () => {
+    if (bag) {
+      setAddingForBagId(bag.id);
       setView('trip-add-item');
     }
   };
 
-  if (!person) {
+  if (!bag) {
     return (
       <div className="w-full md:max-w-screen-lg mx-auto">
-        <p>Person not found.</p>
+        <p>Bag not found.</p>
         <Button onClick={onBack}>Back</Button>
       </div>
     );
@@ -188,15 +183,15 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
           <div className="justify-self-start">
             <Button variant="default" onClick={onBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to People
+              Back to Bags
             </Button>
           </div>
           <div className="justify-self-center flex items-center gap-2">
-            <User className="h-6 w-6" />
-            <h2 className="text-2xl font-bold">{person.name}</h2>
+            <Briefcase className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">{bag.name}</h2>
           </div>
           <div className="justify-self-end">
-            <Button onClick={handleAddItemForPerson}>
+            <Button onClick={handleAddItemForBag}>
               <Plus className="h-5 w-5 mr-2" />
               Add Item
             </Button>
@@ -208,7 +203,7 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             <ItemsAccordion
               title="To Be Packed"
               items={unpackedItems}
-              person={person}
+              bag={bag}
               categories={categories}
               subcategories={subcategories}
               people={people}
@@ -222,7 +217,7 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             <ItemsAccordion
               title="Packed"
               items={packedItems}
-              person={person}
+              bag={bag}
               categories={categories}
               subcategories={subcategories}
               people={people}
@@ -235,11 +230,11 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             />
           </Accordion>
           
-          {personItems.length === 0 && (
+          {bagItems.length === 0 && (
              <Card className="bg-card mt-4">
               <CardContent className="p-6 text-center">
-                <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No items assigned to {person.name} yet.</p>
+                <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No items assigned to {bag.name} yet.</p>
               </CardContent>
             </Card>
           )}
@@ -251,7 +246,7 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             onOpenChange={() => setEditingItem(null)}
             item={editingItem}
             tripPeople={tripPeople}
-            tripBags={tripBags}
+            tripBags={[bag]}
             onSave={updateItem}
           />
         )}
@@ -269,4 +264,4 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
   );
 };
 
-export default PersonView;
+export default BagDetailView;

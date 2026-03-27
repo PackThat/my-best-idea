@@ -156,11 +156,6 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
     return bags.filter(b => currentTrip.bagIds!.includes(b.id));
   }, [currentTrip, bags]);
 
-  const tripPeople = useMemo(() => {
-    if (!currentTrip?.peopleIds) return [];
-    return people.filter(p => currentTrip.peopleIds!.includes(p.id));
-  }, [currentTrip, people]);
-
   const handleSaveNote = (itemId: string, newNote: string | undefined) => {
     updateItem(itemId, { notes: newNote });
   };
@@ -250,7 +245,7 @@ const PersonView: React.FC<PersonViewProps> = ({ personId, onBack }) => {
             open={!!editingItem}
             onOpenChange={() => setEditingItem(null)}
             item={editingItem}
-            tripPeople={tripPeople}
+            tripPeople={[person]}
             tripBags={tripBags}
             onSave={updateItem}
           />
