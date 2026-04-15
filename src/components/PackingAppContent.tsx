@@ -37,23 +37,25 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
   onCategoryClick,
   onBackToList
 }) => {
-  // We remove the direct currentTripId check here to prevent the "Loading" override
   const { currentTripId } = useAppContext();
 
   const renderContent = () => {
-    // Explicitly handle the category-detail/category types first
-    if (viewState.type === 'category' || (viewState.type as string) === 'category-detail') {
-      if (!viewState.categoryId) return <div>No category selected</div>;
+    // We treat the state as 'any' here to stop the "Property does not exist" errors
+    const state = viewState as any;
+
+    // Explicitly handle the category views first
+    if (state.type === 'category' || state.type === 'category-detail') {
+      if (!state.categoryId) return <div className="p-4 text-center">No category selected</div>;
       return (
         <CategoryView
-          categoryId={viewState.categoryId}
-          personId={viewState.personId}
+          categoryId={state.categoryId}
+          personId={state.personId}
           onBack={onBackToList}
         />
       );
     }
 
-    switch (viewState.type) {
+    switch (state.type) {
       case 'home':
         return <HomeView onViewChange={onTripViewChange} />;
       
@@ -67,9 +69,8 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         return <TripBagsView onBagClick={onBagClick} />;
       
       case 'bag':
-        const { currentBagId } = useAppContext();
-        if (!currentBagId) return null;
-        return <BagDetailView bagId={currentBagId} onBack={onBackToList} />;
+        // If we don't have a bagId in the map, we check the global context as a backup
+        return <BagDetailView bagId={state.bagId || ''} onBack={onBackToList} />;
 
       case 'trip-items':
         return <TripItemsView />;
@@ -99,22 +100,22 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
         return <TripSettingsView />;
 
       case 'person':
-        if (!viewState.personId) return null;
+        if (!state.personId) return <div className="p-4 text-center">No person selected</div>;
         return (
           <PersonView
-            personId={viewState.personId}
+            personId={state.personId}
             onBack={onBackToList}
           />
         );
       
       default:
-        // This is the fallback. If we have an ID in the URL, show home. Otherwise list.
+        // Fallback: If a trip is active, show Home. Otherwise, show the Trip List.
         return currentTripId ? <HomeView onViewChange={onTripViewChange} /> : <TripsList />;
     }
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full bg-background">
       {renderContent()}
     </div>
   );

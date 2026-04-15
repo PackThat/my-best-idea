@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Users, Trash2 } from 'lucide-react';
 import { Person, Item } from '@/types';
-import { AddPersonDialog } from './AddPersonDialog';
+// Fix: Changed to a default import (removed the curly braces)
+import AddPersonDialog from './AddPersonDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -24,9 +25,10 @@ const PeopleListView: React.FC<PeopleListViewProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { deletePerson } = useAppContext();
 
+  // Fix: We convert the string ID back to a number before sending it to the database
   const handleDeletePerson = (personId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    deletePerson(personId);
+    deletePerson(Number(personId));
   };
 
   return (
@@ -45,19 +47,24 @@ const PeopleListView: React.FC<PeopleListViewProps> = ({
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {people.map((person) => {
-          const personItems = items.filter(item => item.personId === person.id);
+          // Fix: Convert both IDs to strings to make sure the comparison works perfectly
+          const personItems = items.filter(item => String(item.personId) === String(person.id));
           const packedItems = personItems.filter(item => item.packed);
           
           return (
             <Card 
               key={person.id} 
               className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => onPersonClick(person.id)}
+              // Fix: Convert the number ID to a string for the click function
+              onClick={() => onPersonClick(String(person.id))}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center gap-2">
-                    <div className={`w-4 h-4 rounded-full ${person.color}`} />
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: person.color }} 
+                    />
                     {person.name}
                   </div>
                   <AlertDialog>
@@ -86,7 +93,8 @@ const PeopleListView: React.FC<PeopleListViewProps> = ({
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={(e) => handleDeletePerson(person.id, e)}
+                          // Fix: Convert ID to string here too
+                          onClick={(e) => handleDeletePerson(String(person.id), e)}
                           className="bg-red-600 hover:bg-red-700"
                         >
                           Delete

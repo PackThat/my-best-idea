@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, User, Package, Plus } from 'lucide-react';
+import { User, Package, Plus } from 'lucide-react';
 import { Item, Person, Category, Subcategory, Bag } from '@/types';
 import ItemCard from './ItemCard';
 import { Button } from './ui/button';
@@ -29,9 +29,9 @@ const PackingList: React.FC<PackingListProps> = ({
   onAddItem,
   showAddButton,
 }) => {
-  // Group items by person
+  // Group items by person - We make sure the key is always a string
   const itemsByPerson: { [key: string]: Item[] } = items.reduce((acc, item) => {
-    const personId = item.personId || 'unassigned';
+    const personId = item.personId ? String(item.personId) : 'unassigned';
     if (!acc[personId]) {
       acc[personId] = [];
     }
@@ -39,7 +39,8 @@ const PackingList: React.FC<PackingListProps> = ({
     return acc;
   }, {} as { [key: string]: Item[] });
 
-  const getPersonById = (personId: string) => people.find(p => p.id === personId);
+  // Fix: We convert the ID to a String so it matches the personId word
+  const getPersonById = (personId: string) => people.find(p => String(p.id) === personId);
 
   return (
     <div className="space-y-6">
@@ -54,7 +55,8 @@ const PackingList: React.FC<PackingListProps> = ({
       </div>
       
       {Object.entries(itemsByPerson).map(([personId, personItems]) => {
-        const person = personId !== 'unassigned' ? getPersonById(personId) : null;
+        // Fix: Use 'undefined' instead of 'null' to keep the component happy
+        const person = personId !== 'unassigned' ? getPersonById(personId) : undefined;
         const packedCount = personItems.filter(item => item.packed).length;
         const totalCount = personItems.length;
 
@@ -91,7 +93,9 @@ const PackingList: React.FC<PackingListProps> = ({
                 {personItems.map((item) => {
                   const itemCategory = categories.find(c => c.id === item.categoryId);
                   const subcategory = subcategories.find(s => s.id === item.subcategoryId);
-                  const bag = bags.find(b => b.id === item.bagId);
+                  
+                  // Fix: Use String comparison for bags just to be safe
+                  const bag = bags.find(b => String(b.id) === String(item.bagId));
                   
                   return (
                     <ItemCard
