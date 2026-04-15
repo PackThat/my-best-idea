@@ -95,7 +95,19 @@ interface AppContextType {
   
   updateItem: (itemId: string, updates: Partial<Item>) => Promise<void>;
   deleteItem: (itemId: string) => Promise<void>;
-  addMultipleCatalogItemsToTripItems: (bagId: number | undefined, personId: number | undefined, itemsToAdd: { catalogItemId: string; quantity: number; notes?: string; isToBuy?: boolean }[]) => Promise<void>;
+  addMultipleCatalogItemsToTripItems: (
+    bagId: number | undefined, 
+    personId: number | undefined, 
+    itemsToAdd: { 
+      catalogItemId: string; 
+      quantity: number; 
+      name?: string; 
+      categoryId?: string; 
+      subcategoryId?: string; 
+      notes?: string; 
+      isToBuy?: boolean 
+    }[]
+  ) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -348,9 +360,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [setCatalogItems]);
 
   const updateCatalogItem = useCallback(async (itemId: string, updates: Partial<CatalogItem>) => {
-    const { data, error } = await supabase.from('catalog_items').update({ is_favorite: updates.is_favorite }).eq('id', itemId).select().single();
-    if (error) { console.error("Error updating catalog item:", error); return; }
-    if (data) { setCatalogItems(prev => prev.map(i => (i.id === itemId ? { ...i, is_favorite: data.is_favorite } : i))); }
+    // This prepares the data for Supabase, mapping our code names to database names
+    const supabaseUpdates: any = {};
+    if (updates.name !== undefined) supabaseUpdates.name = updates.name;
+    if (updates.categoryId !== undefined) supabaseUpdates.category_id = updates.categoryId;
+    if (updates.subcategoryId !== undefined) supabaseUpdates.subcategory_id = updates.subcategoryId;
+    if (updates.is_favorite !== undefined) supabaseUpdates.is_favorite = updates.is_favorite;
+
+    const { data, error } = await supabase.from('catalog_items').update(supabaseUpdates).eq('id', itemId).select().single();
+    
+    if (error) {
+      console.error("Error updating catalog item:", error);
+      return;
+    }
+
+    if (data) {
+      setCatalogItems(prev => prev.map(item => 
+        item.id === itemId ? { 
+          ...item, 
+          name: data.name,
+          categoryId: data.category_id,
+          subcategoryId: data.subcategory_id,
+          is_favorite: data.is_favorite 
+        } : item
+      ));
+    }
   }, [setCatalogItems]);
 
   const deleteCatalogItem = useCallback(async (itemId: string) => {
@@ -373,21 +407,49 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addMultipleCatalogItemsToTripItems = useCallback(async (
     bagId: number | undefined, personId: number | undefined,
-    itemsToAdd: { catalogItemId: string; quantity: number; notes?: string; isToBuy?: boolean }[]
+    itemsToAdd: { 
+      catalogItemId: string; 
+      name?: string; 
+      categoryId?: string; 
+      subcategoryId?: string; 
+      quantity: number; 
+      notes?: string; 
+      isToBuy?: boolean 
+    }[]
   ) => {
     if (!currentTrip) return;
     const newItems: Item[] = [];
+    
     for (const itemData of itemsToAdd) {
-      const catalogItem = catalogItems.find(ci => ci.id === itemData.catalogItemId);
-      if (catalogItem) {
+      // Look in state first
+      let catalogItem = catalogItems.find(ci => ci.id === itemData.catalogItemId);
+      
+      // If we found it OR if we have the info passed directly (for brand new items)
+      const name = catalogItem?.name || itemData.name;
+      const catId = catalogItem?.categoryId || itemData.categoryId;
+      const subCatId = catalogItem?.subcategoryId || itemData.subcategoryId;
+
+      if (name && catId) {
         newItems.push({
-          id: uuidv4(), name: catalogItem.name, catalogItemId: catalogItem.id, categoryId: catalogItem.categoryId, 
-          subcategoryId: catalogItem.subcategoryId, packed: false, quantity: itemData.quantity, isToBuy: itemData.isToBuy || false,
-          bagId, personId, notes: itemData.notes, createdAt: new Date().toISOString(),
+          id: uuidv4(), 
+          name: name, 
+          catalogItemId: itemData.catalogItemId, 
+          categoryId: catId, 
+          subcategoryId: subCatId, 
+          packed: false, 
+          quantity: itemData.quantity, 
+          isToBuy: itemData.isToBuy || false,
+          bagId, 
+          personId, 
+          notes: itemData.notes, 
+          createdAt: new Date().toISOString(),
         });
       }
     }
-    await updateTrip(currentTrip.id, { items: [...(currentTrip.items || []), ...newItems] });
+    
+    if (newItems.length > 0) {
+      await updateTrip(currentTrip.id, { items: [...(currentTrip.items || []), ...newItems] });
+    }
   }, [currentTrip, catalogItems, updateTrip]);
 
   const value = {
