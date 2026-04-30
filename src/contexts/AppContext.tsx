@@ -39,6 +39,8 @@ interface AppContextType {
   setAddingCategoryId: (id: string | null) => void; 
   addingSubcategoryId: string | null;
   setAddingSubcategoryId: (id: string | null) => void;
+  showFavoritesOnly: boolean;
+  setShowFavoritesOnly: (show: boolean) => void;
   addingForPersonId: number | null;
   setAddingForPersonId: (id: number | null) => void;
   addingForBagId: number | null;
@@ -136,6 +138,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currentCategoryForViewId, setCurrentCategoryForViewId] = useState<string | null>(null);
   const [addingCategoryId, setAddingCategoryId] = useState<string | null>(null);
   const [addingSubcategoryId, setAddingSubcategoryId] = useState<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [addingForPersonId, setAddingForPersonId] = useState<number | null>(null);
   const [addingForBagId, setAddingForBagId] = useState<number | null>(null);
 
@@ -454,7 +457,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const value = {
     view, setView, selectedCategoryId, selectCategory, selectedSubcategoryId, selectSubcategory, addingCategoryId, 
-    setAddingCategoryId, addingSubcategoryId, setAddingSubcategoryId, addingForPersonId, setAddingForPersonId,
+    setAddingCategoryId, addingSubcategoryId, setAddingSubcategoryId, showFavoritesOnly, setShowFavoritesOnly, addingForPersonId, setAddingForPersonId,
     addingForBagId, setAddingForBagId, sidebarOpen, toggleSidebar, isLoading, categories, subcategories, 
     catalog_items: catalogItems, bags, people, items: currentTripItems, todos: [], trips, currentTrip, 
     currentTripId, currentPerson, currentBag, currentBagId, currentCategory, selectPerson, selectBag, 

@@ -23,7 +23,6 @@ interface PackingListItemProps {
   mode?: 'packing' | 'tobuy';
 }
 
-// Helper component for details and actions to avoid code duplication
 const ItemActions: React.FC<PackingListItemProps> = ({
   item, people, bags, onDelete, updateCatalogItem, onEdit, onUpdate, contextPersonId, contextBagId, mode
 }) => {
@@ -47,98 +46,61 @@ const ItemActions: React.FC<PackingListItemProps> = ({
 
   return (
     <>
-      {/* Person and Bag details */}
       <div className="flex items-center gap-3 text-sm text-foreground min-w-0">
         {assignedPerson && assignedPerson.id !== contextPersonId && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <User className="h-4 w-4" />
-                <span className="truncate">{assignedPerson.name}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>{assignedPerson.name}</TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <User className="h-4 w-4" />
+            <span className="truncate">{assignedPerson.name}</span>
+          </div>
         )}
         {assignedBag && assignedBag.id !== contextBagId && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Backpack className="h-4 w-4" />
-                <span className="truncate">{assignedBag.name}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>{assignedBag.name}</TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Backpack className="h-4 w-4" />
+            <span className="truncate">{assignedBag.name}</span>
+          </div>
         )}
       </div>
 
-      {/* Action Buttons */}
       <div className="flex items-center gap-0.5 ml-auto shrink-0">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={handleFavoriteToggle}>
-              <Star className={cn("h-4 w-4", isFavorite && "fill-icon-active text-icon-active")} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{isFavorite ? 'Remove from favorites' : 'Add to favorites'}</TooltipContent>
-        </Tooltip>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleFavoriteToggle}>
+          <Star className={cn("h-4 w-4", isFavorite ? "fill-icon-active text-icon-active" : "text-foreground")} />
+        </Button>
+        
         {mode === 'packing' && (
-           <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => updateItem(item.id, { isToBuy: !item.isToBuy })}>
-                  {/* Added stroke-[3px] to make it BOLD when active */}
-                  <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-icon-active stroke-[3px]")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{item.isToBuy ? 'Remove from To Buy list' : 'Add to To Buy list'}</TooltipContent>
-            </Tooltip>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => onUpdate(item.id, { isToBuy: !item.isToBuy })}>
+            <DollarSign className={cn("h-4 w-4", item.isToBuy && "text-icon-active stroke-[3px]")} />
+          </Button>
         )}
         
-        {/* NOTES BUTTON */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => setIsNoteDialogOpen(true)}>
-              <MessageSquare className={cn("h-4 w-4", item.notes && "fill-icon-active text-icon-active")} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>{item.notes ? 'Edit note' : 'Add a note'}</TooltipContent>
-        </Tooltip>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => setIsNoteDialogOpen(true)}>
+          <MessageSquare className={cn("h-4 w-4", item.notes && "fill-icon-active text-icon-active")} />
+        </Button>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => onEdit(item)}>
-              <Edit2 className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Edit item details</TooltipContent>
-        </Tooltip>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => onEdit(item)}>
+          <Edit2 className="h-4 w-4" />
+        </Button>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-card">
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>Remove from Trip?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete "{item.quantity} x {item.name}" from your trip.
+                This will delete "{item.quantity} x {item.name}" from this trip only. It will **not** be deleted from your Master Catalog.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(item.id)}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-destructive">Remove from Trip</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
 
-        <NoteEditDialog 
-            open={isNoteDialogOpen}
-            onOpenChange={setIsNoteDialogOpen}
-            item={item}
-            onSaveNote={handleSaveNote}
-        />
+        <NoteEditDialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen} item={item} onSaveNote={handleSaveNote} />
       </div>
     </>
   );
@@ -146,53 +108,47 @@ const ItemActions: React.FC<PackingListItemProps> = ({
 
 export const PackingListItem: React.FC<PackingListItemProps> = (props) => {
   const { item, onUpdate, mode = 'packing' } = props;
+  const { catalog_items } = useAppContext();
+  
+  const catalogItem = catalog_items.find(ci => ci.id === item.catalogItemId);
+  const isFavorite = catalogItem?.is_favorite || false;
 
   const handleCheckboxChange = (checked: boolean) => {
     if (mode === 'packing') {
       onUpdate(item.id, { packed: checked });
-    } else { // mode === 'tobuy'
-      onUpdate(item.id, { isToBuy: false }); // Mark as "bought"
+    } else {
+      onUpdate(item.id, { isToBuy: false });
     }
   };
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <div className="border-b">
-        {/* --- Mobile Layout (Stacked) --- */}
-        <div className="flex flex-col py-3 md:hidden">
-          <div className="flex items-center gap-4">
-            <Checkbox
-              className="w-5 h-5"
-              checked={mode === 'packing' ? item.packed : false}
-              onCheckedChange={handleCheckboxChange}
-            />
-            <div className="flex-grow">
-              <span className="font-medium text-foreground">
-                {item.quantity} x {item.name}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between pl-9 pt-2">
-            <ItemActions {...props} mode={mode} />
-          </div>
-        </div>
-
-        {/* --- Desktop Layout (Single Row) --- */}
-        <div className="hidden md:flex items-center gap-4 py-2">
-          <Checkbox
-            className="w-5 h-5"
-            checked={mode === 'packing' ? item.packed : false}
-            onCheckedChange={handleCheckboxChange}
-          />
-          <div className="flex-grow">
-            <span className="font-medium text-foreground">
+    <div className="border-b">
+      <div className="flex flex-col py-3 md:hidden">
+        <div className="flex items-center gap-4">
+          <Checkbox className="w-5 h-5" checked={mode === 'packing' ? item.packed : false} onCheckedChange={handleCheckboxChange} />
+          <div className="flex-grow flex items-center gap-2 min-w-0">
+            <span className="font-medium text-foreground truncate">
               {item.quantity} x {item.name}
             </span>
+            {isFavorite && <Star className="h-3 w-3 fill-icon-active text-icon-active shrink-0" />}
           </div>
+        </div>
+        <div className="flex items-center justify-between pl-9 pt-2">
           <ItemActions {...props} mode={mode} />
         </div>
       </div>
-    </TooltipProvider>
+
+      <div className="hidden md:flex items-center gap-4 py-2">
+        <Checkbox className="w-5 h-5" checked={mode === 'packing' ? item.packed : false} onCheckedChange={handleCheckboxChange} />
+        <div className="flex-grow flex items-center gap-2">
+          <span className="font-medium text-foreground">
+            {item.quantity} x {item.name}
+          </span>
+          {isFavorite && <Star className="h-3 w-3 fill-icon-active text-icon-active" />}
+        </div>
+        <ItemActions {...props} mode={mode} />
+      </div>
+    </div>
   );
 };
 

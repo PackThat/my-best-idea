@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Star } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PackingListItem } from './PackingListItem';
 import { Category, Subcategory, Item, Person, Bag, CatalogItem } from '@/types';
@@ -38,10 +38,12 @@ interface ItemsAccordionProps {
   updateCatalogItem: (itemId: string, updates: Partial<CatalogItem>) => Promise<void>;
   onEditItem: (item: Item) => void;
   onEditNote: (item: Item) => void;
+  showFavoritesOnly: boolean;
+  catalog_items: CatalogItem[];
 }
 
 const ItemsAccordion: React.FC<ItemsAccordionProps> = ({ 
-  title, items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote 
+  title, items, categories, subcategories, people, bags, onUpdate, onDelete, updateCatalogItem, onEditItem, onEditNote, showFavoritesOnly, catalog_items 
 }) => {
   if (items.length === 0) return null;
 
@@ -55,15 +57,15 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
   });
 
   return (
-    <AccordionItem value={title.toLowerCase().replace(/ /g, '-')}>
-      <AccordionTrigger className="text-lg font-semibold text-foreground hover:text-primary">
+    <AccordionItem value={title.toLowerCase().replace(/ /g, '-')} className="border-b-0">
+      <AccordionTrigger className="text-lg font-bold text-foreground hover:no-underline py-4">
         <div className="flex items-center gap-2">
           <span>{title}</span>
-          <Badge className="bg-counter-badge text-counter-badge-foreground">{items.length}</Badge>
+          <Badge className="bg-counter-badge text-counter-badge-foreground h-5 min-w-5 flex items-center justify-center p-0 px-1">{items.length}</Badge>
         </div>
       </AccordionTrigger>
-      <AccordionContent>
-        <Accordion type="multiple" className="w-full space-y-1 pl-2">
+      <AccordionContent className="pb-4">
+        <Accordion type="multiple" className="w-full space-y-2 pl-1">
           {sortedCategoryIds.map(categoryId => {
             const category = categories.find(c => c.id === categoryId);
             const categoryName = categoryId === 'uncategorized' ? 'Uncategorized' : category?.name;
@@ -77,14 +79,20 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
               const subB = subcategories.find(s => s.id === b)?.name || '';
               return subA.localeCompare(subB);
             });
+
+            // Check for favorites in this category for the tan star
+            const hasFavorites = catalog_items.some(ci => ci.categoryId === categoryId && ci.is_favorite);
             
             return (
-              <AccordionItem value={categoryId} key={categoryId} className="border rounded-md bg-card overflow-hidden">
-                <AccordionTrigger className="px-3 py-2 text-base font-semibold hover:bg-muted data-[state=open]:bg-muted rounded-md">
-                  {categoryName} ({categoryItems.length})
+              <AccordionItem value={categoryId} key={categoryId} className="border rounded-lg bg-card overflow-hidden mb-2 shadow-sm">
+                <AccordionTrigger className="px-3 py-2 text-sm font-bold hover:no-underline hover:bg-muted data-[state=open]:bg-muted">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate">{categoryName} ({categoryItems.length})</span>
+                    {showFavoritesOnly && hasFavorites && <Star className="h-3 w-3 fill-icon-active text-icon-active" />}
+                  </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-2 px-2">
-                  <div className="border-l-2">
+                <AccordionContent className="pt-2 px-1">
+                  <div className="space-y-0">
                     {itemsWithNoSubcategory.map(item => (
                       <PackingListItem 
                         key={item.id} 
@@ -101,20 +109,24 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
                   </div>
 
                    {sortedSubcategoryIds.length > 0 && (
-                    <Accordion type="multiple" className="w-full">
+                    <Accordion type="multiple" className="w-full mt-1">
                       {sortedSubcategoryIds.map(subcategoryId => {
                         const subcategory = subcategories.find(sc => sc.id === subcategoryId);
                         const subName = subcategoryId === 'uncategorized' ? 'Uncategorized' : subcategory?.name;
                         const subcategoryItems = itemsBySubcategory[subcategoryId];
+                        const subHasFavorites = catalog_items.some(ci => ci.subcategoryId === subcategoryId && ci.is_favorite);
+
                         return (
                           <AccordionItem value={subcategoryId} key={subcategoryId} className="border-0">
-                            <AccordionTrigger className={cn("px-2 py-2 text-sm font-medium rounded-sm hover:bg-accent",
-                              "data-[state=open]:bg-secondary data-[state=open]:text-secondary-foreground"
+                            <AccordionTrigger className={cn("px-3 py-2 text-xs font-semibold rounded-none hover:no-underline border-t",
+                              "data-[state=open]:bg-secondary/30"
                             )}>
-                              {subName} ({subcategoryItems.length})
+                              <div className="flex items-center gap-2">
+                                <span className="truncate">{subName} ({subcategoryItems.length})</span>
+                                {showFavoritesOnly && subHasFavorites && <Star className="h-3 w-3 fill-icon-active text-icon-active" />}
+                              </div>
                             </AccordionTrigger>
-                            <AccordionContent className="pl-4 pt-1">
-                              <div className="border-l-2">
+                            <AccordionContent className="pl-2 pt-0 pb-1">
                                 {subcategoryItems.map(item => (
                                   <PackingListItem 
                                     key={item.id} item={item} people={people} bags={bags}
@@ -122,7 +134,6 @@ const ItemsAccordion: React.FC<ItemsAccordionProps> = ({
                                     updateCatalogItem={updateCatalogItem} onEdit={onEditItem} onEditNote={onEditNote}
                                   />
                                 ))}
-                              </div>
                             </AccordionContent>
                           </AccordionItem>
                         )
@@ -146,11 +157,13 @@ export const TripItemsView: React.FC = () => {
     setView,
     categories,
     subcategories,
+    catalog_items,
     people,
     bags,
     updateItem,
     deleteItem,
     updateCatalogItem,
+    showFavoritesOnly
   } = useAppContext();
 
   const [editingItem, setEditingItem] = useState<Item | null>(null);
@@ -175,75 +188,76 @@ export const TripItemsView: React.FC = () => {
   };
 
   return (
-    <div className="w-full md:max-w-screen-lg mx-auto">
-      <div className="space-y-6">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
-          <div className="justify-self-start">
-            <Button variant="default" onClick={() => setView('trip-home')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Trip
-            </Button>
-          </div>
-          <h2 className="text-2xl font-bold justify-self-center">Packing List</h2>
-          <div className="justify-self-end">
-            <Button onClick={() => setView('trip-add-item')}>
-              <Plus className="h-5 w-5 mr-2" />
-              Add Item
-            </Button>
-          </div>
-        </div>
+    <div className="w-full max-w-screen-md mx-auto space-y-4 pb-24 px-4 pt-4 overflow-x-hidden">
+      {/* Tightened Mobile Header */}
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="default" size="sm" onClick={() => setView('trip-home')} className="h-9 px-3 shrink-0">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          <span className="text-xs sm:text-sm">Back</span>
+        </Button>
         
-        <div className="w-full md:max-w-screen-md mx-auto">
-          <Accordion type="multiple" defaultValue={['to-be-packed']} className="space-y-4">
-            <ItemsAccordion
-              title="To Be Packed"
-              items={unpackedItems}
-              categories={categories}
-              subcategories={subcategories}
-              people={people}
-              bags={bags}
-              onUpdate={updateItem}
-              onDelete={deleteItem}
-              updateCatalogItem={updateCatalogItem}
-              onEditItem={setEditingItem}
-              onEditNote={setEditingNoteItem}
-            />
-            <ItemsAccordion
-              title="Packed"
-              items={packedItems}
-              categories={categories}
-              subcategories={subcategories}
-              people={people}
-              bags={bags}
-              onUpdate={updateItem}
-              onDelete={deleteItem}
-              updateCatalogItem={updateCatalogItem}
-              onEditItem={setEditingItem}
-              onEditNote={setEditingNoteItem}
-            />
-          </Accordion>
-        </div>
-
-        {editingItem && (
-          <EditTripItemDialog
-            open={!!editingItem}
-            onOpenChange={() => setEditingItem(null)}
-            item={editingItem}
-            tripPeople={tripPeople}
-            tripBags={tripBags}
-            onSave={updateItem}
-          />
-        )}
-
-        {editingNoteItem && (
-          <NoteEditDialog
-            open={!!editingNoteItem}
-            onOpenChange={() => setEditingNoteItem(null)}
-            item={editingNoteItem}
-            onSaveNote={handleSaveNote}
-          />
-        )}
+        <h2 className="text-xl font-bold truncate text-center flex-grow">Packing List</h2>
+        
+        <Button size="sm" onClick={() => setView('trip-add-item')} className="h-9 px-3 shrink-0">
+          <Plus className="h-4 w-4 mr-1" />
+          <span className="text-xs sm:text-sm">Add</span>
+        </Button>
       </div>
+
+      <div className="w-full">
+        <Accordion type="multiple" defaultValue={['to-be-packed']} className="space-y-2">
+          <ItemsAccordion
+            title="To Be Packed"
+            items={unpackedItems}
+            categories={categories}
+            subcategories={subcategories}
+            people={people}
+            bags={bags}
+            onUpdate={updateItem}
+            onDelete={deleteItem}
+            updateCatalogItem={updateCatalogItem}
+            onEditItem={setEditingItem}
+            onEditNote={setEditingNoteItem}
+            showFavoritesOnly={showFavoritesOnly}
+            catalog_items={catalog_items}
+          />
+          <ItemsAccordion
+            title="Packed"
+            items={packedItems}
+            categories={categories}
+            subcategories={subcategories}
+            people={people}
+            bags={bags}
+            onUpdate={updateItem}
+            onDelete={deleteItem}
+            updateCatalogItem={updateCatalogItem}
+            onEditItem={setEditingItem}
+            onEditNote={setEditingNoteItem}
+            showFavoritesOnly={showFavoritesOnly}
+            catalog_items={catalog_items}
+          />
+        </Accordion>
+      </div>
+
+      {editingItem && (
+        <EditTripItemDialog
+          open={!!editingItem}
+          onOpenChange={() => setEditingItem(null)}
+          item={editingItem}
+          tripPeople={tripPeople}
+          tripBags={tripBags}
+          onSave={updateItem}
+        />
+      )}
+
+      {editingNoteItem && (
+        <NoteEditDialog
+          open={!!editingNoteItem}
+          onOpenChange={() => setEditingNoteItem(null)}
+          item={editingNoteItem}
+          onSaveNote={handleSaveNote}
+        />
+      )}
     </div>
   );
 };

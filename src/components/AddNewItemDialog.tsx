@@ -1,21 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Category, Subcategory, Person, Bag } from '@/types';
 
 interface AddNewItemDialogProps {
@@ -56,164 +44,131 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
   defaultBagId,
   defaultIsToBuy,
 }) => {
+  const [name, setName] = useState(initialName || '');
   const [selectedCatId, setSelectedCatId] = useState(preselectedCategoryId || '');
   const [selectedSubCatId, setSelectedSubCatId] = useState(preselectedSubcategoryId || '');
   const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(defaultPersonId);
   const [selectedBagId, setSelectedBagId] = useState<number | undefined>(defaultBagId);
   const [isToBuy, setIsToBuy] = useState(defaultIsToBuy || false);
 
-  const [formData, setFormData] = useState({
-    name: initialName || '',
-    notes: '',
-  });
-
   useEffect(() => {
     if (open) {
+      setName(initialName || '');
       setSelectedCatId(preselectedCategoryId || '');
       setSelectedSubCatId(preselectedSubcategoryId || '');
       setSelectedPersonId(defaultPersonId);
       setSelectedBagId(defaultBagId);
       setIsToBuy(defaultIsToBuy || false);
-      setFormData({ name: initialName || '', notes: '' });
     }
-  }, [open, preselectedCategoryId, preselectedSubcategoryId, defaultPersonId, defaultBagId, defaultIsToBuy, initialName]);
+  }, [open, initialName, preselectedCategoryId, preselectedSubcategoryId, defaultPersonId, defaultBagId, defaultIsToBuy]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !selectedCatId) return;
+    if (!name.trim() || !selectedCatId) return;
 
     onAddItem({
-      name: formData.name.trim(),
+      name: name.trim(),
       categoryId: selectedCatId,
       subcategoryId: (selectedSubCatId && selectedSubCatId !== 'none') ? selectedSubCatId : undefined,
       personId: selectedPersonId,
       bagId: selectedBagId,
       isToBuy: isToBuy
     });
-
-    onOpenChange(false);
   };
 
-  const currentCategory = categories.find(c => c.id === selectedCatId);
+  const filteredSubcategories = subcategories.filter(sc => sc.categoryId === selectedCatId);
+
+  // Styling for the standard select to match your app
+  const selectClass = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground sm:max-w-md border-border">
+      <DialogContent className="bg-card text-card-foreground border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Add New Item</DialogTitle>
-          <div className="text-sm text-muted-foreground mt-1">
-            Adding to: <span className="font-semibold text-foreground">
-              {currentCategory?.name || 'Uncategorized'}
-            </span>
-          </div>
+          <DialogTitle className="text-xl font-bold">Create New Master Item</DialogTitle>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div>
-            <Label htmlFor="name" className="mb-1 block font-medium">Item Name</Label>
+          <div className="space-y-2">
+            <Label htmlFor="new-item-name">Item Name</Label>
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="e.g. Reading Glasses"
+              id="new-item-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Snow Jacket"
               required
               autoFocus
-              className="bg-input focus-visible:bg-card"
             />
           </div>
 
-          <div className="space-y-4">
-            {!preselectedCategoryId && (
-              <div>
-                <Label className="mb-1 block font-medium text-xs text-muted-foreground">Category</Label>
-                <Select value={selectedCatId} onValueChange={(val) => {
-                  setSelectedCatId(val);
-                  setSelectedSubCatId(''); 
-                }}>
-                  <SelectTrigger className="bg-input">
-                    <SelectValue placeholder="Pick a category..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card">
-                    {categories.sort((a, b) => a.name.localeCompare(b.name)).map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Category *</Label>
+              <select 
+                className={selectClass}
+                value={selectedCatId} 
+                onChange={(e) => { setSelectedCatId(e.target.value); setSelectedSubCatId('none'); }}
+                required
+              >
+                <option value="" disabled>Pick a category</option>
+                {categories.sort((a, b) => a.name.localeCompare(b.name)).map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
 
-            {selectedCatId && !preselectedSubcategoryId && (
-              <div>
-                <Label className="mb-1 block font-medium text-xs text-muted-foreground">Subcategory (Optional)</Label>
-                <Select value={selectedSubCatId} onValueChange={setSelectedSubCatId}>
-                  <SelectTrigger className="bg-input">
-                    <SelectValue placeholder="Pick a subcategory..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card">
-                    <SelectItem value="none">None (General Item)</SelectItem>
-                    {subcategories
-                      .filter(sc => sc.categoryId === selectedCatId)
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((sc) => (
-                        <SelectItem key={sc.id} value={sc.id}>{sc.name}</SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>Subcategory</Label>
+              <select 
+                className={selectClass}
+                value={selectedSubCatId || 'none'} 
+                onChange={(e) => setSelectedSubCatId(e.target.value)}
+              >
+                <option value="none">None</option>
+                {filteredSubcategories.sort((a, b) => a.name.localeCompare(b.name)).map((sc) => (
+                  <option key={sc.id} value={sc.id}>{sc.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
-              <div>
-                <Label className="mb-1 block font-medium text-xs text-muted-foreground">Assign Person</Label>
-                <Select 
+          <div className="border-t pt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Assign Person</Label>
+                <select 
+                  className={selectClass}
                   value={selectedPersonId ? String(selectedPersonId) : 'unassigned'} 
-                  onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}
+                  onChange={(e) => setSelectedPersonId(e.target.value === 'unassigned' ? undefined : Number(e.target.value))}
                 >
-                  <SelectTrigger className="bg-input">
-                    <SelectValue placeholder="Person..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card">
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {people?.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="unassigned">Unassigned</option>
+                  {people?.map((p) => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
+                </select>
               </div>
 
-              <div>
-                <Label className="mb-1 block font-medium text-xs text-muted-foreground">Assign Bag</Label>
-                <Select 
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase font-bold">Assign Bag</Label>
+                <select 
+                  className={selectClass}
                   value={selectedBagId ? String(selectedBagId) : 'unassigned'} 
-                  onValueChange={(val) => setSelectedBagId(val === 'unassigned' ? undefined : Number(val))}
+                  onChange={(e) => setSelectedBagId(e.target.value === 'unassigned' ? undefined : Number(e.target.value))}
                 >
-                  <SelectTrigger className="bg-input">
-                    <SelectValue placeholder="Bag..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card">
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
-                    {bags?.map((b) => (
-                      <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="unassigned">Unassigned</option>
+                  {bags?.map((b) => <option key={b.id} value={String(b.id)}>{b.name}</option>)}
+                </select>
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="dialog-toBuy" 
-                checked={isToBuy} 
-                onCheckedChange={(checked: boolean) => setIsToBuy(checked)} 
-              />
-              <Label htmlFor="dialog-toBuy" className="font-medium cursor-pointer">Need to buy this</Label>
+              <Checkbox id="dialog-toBuy" checked={isToBuy} onCheckedChange={(checked: boolean) => setIsToBuy(checked)} />
+              <Label htmlFor="dialog-toBuy" className="font-medium cursor-pointer">I need to buy this</Label>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">Add Item</Button>
-          </div>
+            <Button type="submit" disabled={!name.trim() || !selectedCatId}>Add to Trip & Catalog</Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
