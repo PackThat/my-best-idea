@@ -20,6 +20,7 @@ interface AddNewItemDialogProps {
     personId?: number;
     bagId?: number;
     isToBuy?: boolean;
+    notes?: string;
   }) => void;
   initialName?: string;
   preselectedCategoryId?: string;
@@ -50,6 +51,7 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
   const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(defaultPersonId);
   const [selectedBagId, setSelectedBagId] = useState<number | undefined>(defaultBagId);
   const [isToBuy, setIsToBuy] = useState(defaultIsToBuy || false);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -59,6 +61,7 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
       setSelectedPersonId(defaultPersonId);
       setSelectedBagId(defaultBagId);
       setIsToBuy(defaultIsToBuy || false);
+      setNotes('');
     }
   }, [open, initialName, preselectedCategoryId, preselectedSubcategoryId, defaultPersonId, defaultBagId, defaultIsToBuy]);
 
@@ -72,7 +75,8 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
       subcategoryId: (selectedSubCatId && selectedSubCatId !== 'none') ? selectedSubCatId : undefined,
       personId: selectedPersonId,
       bagId: selectedBagId,
-      isToBuy: isToBuy
+      isToBuy: isToBuy,
+      notes: notes.trim() || undefined
     });
   };
 
@@ -159,7 +163,17 @@ export const AddNewItemDialog: React.FC<AddNewItemDialogProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="space-y-2">
+              <Label htmlFor="new-item-notes">Notes</Label>
+              <Input
+                id="new-item-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Flight essentials, specific brand, etc."
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2">
               <Checkbox id="dialog-toBuy" checked={isToBuy} onCheckedChange={(checked: boolean) => setIsToBuy(checked)} />
               <Label htmlFor="dialog-toBuy" className="font-medium cursor-pointer">I need to buy this</Label>
             </div>

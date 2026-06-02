@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import EditCatalogItemDialog from './EditCatalogItemDialog';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, ChevronRight, Star, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,6 +26,26 @@ export const ItemsManagementView: React.FC = () => {
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<CatalogItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<CatalogItem | null>(null);
+
+  const handleEditItemClick = (e: React.MouseEvent, item: CatalogItem) => {
+    e.stopPropagation();
+    setItemToEdit(item);
+  };
+
+  const handleDeleteItemClick = (e: React.MouseEvent, item: CatalogItem) => {
+    e.stopPropagation();
+    setItemToDelete(item);
+  };
+
+  const { updateCatalogItem } = useAppContext();
+  const handleToggleFavorite = async (e: React.MouseEvent, item: CatalogItem) => {
+    e.stopPropagation();
+    if (updateCatalogItem) {
+      await updateCatalogItem(item.id, { is_favorite: !item.is_favorite });
+    }
+  };
 
   const categoryHasFavorites = (categoryId: string) => {
     return catalog_items.some(item => item.categoryId === categoryId && item.is_favorite);
@@ -121,8 +142,16 @@ export const ItemsManagementView: React.FC = () => {
         </Label>
         
         <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-foreground"><Pencil className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6" 
+              onClick={(e) => handleToggleFavorite(e, item)}
+            >
+              <Star className={cn("h-4 w-4", item.is_favorite ? "fill-icon-active text-icon-active" : "text-muted-foreground")} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-foreground" onClick={(e) => handleEditItemClick(e, item)}><Pencil className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => handleDeleteItemClick(e, item)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       </div>
     );
@@ -209,6 +238,14 @@ export const ItemsManagementView: React.FC = () => {
             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={confirmDelete} className="bg-destructive">Delete</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {itemToEdit && (
+        <EditCatalogItemDialog 
+          open={!!itemToEdit} 
+          onOpenChange={(open: boolean) => !open && setItemToEdit(null)} 
+          item={itemToEdit} 
+        />
+      )}
     </div>
   );
 };

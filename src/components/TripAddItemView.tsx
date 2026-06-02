@@ -19,7 +19,7 @@ export const TripAddItemView: React.FC = () => {
     subcategories, 
     catalog_items, 
     addingCategoryId,
-    addingSubcategoryId, // Fixed: Grabbed the missing variable here
+    addingSubcategoryId,
     setAddingCategoryId,
     addCatalogItem,
     deleteCatalogItem,
@@ -165,29 +165,29 @@ export const TripAddItemView: React.FC = () => {
     const subcategory = subcategories.find(sc => sc.id === item.subcategoryId);
 
     return (
-      <div key={item.id} className="flex items-center space-x-2 py-3 border-b last:border-b-0">
+      <div key={item.id} className="flex items-center space-x-2 py-1.5 border-b last:border-b-0">
         <Checkbox id={`item-${item.id}`} checked={isSelected} onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} />
         
         <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate">{item.name}</span>
+            <span className="truncate text-sm font-medium text-foreground">{item.name}</span>
             {item.is_favorite && <Star className={cn("h-4 w-4 fill-icon-active text-icon-active shrink-0")} />}
           </div>
-          <div className="text-xs text-muted-foreground truncate">
+          <div className="text-[10px] text-muted-foreground truncate uppercase tracking-wider">
             {category?.name}{subcategory && ` / ${subcategory.name}`}
           </div>
         </Label>
         
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setIsEditingItem(true); }}><Edit2 className="h-5 w-5" /></Button>
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground" onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete "${item.name}"?`)) deleteCatalogItem(item.id); }}><Trash2 className="h-5 w-5 text-destructive" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setIsEditingItem(true); }}><Edit2 className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete "${item.name}" from Master?`)) deleteCatalogItem(item.id); }}><Trash2 className="h-4 w-4" /></Button>
         </div>
 
         {isSelected && (
-          <div className="flex items-center gap-1 shrink-0 ml-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(item.id, quantity - 1)}><Minus className="h-4 w-4" /></Button>
-            <Input type="number" value={quantity} onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value, 10) || 1)} className="h-8 w-12 text-center p-0" />
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(item.id, quantity + 1)}><Plus className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-1 shrink-0 ml-1">
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => handleQuantityChange(item.id, quantity - 1)}><Minus className="h-3 w-3" /></Button>
+            <Input type="number" value={quantity} onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value, 10) || 1)} className="h-7 w-10 text-center p-0 text-xs bg-background" />
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => handleQuantityChange(item.id, quantity + 1)}><Plus className="h-3 w-3" /></Button>
           </div>
         )}
       </div>
@@ -199,7 +199,7 @@ export const TripAddItemView: React.FC = () => {
       return (
         <Button variant="ghost" size="sm" onClick={handleExitAddItemMode} className="p-0 hover:bg-transparent">
           <ArrowLeft className="h-5 w-5 mr-2" />
-          <span className="text-lg font-semibold">Back to {currentPerson.name}</span>
+          <span className="text-lg font-semibold text-foreground">Back to {currentPerson.name}</span>
         </Button>
       );
     }
@@ -207,55 +207,74 @@ export const TripAddItemView: React.FC = () => {
       return (
         <Button variant="ghost" size="sm" onClick={handleExitAddItemMode} className="p-0 hover:bg-transparent">
           <ArrowLeft className="h-5 w-5 mr-2" />
-          <span className="text-lg font-semibold">Back to {currentBag.name}</span>
+          <span className="text-lg font-semibold text-foreground">Back to {currentBag.name}</span>
         </Button>
       );
     }
     return (
       <Button variant="ghost" size="sm" onClick={() => setView('trip-items')} className="p-0 hover:bg-transparent">
         <ArrowLeft className="h-5 w-5 mr-2" />
-        <span className="text-lg font-semibold">Back to Packing List</span>
+        <span className="text-lg font-semibold text-foreground">Back to Packing List</span>
       </Button>
     );
   };
 
   return (
-    <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24 px-4 pt-4">
+    <div className="w-full md:max-w-screen-lg mx-auto space-y-6 pb-24 px-4 pt-4 overflow-x-hidden">
       <div className="flex items-center gap-4">{renderHeader()}</div>
+      
       <div className="w-full md:max-w-screen-md mx-auto space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Quick Add/Search Item" className="pl-11 bg-card border-border" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        </div>
-        <div className="flex items-center space-x-2 px-1">
-          <Checkbox id="trip-show-favorites" checked={showFavoritesOnly} onCheckedChange={(checked) => setShowFavoritesOnly(Boolean(checked))} />
-          <Label htmlFor="trip-show-favorites" className="text-sm font-medium cursor-pointer select-none flex items-center gap-2">
-            Show Favourites Only <Star className={cn("h-3 w-3", showFavoritesOnly ? "fill-icon-active text-icon-active" : "text-muted-foreground")} />
-          </Label>
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+                placeholder="Quick Add/Search Item" 
+                className="pl-11 bg-search-background text-foreground border-transparent placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:bg-card focus-visible:border-border" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+          </div>
+          <div className="flex items-center space-x-2 px-1">
+            <Checkbox id="trip-show-favorites" checked={showFavoritesOnly} onCheckedChange={(checked) => setShowFavoritesOnly(Boolean(checked))} />
+            <Label htmlFor="trip-show-favorites" className="text-sm font-medium cursor-pointer select-none flex items-center gap-2 text-foreground">
+              Show Favourites Only <Star className={cn("h-3 w-3", showFavoritesOnly ? "fill-icon-active text-icon-active" : "text-muted-foreground")} />
+            </Label>
+          </div>
         </div>
 
         {searchResults ? (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground">Search Results</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-tight">Search Results</h3>
+              {/* Single, consistent Create button */}
+              <Button onClick={() => setIsAddingNewItem(true)} size="sm" className="h-8 shadow-sm">
+                <Plus className="h-3 w-3 mr-1" /> Create "{searchTerm}"
+              </Button>
+            </div>
+            
             {searchResults.items.length > 0 ? (
-              <Card className="p-2 bg-card"><div className="space-y-1">{searchResults.items.map(renderItemRow)}</div></Card>
+              <Card className="bg-card border-border shadow-sm">
+                <div className="px-2">
+                  {searchResults.items.map(renderItemRow)}
+                </div>
+              </Card>
             ) : (
-              <div className="text-center py-12 space-y-4 border border-dashed rounded-lg bg-card">
-                <p className="text-muted-foreground">No items found matching "{searchTerm}".</p>
-                <Button onClick={() => setIsAddingNewItem(true)} variant="default" className="px-8"><Plus className="h-4 w-4 mr-2" /> Create "{searchTerm}"</Button>
+              <div className="text-center py-12 border border-dashed rounded-lg bg-card border-border">
+                <p className="text-muted-foreground text-sm">No items found matching "{searchTerm}".</p>
+                {/* Redundant button removed from here */}
               </div>
             )}
           </div>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-2">
-              <h3 className="text-sm font-semibold text-muted-foreground mt-2">Browse Categories</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground mt-2 uppercase tracking-tight">Browse Categories</h3>
               {sortedCategories.map(category => (
-                <Card key={category.id} className="hover:bg-muted/50 transition-colors cursor-pointer bg-card" onClick={() => handleCategoryClick(category.id)}>
+                <Card key={category.id} className="hover:bg-muted/50 transition-colors cursor-pointer bg-card border-border shadow-sm" onClick={() => handleCategoryClick(category.id)}>
                   <CardContent className="py-3 px-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{category.name}</span>
-                      {showFavoritesOnly && <Star className="h-3 w-3 fill-icon-active text-icon-active" />}
+                      <span className="font-medium text-sm text-foreground">{category.name}</span>
+                      {categoryHasFavorites(category.id) && <Star className="h-3 w-3 fill-icon-active text-icon-active" />}
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </CardContent>
@@ -267,19 +286,19 @@ export const TripAddItemView: React.FC = () => {
       </div>
       
       {isFooterVisible && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t z-50">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border z-50">
           <div className="w-full md:max-w-screen-md mx-auto space-y-4">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Select value={String(selectedPersonId || 'unassigned')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>
-                    <SelectTrigger className="bg-input"><SelectValue placeholder="Assign Person" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="bg-input border-border text-foreground"><SelectValue placeholder="Assign Person" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
                         <SelectItem value="unassigned">Person Unassigned</SelectItem>
                         {tripPeople.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                  <Select value={String(selectedBagId || 'unassigned')} onValueChange={(val) => setSelectedBagId(val === 'unassigned' ? undefined : Number(val))}>
-                    <SelectTrigger className="bg-input"><SelectValue placeholder="Assign Bag" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="bg-input border-border text-foreground"><SelectValue placeholder="Assign Bag" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
                         <SelectItem value="unassigned">Bag Unassigned</SelectItem>
                         {tripBags.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
                     </SelectContent>
@@ -288,9 +307,9 @@ export const TripAddItemView: React.FC = () => {
              <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox id="footer-needsToBuy" checked={needsToBuy} onCheckedChange={(checked) => setNeedsToBuy(Boolean(checked))} />
-                  <Label htmlFor="footer-needsToBuy" className="font-medium">Need to buy</Label>
+                  <Label htmlFor="footer-needsToBuy" className="font-medium text-sm text-foreground">Need to buy</Label>
                 </div>
-                <Button onClick={handleAddItems} disabled={isAdding} className="min-w-[140px]">{isAdding ? 'Adding...' : `Add ${getSelectedCount()} Items`}</Button>
+                <Button onClick={handleAddItems} disabled={isAdding} className="min-w-[140px] shadow-sm">{isAdding ? 'Adding...' : `Add ${getSelectedCount()} Items`}</Button>
              </div>
           </div>
         </div>

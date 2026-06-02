@@ -75,10 +75,43 @@ My-Best-Idea/
 │   │   ├── TripsList.tsx
 │   │   └── theme-provider.tsx
 │   ├── contexts/
+│   │   ├── AppContext.tsx
+│   │   ├── BagContext.tsx
+│   │   ├── CategoryContext.tsx
+│   │   ├── ItemContext.tsx
+│   │   ├── PeopleContext.tsx
+│   │   ├── SubcategoryContext.tsx
+│   │   └── TripContext.tsx
 │   ├── data/
+│   │   ├── bags.ts
+│   │   ├── categories.ts
+│   │   ├── items.ts
+│   │   ├── people.ts
+│   │   ├── subcategories.ts
+│   │   └── trips.ts
 │   ├── hooks/
+│   │   ├── useBags.ts
+│   │   ├── useCategories.ts
+│   │   ├── useItems.ts
+│   │   ├── usePeople.ts
+│   │   ├── useSubcategories.ts
+│   │   └── useTrips.ts
 │   ├── lib/
+│   │   └── utils.ts
 │   ├── pages/
+│   │   ├── Bags.tsx
+│   │   ├── Categories.tsx
+│   │   ├── Items.tsx
+│   │   ├── People.tsx
+│   │   ├── Subcategories.tsx
+│   │   └── Trips.tsx
+│   ├── types/
+│   │   ├── Bag.ts
+│   │   ├── Category.ts
+│   │   ├── Item.ts
+│   │   ├── Person.ts
+│   │   ├── Subcategory.ts
+│   │   └── Trip.ts
 │   ├── App.css
 │   ├── App.tsx
 │   ├── index.css
