@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Star, Minus, Plus, DollarSign, MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Star, Minus, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,9 +16,8 @@ import { CatalogItem } from '@/types';
 export const TripAddItemListView: React.FC = () => {
   const { 
     setView, subcategories, catalog_items, people, bags, currentTrip,
-    addingSubcategoryId, addMultipleCatalogItemsToTripItems, updateCatalogItem,
-    deleteCatalogItem, addingForPersonId, addingForBagId,
-    showFavoritesOnly, setShowFavoritesOnly
+    addingSubcategoryId, addMultipleCatalogItemsToTripItems, deleteCatalogItem, 
+    addingForPersonId, addingForBagId, showFavoritesOnly, setShowFavoritesOnly
   } = useAppContext();
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
@@ -78,97 +76,76 @@ export const TripAddItemListView: React.FC = () => {
 
   const isFooterVisible = Object.keys(selectedItems).length > 0;
 
-  if (!currentSubcategory) {
-    setView('trip-add-subcategory');
-    return null;
-  }
+  if (!currentSubcategory) { setView('trip-add-subcategory'); return null; }
 
   return (
-    <div className="w-full md:max-w-screen-lg mx-auto space-y-4 pb-40 px-4 pt-4">
-      <Card className="p-6 bg-card text-card-foreground border-border shadow-sm">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="default" size="sm" onClick={() => setView('trip-add-subcategory')}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
-          <h2 className="text-xl font-bold truncate">{currentSubcategory.name}</h2>
-        </div>
+    <div className="w-full md:max-w-screen-md mx-auto space-y-4 pb-40 px-4 pt-4">
+      {/* Header and Controls */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" onClick={() => setView('trip-add-subcategory')} className="p-0 hover:bg-transparent">
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          <span className="text-lg font-semibold text-foreground">Back to {currentSubcategory.name}</span>
+        </Button>
+      </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2 px-1">
-            <Checkbox id="trip-list-show-favorites" checked={showFavoritesOnly} onCheckedChange={(checked) => setShowFavoritesOnly(Boolean(checked))} />
-            <Label htmlFor="trip-list-show-favorites" className="text-sm font-medium cursor-pointer select-none flex items-center gap-2">
-              Show Favourites Only <Star className={cn("h-3 w-3", showFavoritesOnly ? "fill-icon-active text-icon-active" : "text-muted-foreground")} />
-            </Label>
-          </div>
+      <div className="flex items-center space-x-2 px-1">
+        <Checkbox id="trip-list-show-favorites" checked={showFavoritesOnly} onCheckedChange={(checked) => setShowFavoritesOnly(Boolean(checked))} />
+        <Label htmlFor="trip-list-show-favorites" className="text-sm font-medium cursor-pointer select-none flex items-center gap-2">
+          Show Favourites Only <Star className={cn("h-3 w-3", showFavoritesOnly ? "fill-icon-active text-icon-active" : "text-muted-foreground")} />
+        </Label>
+      </div>
 
-          <div className="space-y-0">
-            {itemsInSubcategory.length > 0 ? (
-              itemsInSubcategory.map((item) => {
-                const isSelected = !!selectedItems[item.id];
-                const quantity = selectedItems[item.id] || 0;
-                return (
-                  <div key={item.id} className="flex items-center space-x-2 py-2 border-b border-border last:border-b-0">
-                    <Checkbox id={`item-${item.id}`} checked={isSelected} onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} />
-                    <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow flex items-center gap-2 min-w-0 py-2">
-                      <span className="truncate text-sm">{item.name}</span>
-                      {item.is_favorite && <Star className={cn("h-3 w-3 shrink-0 fill-icon-active text-icon-active")} />}
-                    </Label>
-                    <div className="flex items-center shrink-0">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setIsEditingItem(true); }}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete "${item.name}"?`)) deleteCatalogItem(item.id); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+      {/* Main List Container - Compact, no dividers */}
+      <Card className="bg-card border-border shadow-sm p-0 overflow-hidden">
+        <div className="px-2">
+          {itemsInSubcategory.length > 0 ? (
+            itemsInSubcategory.map((item) => {
+              const isSelected = !!selectedItems[item.id];
+              const quantity = selectedItems[item.id] || 0;
+              return (
+                <div key={item.id} className="flex items-center space-x-2 py-1.5">
+                  <Checkbox id={`item-${item.id}`} checked={isSelected} onCheckedChange={(checked) => handleItemSelect(item.id, Boolean(checked))} />
+                  <Label htmlFor={`item-${item.id}`} className="font-normal cursor-pointer flex-grow text-sm py-2">
+                    {item.name} {item.is_favorite && <Star className="inline h-3 w-3 ml-1 fill-icon-active text-icon-active" />}
+                  </Label>
+                  
+                  <div className="flex items-center shrink-0 gap-1">
                     {isSelected && (
-                      <div className="flex items-center gap-1 shrink-0 ml-1">
+                      <div className="flex items-center gap-1 ml-1">
                         <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => handleQuantityChange(item.id, quantity - 1)}><Minus className="h-3 w-3" /></Button>
-                        <Input type="number" value={quantity} onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value, 10) || 1)} className="h-7 w-10 text-center p-0 text-xs bg-input text-foreground border-border" />
+                        <Input type="number" value={quantity} onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value, 10) || 1)} className="h-7 w-10 text-center p-0 text-xs bg-background" />
                         <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => handleQuantityChange(item.id, quantity + 1)}><Plus className="h-3 w-3" /></Button>
                       </div>
                     )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={(e) => { e.stopPropagation(); setEditingItem(item); setIsEditingItem(true); }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete "${item.name}"?`)) deleteCatalogItem(item.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 border-2 border-dashed rounded-lg border-border">
-                <p className="text-muted-foreground text-sm">{showFavoritesOnly ? "No favorite items in this folder." : "No items found."}</p>
-              </div>
-            )}
-          </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-muted-foreground text-sm">No items found.</div>
+          )}
         </div>
       </Card>
       
       {isFooterVisible && (
         <AssignmentFooter 
-          selectedPersonId={selectedPersonId}
-          setSelectedPersonId={setSelectedPersonId}
-          selectedBagId={selectedBagId}
-          setSelectedBagId={setSelectedBagId}
-          needsToBuy={needsToBuy}
-          setNeedsToBuy={setNeedsToBuy}
-          bulkNote={bulkNote}
-          setIsNoteDialogOpen={setIsNoteDialogOpen}
-          onAddItems={handleAddItems}
-          isAdding={isAdding}
+          selectedPersonId={selectedPersonId} setSelectedPersonId={setSelectedPersonId}
+          selectedBagId={selectedBagId} setSelectedBagId={setSelectedBagId}
+          needsToBuy={needsToBuy} setNeedsToBuy={setNeedsToBuy}
+          bulkNote={bulkNote} setIsNoteDialogOpen={setIsNoteDialogOpen}
+          onAddItems={handleAddItems} isAdding={isAdding}
           itemCount={Object.keys(selectedItems).length}
-          tripPeople={tripPeople}
-          tripBags={tripBags}
+          tripPeople={tripPeople} tripBags={tripBags}
         />
       )}
 
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add Note to Selected Items</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Textarea value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} rows={3} />
-          </div>
-          <DialogFooter>
-            <Button size="sm" onClick={() => setIsNoteDialogOpen(false)}>Done</Button>
-          </DialogFooter>
+          <DialogHeader><DialogTitle>Add Note to Selected Items</DialogTitle></DialogHeader>
+          <div className="py-2"><Textarea value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} rows={3} /></div>
+          <DialogFooter><Button size="sm" onClick={() => setIsNoteDialogOpen(false)}>Done</Button></DialogFooter>
         </DialogContent>
       </Dialog>
       <EditCatalogItemDialog open={isEditingItem} onOpenChange={setIsEditingItem} item={editingItem} />

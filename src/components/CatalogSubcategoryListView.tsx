@@ -65,10 +65,10 @@ export const CatalogSubcategoryListView: React.FC = () => {
           </Label>
         </div>
 
-        <div className="space-y-2">
-          {visibleSubcategories.map(subcategory => (
-            <Card key={subcategory.id} className="hover:bg-muted/50 transition-colors cursor-pointer bg-card" onClick={() => handleSubcategoryClick(subcategory)}>
-              <CardContent className="py-2 px-4 flex justify-between items-center min-h-[44px]">
+        <Card className="bg-card border-border shadow-sm p-0">
+          <div className="divide-y divide-border">
+            {visibleSubcategories.map(subcategory => (
+              <div key={subcategory.id} className="hover:bg-muted/50 transition-colors cursor-pointer py-3 px-4 flex justify-between items-center" onClick={() => handleSubcategoryClick(subcategory)}>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{subcategory.name}</span>
                   {subcategoryHasFavorites(subcategory.id) && <Star className="h-3 w-3 fill-icon-active text-icon-active" />}
@@ -77,10 +77,10 @@ export const CatalogSubcategoryListView: React.FC = () => {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={(e) => { e.stopPropagation(); setSubToEdit(subcategory); setSubName(subcategory.name); setIsEditDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                     <ChevronRight className="h-4 w-4 text-muted-foreground ml-1" />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
       {/* CRUD Dialogs preserved in your local file */}
     </div>
