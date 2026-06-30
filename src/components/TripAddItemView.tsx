@@ -8,9 +8,12 @@ import { CatalogItem } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from '@/lib/utils';
 import AddNewItemDialog from './AddNewItemDialog';
 import EditCatalogItemDialog from './EditCatalogItemDialog';
+import { AssignmentFooter } from './AssignmentFooter';
 
 export const TripAddItemView: React.FC = () => {
   const { 
@@ -40,8 +43,10 @@ export const TripAddItemView: React.FC = () => {
   const [selectedPersonId, setSelectedPersonId] = useState<number | undefined>(addingForPersonId || undefined);
   const [selectedBagId, setSelectedBagId] = useState<number | undefined>(addingForBagId || undefined);
   const [needsToBuy, setNeedsToBuy] = useState(false);
+  const [bulkNote, setBulkNote] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingNewItem, setIsAddingNewItem] = useState(false);
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
   const [isEditingItem, setIsEditingItem] = useState(false);
@@ -286,37 +291,44 @@ export const TripAddItemView: React.FC = () => {
       </div>
       
       {isFooterVisible && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border z-50">
-          <div className="w-full md:max-w-screen-md mx-auto space-y-4">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Select value={String(selectedPersonId || 'unassigned')} onValueChange={(val) => setSelectedPersonId(val === 'unassigned' ? undefined : Number(val))}>
-                    <SelectTrigger className="bg-input border-border text-foreground"><SelectValue placeholder="Assign Person" /></SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                        <SelectItem value="unassigned">Person Unassigned</SelectItem>
-                        {tripPeople.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                 <Select value={String(selectedBagId || 'unassigned')} onValueChange={(val) => setSelectedBagId(val === 'unassigned' ? undefined : Number(val))}>
-                    <SelectTrigger className="bg-input border-border text-foreground"><SelectValue placeholder="Assign Bag" /></SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                        <SelectItem value="unassigned">Bag Unassigned</SelectItem>
-                        {tripBags.map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-             </div>
-             <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="footer-needsToBuy" checked={needsToBuy} onCheckedChange={(checked) => setNeedsToBuy(Boolean(checked))} />
-                  <Label htmlFor="footer-needsToBuy" className="font-medium text-sm text-foreground">Need to buy</Label>
-                </div>
-                <Button onClick={handleAddItems} disabled={isAdding} className="min-w-[140px] shadow-sm">{isAdding ? 'Adding...' : `Add ${getSelectedCount()} Items`}</Button>
-             </div>
-          </div>
-        </div>
+        <AssignmentFooter 
+          selectedPersonId={selectedPersonId}
+          setSelectedPersonId={setSelectedPersonId}
+          selectedBagId={selectedBagId}
+          setSelectedBagId={setSelectedBagId}
+          needsToBuy={needsToBuy}
+          setNeedsToBuy={setNeedsToBuy}
+          bulkNote={bulkNote}
+          setIsNoteDialogOpen={setIsNoteDialogOpen}
+          onAddItems={handleAddItems}
+          isAdding={isAdding}
+          itemCount={getSelectedCount()}
+          tripPeople={tripPeople}
+          tripBags={tripBags}
+        />
       )}
 
-      <AddNewItemDialog open={isAddingNewItem} onOpenChange={setIsAddingNewItem} categories={categories} subcategories={subcategories} people={tripPeople} bags={tripBags} onAddItem={handleAddNewCatalogItem} initialName={searchTerm} preselectedCategoryId={addingCategoryId || undefined} preselectedSubcategoryId={addingSubcategoryId || undefined} defaultPersonId={selectedPersonId} defaultBagId={selectedBagId} defaultIsToBuy={needsToBuy} />
+<AddNewItemDialog open={isAddingNewItem} onOpenChange={setIsAddingNewItem} categories={categories} subcategories={subcategories} people={tripPeople} bags={tripBags} onAddItem={handleAddNewCatalogItem} initialName={searchTerm} preselectedCategoryId={addingCategoryId || undefined} preselectedSubcategoryId={addingSubcategoryId || undefined} defaultPersonId={selectedPersonId} defaultBagId={selectedBagId} defaultIsToBuy={needsToBuy} />
       <EditCatalogItemDialog open={isEditingItem} onOpenChange={setIsEditingItem} item={editingItem} />
+
+      <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Note to Selected Items</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Textarea 
+              placeholder="Add a note to all selected items..." 
+              value={bulkNote} 
+              onChange={(e) => setBulkNote(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button size="sm" onClick={() => setIsNoteDialogOpen(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

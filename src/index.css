@@ -139,3 +139,23 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield; /* Firefox */
 }
+
+/* Use theme-aware variables so it changes automatically with themes */
+[data-radix-popper-content-wrapper] [role="listbox"],
+[data-radix-popper-content-wrapper] > div {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Ensure individual dropdown choice items also match */
+[data-radix-collection-item] {
+  background-color: transparent !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Subtle highlight color when hovering over an option */
+[data-radix-collection-item]:hover,
+[data-radix-collection-item][data-highlighted] {
+  background-color: hsl(var(--muted)) !important;
+}

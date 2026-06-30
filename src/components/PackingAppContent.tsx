@@ -115,7 +115,7 @@ const PackingAppContent: React.FC<PackingAppContentProps> = ({
   };
 
   return (
-    <div className="h-full w-full bg-background">
+    <div className="h-full w-full bg-background text-foreground">
       {renderContent()}
     </div>
   );
