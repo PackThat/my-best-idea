@@ -7,19 +7,18 @@ import { Input } from '@/components/ui/input';
 import { CatalogItem } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from '@/lib/utils';
 import AddNewItemDialog from './AddNewItemDialog';
 import EditCatalogItemDialog from './EditCatalogItemDialog';
+import NoteEditDialog from './NoteEditDialog';
 import { AssignmentFooter } from './AssignmentFooter';
 
 export const TripAddItemView: React.FC = () => {
   const { 
     setView, categories, subcategories, catalog_items, addingCategoryId, addingSubcategoryId,
     setAddingCategoryId, addCatalogItem, deleteCatalogItem, people, bags, currentTrip,
-    addMultipleCatalogItemsToTripItems, addingForPersonId, addingForBagId, currentPerson,
-    currentBag, showFavoritesOnly, setShowFavoritesOnly
+    addMultipleCatalogItemsToTripItems, addingForPersonId, addingForBagId,
+    showFavoritesOnly, setShowFavoritesOnly
   } = useAppContext();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,6 +47,13 @@ export const TripAddItemView: React.FC = () => {
     if (!currentTrip?.bagIds) return [];
     return bags.filter(b => currentTrip.bagIds!.includes(b.id));
   }, [currentTrip, bags]);
+
+  const selectedItemsList = useMemo(() => {
+    return Object.keys(selectedItems).map(id => {
+      const item = catalog_items.find(i => i.id === id);
+      return { id, name: item?.name || 'Unknown Item' };
+    });
+  }, [selectedItems, catalog_items]);
   
   const categoryHasFavorites = (categoryId: string) => {
     return catalog_items.some(item => item.categoryId === categoryId && item.is_favorite);
@@ -92,7 +98,7 @@ export const TripAddItemView: React.FC = () => {
 
   const handleAddItems = async () => {
     const itemsToAdd = Object.entries(selectedItems).map(([id, qty]) => ({
-      catalogItemId: id, quantity: qty, isToBuy: needsToBuy,
+      catalogItemId: id, quantity: qty, isToBuy: needsToBuy, notes: bulkNote || undefined
     }));
     if (itemsToAdd.length === 0) return;
     setIsAdding(true);
@@ -229,6 +235,13 @@ export const TripAddItemView: React.FC = () => {
       )}
       <AddNewItemDialog open={isAddingNewItem} onOpenChange={setIsAddingNewItem} categories={categories} subcategories={subcategories} people={tripPeople} bags={tripBags} onAddItem={handleAddNewCatalogItem} initialName={searchTerm} preselectedCategoryId={addingCategoryId || undefined} preselectedSubcategoryId={addingSubcategoryId || undefined} defaultPersonId={selectedPersonId} defaultBagId={selectedBagId} defaultIsToBuy={needsToBuy} />
       <EditCatalogItemDialog open={isEditingItem} onOpenChange={setIsEditingItem} item={editingItem} />
+      <NoteEditDialog 
+        open={isNoteDialogOpen} 
+        onOpenChange={setIsNoteDialogOpen} 
+        items={selectedItemsList} 
+        initialNote={bulkNote} 
+        onSave={(newNote) => setBulkNote(newNote || '')} 
+      />
     </div>
   );
 };

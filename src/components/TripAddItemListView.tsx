@@ -6,10 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import EditCatalogItemDialog from './EditCatalogItemDialog';
+import NoteEditDialog from './NoteEditDialog';
 import { AssignmentFooter } from './AssignmentFooter';
 import { CatalogItem } from '@/types';
 
@@ -39,6 +38,13 @@ export const TripAddItemListView: React.FC = () => {
     if (!currentTrip?.bagIds) return [];
     return bags.filter(b => currentTrip.bagIds!.includes(b.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [currentTrip, bags]);
+
+  const selectedItemsList = useMemo(() => {
+    return Object.keys(selectedItems).map(id => {
+      const item = catalog_items.find(i => i.id === id);
+      return { id, name: item?.name || 'Unknown Item' };
+    });
+  }, [selectedItems, catalog_items]);
 
   const currentSubcategory = subcategories.find(sc => sc.id === addingSubcategoryId);
   
@@ -95,7 +101,7 @@ export const TripAddItemListView: React.FC = () => {
         </Label>
       </div>
 
-      {/* Main List Container - Compact, no dividers */}
+      {/* Main List Container */}
       <Card className="bg-card border-border shadow-sm p-0 overflow-hidden">
         <div className="px-2">
           {itemsInSubcategory.length > 0 ? (
@@ -141,14 +147,15 @@ export const TripAddItemListView: React.FC = () => {
         />
       )}
 
-      <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader><DialogTitle>Add Note to Selected Items</DialogTitle></DialogHeader>
-          <div className="py-2"><Textarea value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} rows={3} /></div>
-          <DialogFooter><Button size="sm" onClick={() => setIsNoteDialogOpen(false)}>Done</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
       <EditCatalogItemDialog open={isEditingItem} onOpenChange={setIsEditingItem} item={editingItem} />
+      
+      <NoteEditDialog 
+        open={isNoteDialogOpen} 
+        onOpenChange={setIsNoteDialogOpen} 
+        items={selectedItemsList} 
+        initialNote={bulkNote} 
+        onSave={(val) => setBulkNote(val ?? '')} 
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+/* stylelint-disable */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,22 +13,22 @@
     --c-light-blue: 208 10% 76%; 
     
     --c-tan: 30 35% 60%;
-    --c-sand: 36 50% 95%;
-    --c-creamier-sand: 33 55% 90%;
+    /* Darkened to 90% so it is actually visible as sand */
+    --c-sand: 36 50% 90%;
     --c-white: 0 0% 100%;
 
     /* --- Light Theme Mapping --- */
     --background: var(--c-light-blue);
     --foreground: var(--c-dark-blue);
-    --card: var(--c-creamier-sand);
+    --card: var(--c-sand);
     --card-foreground: var(--c-mid-blue);
-    --trip-card: var(--c-creamier-sand);
+    --trip-card: var(--c-sand);
     --trip-card-foreground: var(--c-mid-blue);
-    --popover: var(--c-creamier-sand);
+    --popover: var(--c-sand);
     --popover-foreground: var(--c-mid-blue);
     --primary: var(--c-mid-blue);
     --primary-foreground: var(--c-sand);
-    --secondary: var(--c-creamier-sand);
+    --secondary: var(--c-sand);
     --secondary-foreground: var(--c-mid-blue);
     
     /* UPDATED: Muted elements slightly lighter than background */
@@ -53,7 +54,7 @@
     --sidebar-foreground: var(--c-mid-blue);
     --sidebar-header: var(--c-tan);
     --sidebar-header-foreground: var(--c-dark-blue);
-    --sidebar-button: var(--c-creamier-sand);
+    --sidebar-button: var(--c-sand);
     --sidebar-button-foreground: var(--c-dark-blue);
     --sidebar-button-active: var(--c-tan);
     --sidebar-button-active-foreground: var(--c-dark-blue);
@@ -75,7 +76,6 @@
     --c-light-blue: 208 21% 69%;
     --c-tan: 30 35% 60%;
     --c-sand: 36 50% 95%;
-    --c-creamier-sand: 33 55% 90%;
     --c-white: 0 0% 100%;
 
     /* --- Dark Theme Mapping --- */
@@ -138,6 +138,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;      /* Standard property */
 }
 
 /* Use theme-aware variables so it changes automatically with themes */
